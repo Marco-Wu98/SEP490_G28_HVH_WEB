@@ -832,7 +832,9 @@ export default function OrganizersList(props: Props) {
         <Dialog open={openDetailModal} onOpenChange={setOpenDetailModal}>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle>Chi tiết thông tin người tổ chức</DialogTitle>
+              <DialogTitle className="text-black">
+                Chi tiết thông tin người tổ chức
+              </DialogTitle>
               <DialogDescription>
                 Thông tin chi tiết về người tổ chức được chọn
               </DialogDescription>
@@ -931,7 +933,7 @@ export default function OrganizersList(props: Props) {
         <Dialog open={openEditModal} onOpenChange={setOpenEditModal}>
           <DialogContent className="max-w-2xl bg-white dark:bg-white">
             <DialogHeader>
-              <DialogTitle className="text-blue-600">
+              <DialogTitle className="text-black">
                 Cập nhật thông tin người tổ chức
               </DialogTitle>
               <DialogDescription>
@@ -1046,8 +1048,8 @@ export default function OrganizersList(props: Props) {
 
               <div className="flex justify-end gap-2 pt-4">
                 <Button
-                  variant="outline"
                   onClick={() => setOpenEditModal(false)}
+                  className="bg-zinc-100 text-zinc-700 hover:bg-zinc-200"
                 >
                   Hủy
                 </Button>
@@ -1063,9 +1065,11 @@ export default function OrganizersList(props: Props) {
         </Dialog>
         {/* Lock Confirmation Modal */}
         <Dialog open={openLockModal} onOpenChange={setOpenLockModal}>
-          <DialogContent className="max-w-md">
+          <DialogContent className="max-w-md bg-white dark:bg-white">
             <DialogHeader>
-              <DialogTitle>Xác nhận thay đổi trạng thái</DialogTitle>
+              <DialogTitle className="text-black">
+                Xác nhận thay đổi trạng thái
+              </DialogTitle>
               <DialogDescription>
                 <span className="text-red-600">
                   {selectedLockUser
@@ -1088,7 +1092,10 @@ export default function OrganizersList(props: Props) {
             )}
 
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setOpenLockModal(false)}>
+              <Button
+                onClick={() => setOpenLockModal(false)}
+                className="bg-zinc-100 text-zinc-700 hover:bg-zinc-200"
+              >
                 Hủy
               </Button>
               <Button
@@ -1104,7 +1111,7 @@ export default function OrganizersList(props: Props) {
         <Dialog open={openAddHostModal} onOpenChange={setOpenAddHostModal}>
           <DialogContent className="max-w-2xl bg-white dark:bg-white">
             <DialogHeader>
-              <DialogTitle className="text-blue-600">
+              <DialogTitle className="text-black">
                 Tạo tài khoản Host mới
               </DialogTitle>
               <DialogDescription>Nhập thông tin Host</DialogDescription>
@@ -1266,7 +1273,6 @@ export default function OrganizersList(props: Props) {
 
             <div className="flex justify-end gap-2 pt-4 border-t">
               <Button
-                variant="outline"
                 onClick={() => {
                   setOpenAddHostModal(false);
                   setNewHost({
@@ -1280,6 +1286,7 @@ export default function OrganizersList(props: Props) {
                   });
                   setOrgSearchQuery('');
                 }}
+                className="bg-zinc-100 text-zinc-700 hover:bg-zinc-200"
               >
                 Hủy
               </Button>

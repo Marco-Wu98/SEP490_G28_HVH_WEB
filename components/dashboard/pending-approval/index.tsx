@@ -568,9 +568,7 @@ export default function PendingApproval({ user, userDetails }: Props) {
       <Dialog open={showDetailsModal} onOpenChange={setShowDetailsModal}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle className="text-blue-600">
-              Chi tiết thông tin
-            </DialogTitle>
+            <DialogTitle className="text-black">Chi tiết thông tin</DialogTitle>
           </DialogHeader>
           {selectedItem && (
             <div className="space-y-4">
@@ -718,9 +716,7 @@ export default function PendingApproval({ user, userDetails }: Props) {
       <Dialog open={showConfirmModal} onOpenChange={setShowConfirmModal}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="text-blue-600">
-              Xác nhận thao tác
-            </DialogTitle>
+            <DialogTitle className="text-black">Xác nhận thao tác</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <p className="text-gray-700">
@@ -730,9 +726,8 @@ export default function PendingApproval({ user, userDetails }: Props) {
             </p>
             <div className="flex justify-end gap-2">
               <Button
-                variant="outline"
                 onClick={() => setShowConfirmModal(false)}
-                className="border-blue-600 text-blue-600 hover:bg-blue-50"
+                className="bg-zinc-100 text-zinc-700 hover:bg-zinc-200"
               >
                 Hủy
               </Button>

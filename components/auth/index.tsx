@@ -1,6 +1,7 @@
 'use client';
 
 import Footer from '@/components/footer/FooterAuthDefault';
+import Image from 'next/image';
 import { PropsWithChildren, useEffect, useState } from 'react';
 import { FaChevronLeft } from 'react-icons/fa6';
 import { HiBolt } from 'react-icons/hi2';
@@ -37,9 +38,14 @@ export default function DefaultAuthLayout(props: DefaultAuthLayoutProps) {
             <div
               className={`mb-[160px] mt-8 flex w-full items-center justify-center `}
             >
-              <div className="me-2 flex h-[76px] w-[76px] items-center justify-center rounded-md bg-card text-primary">
-                <HiBolt className="h-9 w-9" />
-              </div>
+              <Image
+                src={'/img/logo.png'}
+                alt="Logo"
+                width={70}
+                height={70}
+                className="rounded-sm mr-5"
+              />
+
               <h5 className="text-4xl font-bold leading-5 text-primary-foreground">
                 Hà Nội Thiện Nguyện
               </h5>

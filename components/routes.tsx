@@ -1,16 +1,13 @@
 // Auth Imports
 import { IRoute } from '@/types/types';
-import {
-  HiOutlineHome,
-  HiOutlineCpuChip,
-  HiOutlineUsers,
-  HiOutlineUser,
-  HiOutlineCog8Tooth,
-  HiOutlineCreditCard,
-  HiOutlineDocumentText,
-  HiOutlineCurrencyDollar
-} from 'react-icons/hi2';
 import { Settings } from 'lucide-react';
+import {
+  HiOutlineCpuChip,
+  HiOutlineDocumentText,
+  HiOutlineHome,
+  HiOutlineUser,
+  HiOutlineUsers
+} from 'react-icons/hi2';
 
 export const routes: IRoute[] = [
   {
@@ -62,7 +59,7 @@ export const routes: IRoute[] = [
       },
       {
         name: 'Tài khoản chờ phê duyệt',
-        path: '/dashboard/pending-approval?tab=accounts',
+        path: '/dashboard/pending-accounts',
         collapse: false
       },
       {
@@ -81,19 +78,9 @@ export const routes: IRoute[] = [
   {
     name: 'Cài đặt hồ sơ',
     path: '/dashboard/settings',
-    icon: (
-      <HiOutlineCog8Tooth className="-mt-[7px] h-4 w-4 stroke-2 text-inherit" />
-    ),
+    icon: <HiOutlineUser className="-mt-[7px] h-4 w-4 stroke-2 text-inherit" />,
     collapse: false
   },
-  {
-    name: 'Trợ lý AI',
-    path: '/dashboard/ai-assistant',
-    icon: <HiOutlineUser className="-mt-[7px] h-4 w-4 stroke-2 text-inherit" />,
-    collapse: false,
-    disabled: true
-  },
-
   {
     name: 'Trang giới thiệu',
     path: '/home',

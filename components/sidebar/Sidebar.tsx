@@ -83,41 +83,6 @@ function Sidebar(props: SidebarProps) {
                 <Links routes={routes} />
               </ul>
             </div>
-            {/* Sidebar profile info */}
-            <div className="mb-9 mt-7">
-              <div className="mt-5 flex w-full items-center rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
-                <a href="/dashboard/dashboard/settings">
-                  <Avatar className="min-h-10 min-w-10">
-                    <AvatarImage src={user?.user_metadata.avatar_url} />
-                    <AvatarFallback className="font-bold dark:text-zinc-950">
-                      {/* {userDetails.full_name
-                        ? `${userDetails.full_name[0]}`
-                        : `${user?.user_metadata.email[0].toUpperCase()}`} */}
-                    </AvatarFallback>
-                  </Avatar>
-                </a>
-                <a href="/dashboard/settings">
-                  <p className="ml-2 mr-3 flex items-center text-sm font-semibold leading-none text-zinc-950 dark:text-white">
-                    {userDetails?.full_name ||
-                      user?.user_metadata?.full_name ||
-                      'Người dùng'}
-                  </p>
-                </a>
-                <Button
-                  onClick={(e) => handleSignOut(e)}
-                  variant="outline"
-                  className="ml-auto flex h-[40px] w-[40px] cursor-pointer items-center justify-center rounded-full p-0 text-center text-sm font-medium hover:dark:text-white"
-                  type="submit"
-                >
-                  <HiOutlineArrowRightOnRectangle
-                    className="h-4 w-4 stroke-2 text-zinc-950 dark:text-white"
-                    width="16px"
-                    height="16px"
-                    color="inherit"
-                  />
-                </Button>
-              </div>
-            </div>
           </div>
         </Scrollbars>
       </Card>

@@ -437,7 +437,7 @@ export default function EventSettings(props: Props) {
       <Dialog open={openAddDomainModal} onOpenChange={setOpenAddDomainModal}>
         <DialogContent className="max-w-md bg-white dark:bg-white">
           <DialogHeader>
-            <DialogTitle className="text-blue-600">
+            <DialogTitle className="text-black">
               Thêm lĩnh vực hoạt động
             </DialogTitle>
             <DialogDescription>
@@ -463,9 +463,8 @@ export default function EventSettings(props: Props) {
             </div>
             <div className="flex justify-end gap-2 pt-4">
               <Button
-                variant="outline"
                 onClick={() => setOpenAddDomainModal(false)}
-                className="border-blue-600 text-blue-600 hover:bg-blue-50"
+                className="bg-zinc-100 text-zinc-700 hover:bg-zinc-200"
               >
                 Hủy
               </Button>
@@ -487,7 +486,7 @@ export default function EventSettings(props: Props) {
       >
         <DialogContent className="max-w-4xl max-h-screen overflow-y-auto bg-white dark:bg-white">
           <DialogHeader className="mb-6 pb-4">
-            <DialogTitle className="text-xl font-bold text-blue-600">
+            <DialogTitle className="text-xl font-bold text-black">
               {editingDomain
                 ? 'Chỉnh sửa lĩnh vực hoạt động'
                 : 'Thêm lĩnh vực hoạt động'}
@@ -633,12 +632,11 @@ export default function EventSettings(props: Props) {
 
             <div className="flex justify-end gap-3 pt-6">
               <Button
-                variant="outline"
                 onClick={() => {
                   resetForm();
                   setOpenDetailDomainModal(false);
                 }}
-                className="px-6 border-blue-600 text-blue-600 hover:bg-blue-50"
+                className="px-6 bg-zinc-100 text-zinc-700 hover:bg-zinc-200"
               >
                 Hủy
               </Button>
@@ -660,9 +658,7 @@ export default function EventSettings(props: Props) {
       >
         <DialogContent className="max-w-md bg-white dark:bg-white">
           <DialogHeader>
-            <DialogTitle className="text-blue-600">
-              Thêm lĩnh vực con
-            </DialogTitle>
+            <DialogTitle className="text-black">Thêm lĩnh vực con</DialogTitle>
             <DialogDescription>
               Nhập tên lĩnh vực con mới cho {selectedDomain?.name}
             </DialogDescription>
@@ -684,9 +680,8 @@ export default function EventSettings(props: Props) {
             </div>
             <div className="flex justify-end gap-2 pt-4">
               <Button
-                variant="outline"
                 onClick={() => setOpenAddSubDomainModal(false)}
-                className="border-blue-600 text-blue-600 hover:bg-blue-50"
+                className="bg-zinc-100 text-zinc-700 hover:bg-zinc-200"
               >
                 Hủy
               </Button>
@@ -708,7 +703,7 @@ export default function EventSettings(props: Props) {
       >
         <DialogContent className="max-w-md bg-white dark:bg-white">
           <DialogHeader>
-            <DialogTitle className="text-blue-600">
+            <DialogTitle className="text-black">
               Xác nhận thay đổi trạng thái
             </DialogTitle>
             <DialogDescription>
@@ -729,13 +724,12 @@ export default function EventSettings(props: Props) {
           </DialogHeader>
           <div className="flex justify-end gap-2 pt-4">
             <Button
-              variant="outline"
               onClick={() => {
                 setOpenConfirmToggleDomain(false);
                 setConfirmingDomain(null);
                 setConfirmingSubDomain(null);
               }}
-              className="border-blue-600 text-blue-600 hover:bg-blue-50"
+              className="bg-zinc-100 text-zinc-700 hover:bg-zinc-200"
             >
               Hủy
             </Button>
@@ -762,7 +756,7 @@ export default function EventSettings(props: Props) {
       >
         <DialogContent className="max-w-md bg-white dark:bg-white">
           <DialogHeader>
-            <DialogTitle className="text-blue-600">
+            <DialogTitle className="text-black">
               Xác nhận xóa lĩnh vực
             </DialogTitle>
             <DialogDescription>
@@ -777,12 +771,11 @@ export default function EventSettings(props: Props) {
           </DialogHeader>
           <div className="flex justify-end gap-2 pt-4">
             <Button
-              variant="outline"
               onClick={() => {
                 setOpenConfirmDeleteDomain(false);
                 setConfirmingDomain(null);
               }}
-              className="border-blue-600 text-blue-600 hover:bg-blue-50"
+              className="bg-zinc-100 text-zinc-700 hover:bg-zinc-200"
             >
               Hủy
             </Button>
@@ -803,7 +796,7 @@ export default function EventSettings(props: Props) {
       >
         <DialogContent className="max-w-md bg-white dark:bg-white">
           <DialogHeader>
-            <DialogTitle className="text-blue-600">
+            <DialogTitle className="text-black">
               Xác nhận xóa lĩnh vực con
             </DialogTitle>
             <DialogDescription>
@@ -818,12 +811,11 @@ export default function EventSettings(props: Props) {
           </DialogHeader>
           <div className="flex justify-end gap-2 pt-4">
             <Button
-              variant="outline"
               onClick={() => {
                 setOpenConfirmDeleteSubDomain(false);
                 setConfirmingSubDomain(null);
               }}
-              className="border-blue-600 text-blue-600 hover:bg-blue-50"
+              className="bg-zinc-100 text-zinc-700 hover:bg-zinc-200"
             >
               Hủy
             </Button>
