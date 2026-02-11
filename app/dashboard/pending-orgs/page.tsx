@@ -1,13 +1,9 @@
-import PendingAccountDetailContainer from '@/components/dashboard/pending-accounts/detail-container';
+import PendingOrgs from '@/components/dashboard/pending-orgs';
 import { createClient } from '@/utils/supabase/server';
 import { getUser, getUserDetails } from '@/utils/supabase/queries';
 import { redirect } from 'next/navigation';
 
-interface PageProps {
-  params: { id: string };
-}
-
-export default async function PendingAccountDetailPage({ params }: PageProps) {
+export default async function PendingOrgsPage() {
   const supabase = await createClient();
   const [user, userDetails] = await Promise.all([
     getUser(supabase),
@@ -18,11 +14,5 @@ export default async function PendingAccountDetailPage({ params }: PageProps) {
     return redirect('/dashboard/signin');
   }
 
-  return (
-    <PendingAccountDetailContainer
-      user={user}
-      userDetails={userDetails}
-      id={params.id}
-    />
-  );
+  return <PendingOrgs user={user} userDetails={userDetails} />;
 }

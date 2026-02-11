@@ -1,4 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -60,13 +59,8 @@
   --chart-5: #e3f2fd;
 }
 
-body {
-  font-family: 'Inter', sans-serif;
-}
-
 html {
   scroll-behavior: smooth;
-  font-family: 'Inter', sans-serif;
   color-scheme: unset !important;
   scrollbar-gutter: stable;
 }

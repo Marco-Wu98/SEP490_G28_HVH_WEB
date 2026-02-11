@@ -1,6 +1,13 @@
 import SupabaseProvider from './supabase-provider';
 import { PropsWithChildren } from 'react';
+import { Roboto } from 'next/font/google';
 import '@/styles/globals.css';
+
+const roboto = Roboto({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  display: 'swap'
+});
 
 export const dynamic = 'force-dynamic';
 
@@ -13,8 +20,8 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         <title>
-          Horizon UI Boilerplate - Launch your startup project 10X in a few
-          moments - The best NextJS Boilerplate (This is an example)
+          Hà Nội Thiện Nguyện - Nền tảng kết nối tình nguyện viên và tổ chức từ
+          thiện
         </title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         {/* <!--  Social tags   --> */}
@@ -86,7 +93,11 @@ export default function RootLayout({
           href="/img/apple-touch-icon.png"
         />
       </head>
-      <body id={'root'} className="loading bg-white" suppressHydrationWarning>
+      <body
+        id={'root'}
+        className={`loading bg-white ${roboto.className}`}
+        suppressHydrationWarning
+      >
         <SupabaseProvider>
           <main id="skip">{children}</main>
         </SupabaseProvider>

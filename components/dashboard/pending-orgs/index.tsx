@@ -15,80 +15,64 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import {
-  usePendingAccounts,
-  type PendingAccountsResponse
-} from '@/hooks/features/identity-verification/usePendingAccountsList';
-import { ACCOUNT_STATUS } from '@/constants/account-status';
+import { useOrgRegistrationsList } from '@/hooks/features/approve-reject-organization/useOrgRegistrationsList';
 
-interface PendingAccountItem {
+interface OrgRegistrationItem {
   id: string;
-  email: string | null;
-  phone: string | null;
-  cid: string | null;
-  status: string | null;
-  createdAt: string | null;
+  name: string | null;
+  dhaRegistered: boolean | null;
+  orgType: string | null;
+  managerFullName: string | null;
+  managerCid: string | null;
+  managerEmail: string | null;
 }
 
 interface Props {
   user: User | null | undefined;
   userDetails: { [x: string]: any } | null;
-  accounts: PendingAccountItem[];
 }
 
-const formatDate = (value?: string | null) => {
-  if (!value) return '-';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleDateString('vi-VN');
+const renderYesNo = (value: boolean | null) => {
+  if (value === null || value === undefined) return '-';
+  return value ? 'Có' : 'Không';
 };
 
-export default function PendingAccounts({ user, userDetails }: Props) {
+export default function PendingOrgs({ user, userDetails }: Props) {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
 
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '';
-  const { data, error, isLoading } = usePendingAccounts({
+  const { data, error, isLoading } = useOrgRegistrationsList({
     pageNumber: Math.max(0, currentPage - 1),
     pageSize,
-    status: ACCOUNT_STATUS.PENDING,
+    status: 'PENDING',
     email: searchQuery,
     baseUrl: apiBaseUrl
   });
 
-  const effectiveAccounts = useMemo<PendingAccountItem[]>(() => {
+  const organizations = useMemo<OrgRegistrationItem[]>(() => {
     if (!data?.content) return [];
     return data.content.map((item) => ({
       id: item.id,
-      email: item.email ?? null,
-      phone: null,
-      cid: item.cid ?? null,
-      status: item.status ?? null,
-      createdAt: item.createdAt ?? null
+      name: item.name ?? null,
+      dhaRegistered: item.dhaRegistered ?? null,
+      orgType: item.orgType ?? null,
+      managerFullName: item.managerFullName ?? null,
+      managerCid: item.managerCid ?? null,
+      managerEmail: item.managerEmail ?? null
     }));
   }, [data]);
 
-  const filteredAccounts = useMemo(() => {
-    const searchTerm = searchQuery.toLowerCase();
-    return effectiveAccounts.filter((account) => {
-      const matchesSearch =
-        account.id.toLowerCase().includes(searchTerm) ||
-        (account.email || '').toLowerCase().includes(searchTerm) ||
-        (account.phone || '').toLowerCase().includes(searchTerm) ||
-        (account.cid || '').toLowerCase().includes(searchTerm);
-      return account.status === ACCOUNT_STATUS.PENDING && matchesSearch;
-    });
-  }, [effectiveAccounts, searchQuery]);
-
   const totalPages = data?.page?.totalPages
     ? Math.max(1, data.page.totalPages)
-    : Math.max(1, Math.ceil(filteredAccounts.length / pageSize));
-  const paginatedAccounts = useMemo(() => {
+    : Math.max(1, Math.ceil(organizations.length / pageSize));
+
+  const paginatedOrgs = useMemo(() => {
     const startIndex = (currentPage - 1) * pageSize;
-    return filteredAccounts.slice(startIndex, startIndex + pageSize);
-  }, [currentPage, filteredAccounts]);
+    return organizations.slice(startIndex, startIndex + pageSize);
+  }, [currentPage, organizations]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -98,15 +82,15 @@ export default function PendingAccounts({ user, userDetails }: Props) {
     <DashboardLayout
       user={user}
       userDetails={userDetails}
-      title="Tài khoản chờ phê duyệt"
-      description="Danh sách các tài khoản đang chờ phê duyệt"
+      title="Tổ chức chờ phê duyệt"
+      description="Danh sách các tổ chức đang chờ phê duyệt"
     >
       <div className="w-full max-w-none">
         <div className="mb-6"></div>
 
         <div className="mb-6">
           <Input
-            placeholder="Tìm kiếm tài khoản..."
+            placeholder="Tìm kiếm email quản lý..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="border-blue-200 bg-blue-50"
@@ -117,19 +101,21 @@ export default function PendingAccounts({ user, userDetails }: Props) {
           <Table>
             <TableHeader>
               <TableRow className="border-b border-gray-200 bg-gray-50">
-                <TableHead className="w-40 text-gray-700">ID</TableHead>
-                <TableHead className="w-56 text-gray-700">Email</TableHead>
-                <TableHead className="w-36 text-gray-700">Số CCCD</TableHead>
-                <TableHead className="w-40 text-gray-700">Vai trò</TableHead>
-                <TableHead className="w-28 text-gray-700">Ngày nộp</TableHead>
-                <TableHead className="w-32 text-gray-700">Trạng thái</TableHead>
+                <TableHead className="text-gray-700">ID</TableHead>
+                <TableHead className="text-gray-700">Tên tổ chức</TableHead>
+                <TableHead className="text-gray-700">Loại tổ chức</TableHead>
+                <TableHead className="text-gray-700">DHA</TableHead>
+                <TableHead className="text-gray-700">Quản lý</TableHead>
+                <TableHead className="text-gray-700">CCCD</TableHead>
+                <TableHead className="text-gray-700">Email</TableHead>
+                <TableHead className="text-gray-700">Trạng thái</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
                 <TableRow>
                   <TableCell
-                    colSpan={6}
+                    colSpan={8}
                     className="py-8 text-center text-gray-500"
                   >
                     Đang tải dữ liệu...
@@ -138,47 +124,45 @@ export default function PendingAccounts({ user, userDetails }: Props) {
               ) : error ? (
                 <TableRow>
                   <TableCell
-                    colSpan={6}
+                    colSpan={8}
                     className="py-8 text-center text-red-500"
                   >
                     Không thể tải dữ liệu. Vui lòng thử lại.
                   </TableCell>
                 </TableRow>
-              ) : paginatedAccounts.length > 0 ? (
-                paginatedAccounts.map((account) => (
+              ) : paginatedOrgs.length > 0 ? (
+                paginatedOrgs.map((org) => (
                   <TableRow
-                    key={account.id}
+                    key={org.id}
                     className="cursor-pointer border-b border-gray-200 hover:bg-blue-50"
                     onClick={() =>
-                      router.push(`/dashboard/pending-accounts/${account.id}`)
+                      router.push(`/dashboard/pending-orgs/${org.id}`)
                     }
                   >
-                    <TableCell
-                      className="w-40 max-w-[10rem] truncate font-medium text-gray-900"
-                      title={account.id}
-                    >
-                      {account.id}
+                    <TableCell className="font-medium text-gray-900">
+                      {org.id}
                     </TableCell>
-                    <TableCell
-                      className="w-56 max-w-[14rem] truncate text-gray-600"
-                      title={account.email || ''}
-                    >
-                      {account.email || '-'}
+                    <TableCell className="text-gray-600">
+                      {org.name || '-'}
                     </TableCell>
-                    <TableCell className="w-36 text-gray-600">
-                      {account.cid || '-'}
+                    <TableCell className="text-gray-600">
+                      {org.orgType || '-'}
                     </TableCell>
-                    <TableCell className="w-40 text-gray-600">
-                      Tình nguyện viên
+                    <TableCell className="text-gray-600">
+                      {renderYesNo(org.dhaRegistered)}
                     </TableCell>
-                    <TableCell className="w-28 text-gray-600">
-                      {formatDate(account.createdAt)}
+                    <TableCell className="text-gray-600">
+                      {org.managerFullName || '-'}
                     </TableCell>
-                    <TableCell className="w-32">
+                    <TableCell className="text-gray-600">
+                      {org.managerCid || '-'}
+                    </TableCell>
+                    <TableCell className="text-gray-600">
+                      {org.managerEmail || '-'}
+                    </TableCell>
+                    <TableCell>
                       <Badge className="border-blue-200 bg-blue-50 text-blue-700">
-                        {account.status === ACCOUNT_STATUS.PENDING
-                          ? 'Chờ phê duyệt'
-                          : account.status || '-'}
+                        PENDING
                       </Badge>
                     </TableCell>
                   </TableRow>
@@ -186,10 +170,10 @@ export default function PendingAccounts({ user, userDetails }: Props) {
               ) : (
                 <TableRow>
                   <TableCell
-                    colSpan={6}
+                    colSpan={8}
                     className="py-8 text-center text-gray-500"
                   >
-                    Không có tài khoản chờ phê duyệt
+                    Không có tổ chức chờ phê duyệt
                   </TableCell>
                 </TableRow>
               )}

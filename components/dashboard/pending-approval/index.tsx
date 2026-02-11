@@ -21,151 +21,9 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
-import { CheckCircle2, XCircle, Eye } from 'lucide-react';
-import { useMemo, useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle
-} from '@/components/ui/dialog';
-
-interface Props {
-  user: User | null | undefined;
-  userDetails: { [x: string]: any } | null;
+export default function PendingApproval() {
+  return null;
 }
-
-// Mock data for events pending approval
-const mockEventsPending = [
-  {
-    id: 1,
-    eventName: 'Chương trình tình nguyện môi trường',
-    organizer: 'Tổ chức Xanh Việt',
-    date: '15/03/2026',
-    location: 'Công viên Tao Đàn, TPHCM',
-    volunteers: 45,
-    submittedDate: '10/02/2026'
-  },
-  {
-    id: 2,
-    eventName: 'Hỗ trợ cộng đồng địa phương',
-    organizer: 'Hội chữ Thập Đỏ',
-    date: '22/03/2026',
-    location: 'Huyện Nhà Bè',
-    volunteers: 30,
-    submittedDate: '05/02/2026'
-  },
-  {
-    id: 3,
-    eventName: 'Giáo dục cho trẻ em vùng cao',
-    organizer: 'Quỹ Phúc Lợi Xã Hội',
-    date: '28/03/2026',
-    location: 'Tỉnh Yên Bái',
-    volunteers: 60,
-    submittedDate: '01/02/2026'
-  }
-];
-
-// Mock data for accounts pending approval
-const mockAccountsPending = [
-  {
-    id: 1,
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=101',
-    fullName: 'Trần Thị Bích Nghi',
-    cccd: '201234567890',
-    phone: '0987654321',
-    email: 'bichnghi@example.com',
-    dob: '20/08/1995',
-    type: 'Tình nguyện viên',
-    submittedDate: '04/02/2026'
-  },
-  {
-    id: 2,
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=102',
-    fullName: 'Lê Hoàng Minh',
-    cccd: '202234567890',
-    phone: '0976543210',
-    email: 'hoangminh@example.com',
-    dob: '15/12/1992',
-    type: 'Người tổ chức',
-    submittedDate: '03/02/2026'
-  },
-  {
-    id: 3,
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=103',
-    fullName: 'Phạm Xuân Hùng',
-    cccd: '203234567890',
-    phone: '0965432109',
-    email: 'xuanhung@example.com',
-    dob: '10/07/1998',
-    type: 'Tình nguyện viên',
-    submittedDate: '02/02/2026'
-  }
-];
-
-// Mock data for organizations pending approval
-const mockOrganizationsPending = [
-  {
-    id: 1,
-    logo: 'https://api.dicebear.com/7.x/initials/svg?seed=OrgA',
-    orgName: 'Tổ chức Cộng Đồng Tương Lai',
-    taxId: '0123456789',
-    phone: '0288123456',
-    email: 'contact@communityfuture.org',
-    address: '123 Đường Nguyễn Huệ, Quận 1, TPHCM',
-    submittedDate: '05/02/2026',
-    description: 'Tổ chức hỗ trợ phát triển cộng đồng bền vững'
-  },
-  {
-    id: 2,
-    logo: 'https://api.dicebear.com/7.x/initials/svg?seed=OrgB',
-    orgName: 'Quỹ Tương Lai Xanh',
-    taxId: '0234567890',
-    phone: '0288234567',
-    email: 'info@greenfuture.org',
-    address: '456 Đường Lê Lợi, Quận 1, TPHCM',
-    submittedDate: '04/02/2026',
-    description: 'Quỹ bảo vệ môi trường và phát triển bền vững'
-  },
-  {
-    id: 3,
-    logo: 'https://api.dicebear.com/7.x/initials/svg?seed=OrgC',
-    orgName: 'Trung tâm Giáo dục Cộng Đồng',
-    taxId: '0345678901',
-    phone: '0288345678',
-    email: 'support@communityed.org',
-    address: '789 Đường Võ Văn Kiệt, Quận 1, TPHCM',
-    submittedDate: '03/02/2026',
-    description: 'Trung tâm cung cấp giáo dục và đào tạo cho cộng đồng'
-  }
-];
-
-export default function PendingApproval({ user, userDetails }: Props) {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const tabParam = searchParams?.get('tab') as
-    | 'events'
-    | 'accounts'
-    | 'organizations'
-    | null;
-
-  const [activeTab, setActiveTab] = useState<
-    'events' | 'accounts' | 'organizations'
-  >('events');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filterStatus, setFilterStatus] = useState('all');
-  const [selectedItem, setSelectedItem] = useState<any>(null);
-  const [showDetailsModal, setShowDetailsModal] = useState(false);
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [confirmAction, setConfirmAction] = useState<
-    'approve' | 'reject' | null
-  >(null);
-
-  // Update active tab from URL params
-  useEffect(() => {
-    if (
       tabParam &&
       ['events', 'accounts', 'organizations'].includes(tabParam)
     ) {
@@ -223,7 +81,12 @@ export default function PendingApproval({ user, userDetails }: Props) {
   };
 
   return (
-    <DashboardLayout>
+    <DashboardLayout
+      title="Chờ phê duyệt"
+      description="Quản lý sự kiện, tài khoản và tổ chức chờ phê duyệt"
+      user={user}
+      userDetails={userDetails}
+    >
       <div className="w-full max-w-6xl">
         {/* Header */}
         <div className="mb-6">

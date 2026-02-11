@@ -60,6 +60,8 @@ export default function PendingAccountDetail({
   const [openRejectModal, setOpenRejectModal] = useState(false);
   const [openApproveModal, setOpenApproveModal] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
+  const [accountName, setAccountName] = useState('');
+  const isApproveEnabled = accountName.trim().length > 0;
 
   return (
     <DashboardLayout
@@ -119,6 +121,17 @@ export default function PendingAccountDetail({
                     {renderValue(verification.email)}
                   </p>
                 </div>
+                <div>
+                  <label className="text-sm font-medium text-red-600">
+                    Tên tài khoản
+                  </label>
+                  <input
+                    value={accountName}
+                    onChange={(e) => setAccountName(e.target.value)}
+                    placeholder="Nhập tên tài khoản"
+                    className="mt-1 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-blue-500 focus:outline-none"
+                  />
+                </div>
                 <div className="md:col-span-2 grid gap-3 md:grid-cols-3">
                   <div className="rounded-lg p-2">
                     <p className="text-xs font-medium text-zinc-600">
@@ -165,6 +178,10 @@ export default function PendingAccountDetail({
                 <Button
                   className="bg-blue-600 hover:bg-blue-700"
                   onClick={() => setOpenApproveModal(true)}
+                  disabled={!isApproveEnabled}
+                  title={
+                    isApproveEnabled ? undefined : 'Vui lòng nhập tên tài khoản'
+                  }
                 >
                   Phê duyệt
                 </Button>

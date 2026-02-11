@@ -58,13 +58,13 @@ export const routes: IRoute[] = [
         collapse: false
       },
       {
-        name: 'Tài khoản chờ phê duyệt',
-        path: '/dashboard/pending-accounts',
+        name: 'Tổ chức chờ phê duyệt',
+        path: '/dashboard/pending-orgs',
         collapse: false
       },
       {
-        name: 'Tổ chức chờ phê duyệt',
-        path: '/dashboard/pending-approval?tab=organizations',
+        name: 'Tài khoản chờ phê duyệt',
+        path: '/dashboard/pending-accounts',
         collapse: false
       }
     ]
@@ -83,11 +83,10 @@ export const routes: IRoute[] = [
   },
   {
     name: 'Trang giới thiệu',
-    path: '/home',
+    path: '/about-us',
     icon: (
       <HiOutlineDocumentText className="-mt-[7px] h-4 w-4 stroke-2 text-inherit" />
     ),
-    collapse: false,
-    disabled: true
+    collapse: false
   }
 ];

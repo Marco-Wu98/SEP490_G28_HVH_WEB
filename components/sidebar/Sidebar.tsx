@@ -69,12 +69,13 @@ function Sidebar(props: SidebarProps) {
                 <Image
                   src="/img/logo.png"
                   alt="Logo"
-                  width={40}
-                  height={40}
+                  width={50}
+                  height={50}
                   className="rounded-sm mr-5"
                 />
                 <h5 className="me-2 text-2xl font-bold leading-5 text-zinc-950 dark:text-white">
-                  Hà Nội Thiện Nguyện
+                  <span className="block">Hà Nội</span>
+                  <span className="mt-2   block">Thiện Nguyện</span>
                 </h5>
               </div>
               <div className="mb-8 mt-8 h-px bg-zinc-200 dark:bg-white/10" />
