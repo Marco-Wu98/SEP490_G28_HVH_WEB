@@ -16,13 +16,15 @@ import { Switch } from '@/components/ui/switch';
 import { useCreateActivityDomain } from '@/hooks/features/uc060-create-activity-domain-activity-sub-domain/useCreateActivityDomain';
 import { useUpdateActivityDomain } from '@/hooks/features/uc061-update-activity-domain-activity-sub-domain/useUpdateActivityDomain';
 import { useGetListActivityDomain } from '@/hooks/features/uc063-view-activity-domain-activity-sub-domain/useGetListActivityDomain';
+import { useHideUnhideActivityDomain } from '@/hooks/features/uc062-hide-unhide-activity-domain-activity-subbdomain/useHideUnhideActivityDomain';
+import { useHideUnhideActivitySubdomain } from '@/hooks/features/uc062-hide-unhide-activity-domain-activity-subbdomain/useHideUnhideActivitySubdomain';
 import type {
   UpdateActivityDomainRequest,
   UpdateActivitySubDomainRequest
 } from '@/hooks/dto';
 import type { ActivityDomain, ActivitySubDomain } from '@/hooks/entity';
 import { User } from '@supabase/supabase-js';
-import { Edit, EyeOff, Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -107,14 +109,27 @@ export default function EventSettings(props: Props) {
 
   // Confirmation modals
   const [openConfirmToggleDomain, setOpenConfirmToggleDomain] = useState(false);
+  const [confirmingDomain, setConfirmingDomain] =
+    useState<ActivityDomain | null>(null);
+  const [confirmingSubDomain, setConfirmingSubDomain] =
+    useState<ActivitySubDomain | null>(null);
   const [openConfirmDeleteDomain, setOpenConfirmDeleteDomain] = useState(false);
   const [openConfirmDeleteSubDomain, setOpenConfirmDeleteSubDomain] =
     useState(false);
-  const [confirmingDomain, setConfirmingDomain] =
-    useState<ActivityDomain | null>(null);
-  const [confirmingSubDomain, setConfirmingSubDomain] = useState<
-    (Omit<ActivitySubDomain, 'id'> & { id: string | number }) | null
-  >(null);
+
+  // Hooks for toggling, only called at top level
+  const { trigger: triggerDomain, isMutating: isTogglingDomain } =
+    useHideUnhideActivityDomain(
+      confirmingDomain
+        ? { id: String(confirmingDomain.id), baseUrl: apiBaseUrl }
+        : { id: '', baseUrl: apiBaseUrl }
+    );
+  const { trigger: triggerSubDomain, isMutating: isTogglingSubDomain } =
+    useHideUnhideActivitySubdomain(
+      confirmingSubDomain
+        ? { id: String(confirmingSubDomain.id), baseUrl: apiBaseUrl }
+        : { id: '', baseUrl: apiBaseUrl }
+    );
 
   useEffect(() => {
     setActivityDomains(fetchedActivityDomains);
@@ -353,60 +368,54 @@ export default function EventSettings(props: Props) {
     setOpenAddSubDomainModal(false);
   };
 
-  const toggleDomainActive = (domain: ActivityDomain) => {
+  const handleSwitchDomain = (domain: ActivityDomain) => {
     setConfirmingDomain(domain);
-    setOpenConfirmToggleDomain(true);
-  };
-
-  const handleConfirmToggleDomain = () => {
-    if (!confirmingDomain) return;
-    setActivityDomains(
-      activityDomains.map((d) =>
-        d.id === confirmingDomain.id ? { ...d, active: !d.active } : d
-      )
-    );
-    setOpenConfirmToggleDomain(false);
-    setConfirmingDomain(null);
-  };
-
-  const toggleSubDomainActive = (
-    subDomain: Omit<ActivitySubDomain, 'id'> & { id: string | number }
-  ) => {
-    setConfirmingSubDomain(subDomain);
-    setOpenConfirmToggleDomain(true);
-  };
-
-  const handleConfirmToggleSubDomain = () => {
-    if (!confirmingSubDomain) return;
-    setActivityDomains((prev) =>
-      prev.map((domain) => ({
-        ...domain,
-        activitySubDomains: (domain.activitySubDomains ?? []).map((d) =>
-          String(d.id) === String(confirmingSubDomain.id)
-            ? { ...d, active: !d.active }
-            : d
-        )
-      }))
-    );
-    setSelectedDomain((prev) =>
-      prev
-        ? {
-            ...prev,
-            activitySubDomains: (prev.activitySubDomains ?? []).map((d) =>
-              String(d.id) === String(confirmingSubDomain.id)
-                ? { ...d, active: !d.active }
-                : d
-            )
-          }
-        : prev
-    );
-    setOpenConfirmToggleDomain(false);
     setConfirmingSubDomain(null);
+    setOpenConfirmToggleDomain(true);
+  };
+  const handleSwitchSubDomain = (subDomain: ActivitySubDomain) => {
+    setConfirmingSubDomain(subDomain);
+    setConfirmingDomain(null);
+    setOpenConfirmToggleDomain(true);
   };
 
   const deleteDomain = (domain: ActivityDomain) => {
     setConfirmingDomain(domain);
     setOpenConfirmDeleteDomain(true);
+  };
+
+  const handleConfirmToggleDomain = async () => {
+    if (confirmingDomain) {
+      const isHide = confirmingDomain.active;
+      await triggerDomain({ isVisible: !confirmingDomain.active });
+      setConfirmingDomain(null);
+      setOpenConfirmToggleDomain(false);
+      refreshActivityDomains();
+      toast.success(`${isHide ? 'Ẩn' : 'Hiện'} lĩnh vực thành công!`);
+    }
+    if (confirmingSubDomain) {
+      const isHide = confirmingSubDomain.active;
+      await triggerSubDomain({ isVisible: !confirmingSubDomain.active });
+      setConfirmingSubDomain(null);
+      setOpenConfirmToggleDomain(false);
+      refreshActivityDomains();
+      toast.success(`${isHide ? 'Ẩn' : 'Hiện'} lĩnh vực con thành công!`);
+    }
+  };
+
+  const handleConfirmToggleSubDomain = async () => {
+    if (confirmingDomain) {
+      await triggerDomain({ isVisible: !confirmingDomain.active });
+      setConfirmingDomain(null);
+      setOpenConfirmToggleDomain(false);
+      refreshActivityDomains();
+    }
+    if (confirmingSubDomain) {
+      await triggerSubDomain({ isVisible: !confirmingSubDomain.active });
+      setConfirmingSubDomain(null);
+      setOpenConfirmToggleDomain(false);
+      refreshActivityDomains();
+    }
   };
 
   const handleConfirmDeleteDomain = () => {
@@ -419,13 +428,6 @@ export default function EventSettings(props: Props) {
     setSelectedDomain((prev) =>
       prev?.id === confirmingDomain.id ? null : prev
     );
-  };
-
-  const deleteSubDomain = (
-    subDomain: Omit<ActivitySubDomain, 'id'> & { id: string | number }
-  ) => {
-    setConfirmingSubDomain(subDomain);
-    setOpenConfirmDeleteSubDomain(true);
   };
 
   const handleConfirmDeleteSubDomain = () => {
@@ -457,6 +459,20 @@ export default function EventSettings(props: Props) {
       activityDomains.find((d) => d.id === domainId)?.activitySubDomains ?? []
     );
   };
+
+  // State to keep original sub domain order for each domain
+  const [subDomainOrderMap, setSubDomainOrderMap] = useState<Record<string, string[]>>({});
+
+  // Update subDomainOrderMap when fetchedActivityDomains changes
+  useEffect(() => {
+    if (fetchedActivityDomains.length) {
+      const orderMap: Record<string, string[]> = {};
+      fetchedActivityDomains.forEach(domain => {
+        orderMap[String(domain.id)] = (domain.activitySubDomains ?? []).map(sd => String(sd.id));
+      });
+      setSubDomainOrderMap(orderMap);
+    }
+  }, [fetchedActivityDomains]);
 
   return (
     <DashboardLayout
@@ -492,13 +508,7 @@ export default function EventSettings(props: Props) {
                 className="flex items-center justify-between rounded-lg border border-zinc-300 p-3 dark:border-zinc-700 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 bg-white dark:bg-zinc-950"
                 onClick={() => setSelectedDomain(domain)}
               >
-                <div
-                  className={`flex-1 ${
-                    selectedDomain?.id === domain.id
-                      ? 'font-semibold text-blue-600'
-                      : ''
-                  }`}
-                >
+                <div className="flex-1">
                   <p className="text-sm text-zinc-900 dark:text-zinc-100">
                     {domain.name}
                   </p>
@@ -506,29 +516,9 @@ export default function EventSettings(props: Props) {
                 <div className="flex items-center gap-2">
                   <Switch
                     checked={domain.active}
-                    onCheckedChange={() => toggleDomainActive(domain)}
+                    onCheckedChange={() => handleSwitchDomain(domain)}
                     onClick={(e) => e.stopPropagation()}
                   />
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      openEditModal(domain);
-                    }}
-                  >
-                    <Edit className="h-4 w-4 text-blue-500" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      deleteDomain(domain);
-                    }}
-                  >
-                    <EyeOff className="h-4 w-4 text-red-500" />
-                  </Button>
                 </div>
               </div>
             ))}
@@ -602,29 +592,22 @@ export default function EventSettings(props: Props) {
                   </h4>
                 </div>
                 <div className="space-y-2 max-h-60 overflow-y-auto">
-                  {(selectedDomain.activitySubDomains?.length ?? 0) > 0 ? (
+                  {selectedDomain.activitySubDomains?.length > 0 ? (
                     selectedDomain.activitySubDomains?.map((subDomain) => (
                       <div
                         key={subDomain.id}
-                        className="flex items-center justify-between rounded-lg border border-zinc-300 p-3 bg-white dark:bg-zinc-950"
+                        className="flex items-center justify-between gap-2 bg-white rounded p-3 border border-zinc-200"
                       >
-                        <p className="text-sm text-zinc-900 dark:text-zinc-100">
+                        <span className="text-sm text-zinc-700">
                           {subDomain.name}
-                        </p>
+                        </span>
                         <div className="flex items-center gap-2">
                           <Switch
                             checked={subDomain.active}
                             onCheckedChange={() =>
-                              toggleSubDomainActive(subDomain)
+                              handleSwitchSubDomain(subDomain)
                             }
                           />
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => deleteSubDomain(subDomain)}
-                          >
-                            <EyeOff className="h-4 w-4 text-red-500" />
-                          </Button>
                         </div>
                       </div>
                     ))
@@ -739,7 +722,6 @@ export default function EventSettings(props: Props) {
             </div>
 
             {/* Time Information */}
-            {/* Time Information */}
             <div>
               <label className="text-sm font-medium text-zinc-700 block mb-2">
                 Thời gian phục vụ tối đa{' '}
@@ -810,47 +792,16 @@ export default function EventSettings(props: Props) {
                         key={subDomain.id}
                         className="flex items-center justify-between gap-2 bg-white rounded p-3 border border-zinc-200"
                       >
-                        {editingSubDomainId === subDomain.id ? (
-                          <Input
-                            value={editingSubDomainName}
-                            disabled={isSubmitting}
-                            onChange={(e) =>
-                              setEditingSubDomainName(e.target.value)
+                        <span className="text-sm text-zinc-700">
+                          {subDomain.name}
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            checked={subDomain.active}
+                            onCheckedChange={() =>
+                              handleSwitchSubDomain(subDomain)
                             }
-                            onBlur={applyEditSubDomain}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') applyEditSubDomain();
-                              if (e.key === 'Escape') {
-                                setEditingSubDomainId(null);
-                                setEditingSubDomainName('');
-                              }
-                            }}
-                            className="bg-white border-zinc-200 focus:border-blue-500 focus-visible:outline-none text-zinc-900 placeholder:text-zinc-500"
                           />
-                        ) : (
-                          <span className="text-sm text-zinc-700">
-                            {subDomain.name}
-                          </span>
-                        )}
-                        <div className="flex items-center gap-1">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            disabled={isSubmitting}
-                            onClick={() => startEditSubDomain(subDomain)}
-                          >
-                            <Edit className="h-4 w-4 text-blue-600" />
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            disabled={isSubmitting}
-                            onClick={() => removeDraftSubDomain(subDomain.id)}
-                          >
-                            <Trash2 className="h-4 w-4 text-red-500" />
-                          </Button>
                         </div>
                       </div>
                     ))
@@ -941,47 +892,134 @@ export default function EventSettings(props: Props) {
       >
         <DialogContent className="max-w-md bg-white dark:bg-white">
           <DialogHeader>
-            <DialogTitle className="text-black">
-              Xác nhận thay đổi trạng thái
-            </DialogTitle>
-            <DialogDescription>
-              {confirmingDomain && !confirmingSubDomain ? (
-                <span>
-                  Bạn có chắc muốn{' '}
-                  {confirmingDomain.active ? 'vô hiệu hóa' : 'kích hoạt'} lĩnh
-                  vực <strong>{confirmingDomain.name}</strong>?
+            <div className="flex items-center gap-4 mb-2">
+              {(confirmingDomain &&
+                !confirmingSubDomain &&
+                confirmingDomain.active) ||
+              (confirmingSubDomain && confirmingSubDomain.active) ? (
+                <span className="flex items-center justify-center w-12 h-12 rounded-full bg-[#FFEEDB]">
+                  <svg width="32" height="32" fill="none" viewBox="0 0 24 24">
+                    <path
+                      fill="#FF6B00"
+                      d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm0 18.182A8.182 8.182 0 1 1 12 3.818a8.182 8.182 0 0 1 0 16.364Zm4.09-10.545-5.182 5.182-2.182-2.182a1 1 0 1 0-1.414 1.414l2.889 2.889a1 1 0 0 0 1.414 0l5.889-5.889a1 1 0 1 0-1.414-1.414Z"
+                    />
+                  </svg>
                 </span>
-              ) : confirmingSubDomain ? (
-                <span>
-                  Bạn có chắc muốn{' '}
-                  {confirmingSubDomain.active ? 'vô hiệu hóa' : 'kích hoạt'}{' '}
-                  lĩnh vực con <strong>{confirmingSubDomain.name}</strong>?
+              ) : (
+                <span className="flex items-center justify-center w-12 h-12 rounded-full bg-[#D1FADF]">
+                  <svg width="32" height="32" fill="none" viewBox="0 0 24 24">
+                    <path
+                      fill="#22C55E"
+                      d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm0 18.182A8.182 8.182 0 1 1 12 3.818a8.182 8.182 0 0 1 0 16.364Zm4.09-10.545-5.182 5.182-2.182-2.182a1 1 0 1 0-1.414 1.414l2.889 2.889a1 1 0 0 0 1.414 0l5.889-5.889a1 1 0 1 0-1.414-1.414Z"
+                    />
+                  </svg>
                 </span>
+              )}
+              <DialogTitle className="text-black text-xl font-bold">
+                {(confirmingDomain &&
+                  !confirmingSubDomain &&
+                  confirmingDomain.active) ||
+                (confirmingSubDomain && confirmingSubDomain.active)
+                  ? `Ẩn lĩnh vực "${confirmingDomain?.name || confirmingSubDomain?.name}"?`
+                  : `Hiện lĩnh vực "${confirmingDomain?.name || confirmingSubDomain?.name}"?`}
+              </DialogTitle>
+            </div>
+            <DialogDescription className="text-[#667085] text-base font-normal">
+              {confirmingSubDomain ? (
+                confirmingSubDomain.active ? (
+                  <>
+                    Khi ẩn lĩnh vực con&nbsp;
+                    <span className="font-normal">
+                      Người dùng sẽ không thể xem hoặc chọn lĩnh vực con này.
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    Khi hiện lĩnh vực con&nbsp;
+                    <span className="font-normal">
+                      Người dùng có thể xem và chọn lĩnh vực con này.
+                    </span>
+                  </>
+                )
+              ) : confirmingDomain ? (
+                confirmingDomain.active ? (
+                  <>
+                    Khi ẩn lĩnh vực này, tất cả{' '}
+                    <span className="font-bold text-[#344054]">
+                      {confirmingDomain.activitySubDomains?.length || 0} lĩnh
+                      vực con
+                    </span>
+                    <br />
+                    và các kỹ năng bên trong cũng sẽ bị ẩn.
+                    <br />
+                    <span className="font-normal">
+                      Người dùng sẽ không thể xem hoặc chọn lĩnh vực này.
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    Khi hiện lĩnh vực này, tất cả{' '}
+                    <span className="font-bold text-[#344054]">
+                      {confirmingDomain.activitySubDomains?.length || 0} lĩnh
+                      vực con
+                    </span>
+                    <br />
+                    và các kỹ năng bên trong sẽ được hiển thị trở lại.
+                    <br />
+                    <span className="font-normal">
+                      Người dùng có thể xem và chọn lĩnh vực này.
+                    </span>
+                  </>
+                )
               ) : null}
             </DialogDescription>
           </DialogHeader>
-          <div className="flex justify-end gap-2 pt-4">
+          <div className="flex justify-end gap-3 pt-6">
             <Button
               onClick={() => {
                 setOpenConfirmToggleDomain(false);
                 setConfirmingDomain(null);
                 setConfirmingSubDomain(null);
               }}
-              className="bg-zinc-100 text-zinc-700 hover:bg-zinc-200"
+              className="border border-[#D0D5DD] bg-[#F3F4F6] text-[#6B7280] font-medium rounded px-6 py-2 text-base hover:bg-[#E5E7EB]"
+              style={{ minWidth: 110 }}
             >
               Hủy
             </Button>
             <Button
-              onClick={() => {
-                if (confirmingDomain && !confirmingSubDomain) {
-                  handleConfirmToggleDomain();
+              onClick={async () => {
+                if (confirmingDomain) {
+                  await triggerDomain({ isVisible: !confirmingDomain.active });
+                  setConfirmingDomain(null);
+                  setOpenConfirmToggleDomain(false);
+                  refreshActivityDomains();
+                  toast.success('Cập nhật trạng thái lĩnh vực thành công!');
                 } else if (confirmingSubDomain) {
-                  handleConfirmToggleSubDomain();
+                  await triggerSubDomain({
+                    isVisible: !confirmingSubDomain.active
+                  });
+                  setConfirmingSubDomain(null);
+                  setOpenConfirmToggleDomain(false);
+                  refreshActivityDomains();
+                  toast.success('Cập nhật trạng thái lĩnh vực con thành công!');
                 }
               }}
-              className="bg-blue-600 hover:bg-blue-700"
+              className={
+                (confirmingDomain &&
+                  !confirmingSubDomain &&
+                  confirmingDomain.active) ||
+                (confirmingSubDomain && confirmingSubDomain.active)
+                  ? 'bg-[#FF4500] hover:bg-[#e03e00] text-white font-semibold rounded px-6 py-2 text-base'
+                  : 'bg-[#22C55E] hover:bg-[#16a34a] text-white font-semibold rounded px-6 py-2 text-base'
+              }
+              style={{ minWidth: 130 }}
             >
-              Xác nhận
+              {(confirmingDomain &&
+                !confirmingSubDomain &&
+                confirmingDomain.active) ||
+              (confirmingSubDomain && confirmingSubDomain.active)
+                ? `Xác nhận Ẩn`
+                : `Xác nhận Hiện`}
             </Button>
           </div>
         </DialogContent>

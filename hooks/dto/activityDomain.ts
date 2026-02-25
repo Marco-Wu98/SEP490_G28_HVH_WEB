@@ -1,4 +1,10 @@
-// Activity Domain DTOs
+export interface ChangeActivityDomainVisibilityRequest {
+  isVisible: boolean;
+}
+
+export interface ChangeActivitySubDomainVisibilityRequest {
+  isVisible: boolean;
+}
 
 export interface ActivitySubDomainDetailsResponse {
   id: number;
