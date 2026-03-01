@@ -3,13 +3,17 @@ import OrganizationDetailPage from '@/components/dashboard/organizations/detail'
 import { createClient } from '@/utils/supabase/server';
 import { getUser, getUserDetails } from '@/utils/supabase/queries';
 
-interface Props {
-  params: {
-    id: string;
-  };
-}
+export default async function Page({
+  params
+}: {
+  params: Promise<{ id: string | string[] | undefined }>;
+}) {
+  const { id } = await params;
+  const orgId = Array.isArray(id) ? id[0] : id;
+  if (!orgId) {
+    return redirect('/dashboard/organizations');
+  }
 
-export default async function Page({ params }: Props) {
   const supabase = await createClient();
   const [user, userDetails] = await Promise.all([
     getUser(supabase),
@@ -22,7 +26,7 @@ export default async function Page({ params }: Props) {
 
   return (
     <OrganizationDetailPage
-      orgId={params.id}
+      orgId={orgId}
       user={user}
       userDetails={userDetails}
     />

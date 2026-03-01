@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import Link from 'next/link';
 
 export default function AboutUsPage() {
   useEffect(() => {
@@ -28,10 +29,10 @@ export default function AboutUsPage() {
     <div className="about-us-root">
       <header className="nav">
         <div className="wrap nav-inner">
-          <a className="brand" href="/">
+          <Link className="brand" href="/">
             <img src="/img/logo.png" alt="HVH Logo" className="logo" />
             <span>Hà Nội Thiện Nguyện</span>
-          </a>
+          </Link>
 
           <nav className="nav-links" aria-label="Primary">
             <a href="#story">Câu chuyện</a>
@@ -324,7 +325,7 @@ export default function AboutUsPage() {
                     Ở HVH, mọi tiếng nói đều có giá trị. Chúng tôi khuyến khích
                     mọi người thẳng thắn sẻ chia suy nghĩ, từ những lời khen
                     ngợi đến những góp ý chân tình. Không có khoảng cách giữa
-                    "trưởng nhóm" hay "thành viên", chỉ có những con người cùng
+                    &quot;trưởng nhóm&quot; hay &quot;thành viên&quot;, chỉ có những con người cùng
                     chung mục tiêu, cùng góp ý để dự án ngày một hoàn thiện hơn.
                   </p>
                 </div>

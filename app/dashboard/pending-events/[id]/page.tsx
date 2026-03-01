@@ -3,11 +3,17 @@ import { createClient } from '@/utils/supabase/server';
 import { getUser, getUserDetails } from '@/utils/supabase/queries';
 import { redirect } from 'next/navigation';
 
-interface PageProps {
-  params: { id: string };
-}
+export default async function PendingEventDetailPage({
+  params
+}: {
+  params: Promise<{ id: string | string[] | undefined }>;
+}) {
+  const { id } = await params;
+  const eventId = Array.isArray(id) ? id[0] : id;
+  if (!eventId) {
+    return redirect('/dashboard/pending-events');
+  }
 
-export default async function PendingEventDetailPage({ params }: PageProps) {
   const supabase = await createClient();
   const [user, userDetails] = await Promise.all([
     getUser(supabase),
@@ -22,7 +28,7 @@ export default async function PendingEventDetailPage({ params }: PageProps) {
     <PendingEventDetail
       user={user}
       userDetails={userDetails}
-      eventId={params.id}
+      eventId={eventId}
     />
   );
 }

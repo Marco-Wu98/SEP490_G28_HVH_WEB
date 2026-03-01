@@ -16,12 +16,13 @@ export default function PasswordSignIn({
   redirectMethod,
   isAdmin = false
 }: PasswordSignInProps) {
-  const router = redirectMethod === 'client' ? useRouter() : null;
+  const router = useRouter();
+  const routerForRedirect = redirectMethod === 'client' ? router : null;
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     setIsSubmitting(true); // Disable the button while the request is being handled
-    await handleRequest(e, signInWithPassword, router);
+    await handleRequest(e, signInWithPassword, routerForRedirect);
     setIsSubmitting(false);
   };
 

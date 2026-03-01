@@ -1,3 +1,8 @@
+export interface ChatBody {
+  inputMessage: string;
+  model: string;
+  apiKey?: string;
+}
 import Stripe from 'stripe';
 import { ComponentType, ReactNode } from 'react';
 

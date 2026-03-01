@@ -8,7 +8,7 @@ import {
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { OpenContext, UserContext } from '@/contexts/layout';
-import { getRedirectMethod } from '@/utils/auth-helpers/settings';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import React, { useContext, useEffect, useState } from 'react';
 import { FiAlignJustify } from 'react-icons/fi';
@@ -23,7 +23,7 @@ export default function HeaderLinks(props: { [x: string]: any }) {
   const { open, setOpen } = useContext(OpenContext);
   const user = useContext(UserContext);
   const [mounted, setMounted] = useState(false);
-  const router = getRedirectMethod() === 'client' ? useRouter() : null;
+  const router = useRouter();
   const onOpen = () => {
     setOpen(false);
   };
@@ -56,7 +56,7 @@ export default function HeaderLinks(props: { [x: string]: any }) {
       >
         <HiOutlineArrowRightOnRectangle className="h-4 w-4 stroke-2 text-slate-200" />
       </Button>
-      <a className="w-full" href="/dashboard/settings">
+      <Link className="w-full" href="/dashboard/settings">
         <Avatar className="h-9 min-w-9 md:min-h-10 md:min-w-10">
           <AvatarImage src={user?.user_metadata.avatar_url} />
           <AvatarFallback className="font-bold">
@@ -65,7 +65,7 @@ export default function HeaderLinks(props: { [x: string]: any }) {
               : `${user?.email[0].toUpperCase()}`}
           </AvatarFallback>
         </Avatar>
-      </a>
+      </Link>
     </div>
   );
 }

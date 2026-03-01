@@ -3,11 +3,17 @@ import { createClient } from '@/utils/supabase/server';
 import { getUser, getUserDetails } from '@/utils/supabase/queries';
 import { redirect } from 'next/navigation';
 
-interface PageProps {
-  params: { id: string };
-}
+export default async function PendingAccountDetailPage({
+  params
+}: {
+  params: Promise<{ id: string | string[] | undefined }>;
+}) {
+  const { id } = await params;
+  const pendingAccountId = Array.isArray(id) ? id[0] : id;
+  if (!pendingAccountId) {
+    return redirect('/dashboard/pending-accounts');
+  }
 
-export default async function PendingAccountDetailPage({ params }: PageProps) {
   const supabase = await createClient();
   const [user, userDetails] = await Promise.all([
     getUser(supabase),
@@ -22,7 +28,7 @@ export default async function PendingAccountDetailPage({ params }: PageProps) {
     <PendingAccountDetailContainer
       user={user}
       userDetails={userDetails}
-      id={params.id}
+      id={pendingAccountId}
     />
   );
 }

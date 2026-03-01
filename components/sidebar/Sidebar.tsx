@@ -18,7 +18,6 @@ import { Scrollbars } from 'react-custom-scrollbars-2';
 import { HiX } from 'react-icons/hi';
 import { HiBolt } from 'react-icons/hi2';
 import { HiOutlineArrowRightOnRectangle } from 'react-icons/hi2';
-import { getRedirectMethod } from '@/utils/auth-helpers/settings';
 import { UserContext, UserDetailsContext } from '@/contexts/layout';
 import { createClient } from '@/utils/supabase/client';
 
@@ -30,7 +29,7 @@ export interface SidebarProps extends PropsWithChildren {
 }
 
 function Sidebar(props: SidebarProps) {
-  const router = getRedirectMethod() === 'client' ? useRouter() : null;
+  const router = useRouter();
   const { routes } = props;
 
   const user = useContext(UserContext);
