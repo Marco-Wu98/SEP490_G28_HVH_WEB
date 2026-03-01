@@ -20,8 +20,7 @@ export const getViewTypes = () => {
       ...viewTypes,
       'password_signin',
       'forgot_password',
-      'update_password',
-      'signup'
+      'update_password'
     ];
   }
 

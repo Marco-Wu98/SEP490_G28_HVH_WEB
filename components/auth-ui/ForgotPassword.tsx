@@ -11,10 +11,13 @@ import { Input } from '../ui/input';
 interface ForgotPasswordProps {
   redirectMethod: string;
   disableButton?: boolean;
+  isAdmin?: boolean;
 }
 
 export default function ForgotPassword({
-  redirectMethod
+  redirectMethod,
+  disableButton,
+  isAdmin = false
 }: ForgotPasswordProps) {
   const router = useRouter();
   const routerForRedirect = redirectMethod === 'client' ? router : null;
@@ -33,13 +36,14 @@ export default function ForgotPassword({
         className="mb-4"
         onSubmit={(e) => handleSubmit(e)}
       >
+        <input type="hidden" name="isAdmin" value={isAdmin ? 'true' : 'false'} />
         <div className="grid gap-2">
           <div className="grid gap-1">
-            <label className="text-zinc-950 dark:text-white" htmlFor="email">
+            <label className="text-sm font-medium text-foreground" htmlFor="email">
               Email
             </label>
             <Input
-              className="mr-2.5 mb-2 h-full min-h-[44px] w-full px-4 py-3 focus:outline-0 dark:placeholder:text-zinc-400"
+              className="mr-2.5 mb-2 h-full min-h-[44px] w-full px-4 py-3"
               id="email"
               placeholder="name@example.com"
               type="email"
@@ -51,13 +55,22 @@ export default function ForgotPassword({
           </div>
           <Button
             type="submit"
-            className="mt-2 flex h-[unset] w-full items-center justify-center rounded-lg px-4 py-4 text-sm font-medium"
+            disabled={Boolean(disableButton) || isSubmitting}
+            className={`mt-2 flex h-[unset] w-full items-center justify-center rounded-lg px-4 py-4 text-sm font-medium ${
+              isAdmin
+                ? 'bg-gradient-to-r from-slate-900 via-blue-950 to-slate-950 text-white hover:from-slate-950 hover:via-blue-950 hover:to-slate-900'
+                : ''
+            }`}
           >
             {isSubmitting ? (
               <svg
                 aria-hidden="true"
                 role="status"
-                className="mr-2 inline h-4 w-4 animate-spin text-zinc-200 duration-500 dark:text-zinc-950"
+                className={`mr-2 inline h-4 w-4 animate-spin duration-500 ${
+                  isAdmin
+                    ? 'text-white/80'
+                    : 'text-primary-foreground/80'
+                }`}
                 viewBox="0 0 100 101"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
@@ -80,19 +93,21 @@ export default function ForgotPassword({
       <p>
         <Link
           href="/dashboard/signin/password_signin"
-          className="font-medium text-sm dark:text-white"
+          className="text-sm font-medium text-foreground hover:text-primary"
         >
           Đăng nhập bằng email và mật khẩu
         </Link>
       </p>
-      <p>
-        <Link
-          href="/dashboard/signin/signup"
-          className="font-medium text-sm dark:text-white"
-        >
-          Chưa có tài khoản? Đăng ký
-        </Link>
-      </p>
+      {!isAdmin && (
+        <p>
+          <Link
+            href="/register-org"
+            className="text-sm font-medium text-foreground hover:text-primary"
+          >
+            Chưa có tài khoản? Đăng ký
+          </Link>
+        </p>
+      )}
     </div>
   );
 }

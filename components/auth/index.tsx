@@ -25,19 +25,23 @@ export default function DefaultAuthLayout(props: DefaultAuthLayoutProps) {
   }
   return (
     <div
-      className={`relative h-max ${isAdmin ? 'bg-gradient-to-br from-slate-50 to-gray-100' : 'bg-background text-foreground'}`}
+      className={`relative min-h-screen ${
+        isAdmin
+          ? 'bg-gradient-to-br from-slate-50 to-gray-100 text-zinc-950'
+          : 'bg-background text-foreground'
+      }`}
     >
       <div className="mx-auto flex w-full flex-col justify-center px-5 pt-0 md:h-[unset] md:max-w-[66%] lg:h-[100vh] lg:max-w-[66%] lg:px-6 xl:pl-0 ">
         <a
-          className={`mt-10 w-fit ${isAdmin ? 'text-zinc-700' : 'text-zinc-950 dark:text-white'}`}
+          className={`mt-10 w-fit ${isAdmin ? 'text-zinc-700 hover:text-zinc-950' : 'text-foreground'}`}
           href={isAdmin ? '/dashboard' : '/'}
         >
           <div className="flex w-fit items-center lg:pl-0 lg:pt-0 xl:pt-0">
             <FaChevronLeft
-              className={`mr-3 h-[13px] w-[8px] ${isAdmin ? 'text-zinc-600' : 'text-zinc-950 dark:text-white'}`}
+              className={`mr-3 h-[13px] w-[8px] ${isAdmin ? 'text-zinc-600' : 'text-foreground'}`}
             />
             <p
-              className={`ml-0 text-sm ${isAdmin ? 'text-zinc-700' : 'text-zinc-950 dark:text-white'}`}
+              className={`ml-0 text-sm ${isAdmin ? 'text-zinc-700' : 'text-foreground'}`}
             >
               {isAdmin ? 'Quay lại Dashboard' : 'Quay lại trang web'}
             </p>
@@ -84,7 +88,7 @@ export default function DefaultAuthLayout(props: DefaultAuthLayoutProps) {
             </div>
           </div>
         </div>
-        <Footer />
+        <Footer variant={isAdmin ? 'admin' : 'organizer'} />
       </div>
     </div>
   );

@@ -32,7 +32,14 @@ export async function SignOut(formData: FormData) {
 }
 
 export async function requestPasswordUpdate(formData: FormData) {
-  const callbackURL = getURL('/auth/reset_password');
+  const isAdmin = String(formData.get('isAdmin') || '').trim() === 'true';
+  const basePath = isAdmin ? '/dashboard/signin' : '/signin';
+  const nextPath = isAdmin
+    ? '/dashboard/signin/update_password'
+    : '/signin/update_password';
+  const callbackURL = getURL(
+    `/auth/reset_password?next=${encodeURIComponent(nextPath)}`
+  );
 
   // Get form data
   const email = String(formData.get('email')).trim();
@@ -40,9 +47,9 @@ export async function requestPasswordUpdate(formData: FormData) {
 
   if (!isValidEmail(email)) {
     redirectPath = getErrorRedirect(
-      '/dashboard/signin/forgot_password',
-      'Invalid email address.',
-      'Please try again.'
+      `${basePath}/forgot_password`,
+      'Email không hợp lệ.',
+      'Vui lòng thử lại.'
     );
   }
 
@@ -54,22 +61,22 @@ export async function requestPasswordUpdate(formData: FormData) {
 
   if (error) {
     redirectPath = getErrorRedirect(
-      '/dashboard/signin/forgot_password',
+      `${basePath}/forgot_password`,
       error.message,
-      'Please try again.'
+      'Vui lòng thử lại.'
     );
   } else if (data) {
     redirectPath = getStatusRedirect(
-      '/dashboard/signin/forgot_password',
-      'Success!',
-      'Please check your email for a password reset link. You may now close this tab.',
+      `${basePath}/forgot_password`,
+      'Thành công!',
+      'Vui lòng kiểm tra email để nhận liên kết đặt lại mật khẩu. Bạn có thể đóng tab này.',
       true
     );
   } else {
     redirectPath = getErrorRedirect(
-      '/dashboard/signin/forgot_password',
-      'Hmm... Something went wrong.',
-      'Password reset email could not be sent.'
+      `${basePath}/forgot_password`,
+      'Có lỗi xảy ra.',
+      'Không thể gửi email đặt lại mật khẩu.'
     );
   }
 
@@ -123,77 +130,26 @@ export async function signInWithPassword(formData: FormData) {
   return redirectPath;
 }
 
-export async function signUp(formData: FormData) {
-  const callbackURL = getURL('/auth/callback');
-
-  const email = String(formData.get('email')).trim();
-  const password = String(formData.get('password')).trim();
-  let redirectPath: string;
-
-  if (!isValidEmail(email)) {
-    redirectPath = getErrorRedirect(
-      '/dashboard/signin/signup',
-      'Invalid email address.',
-      'Please try again.'
-    );
-  }
-
-  const supabase = await createClient();
-  const { error, data } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      emailRedirectTo: callbackURL
-    }
-  });
-
-  if (error) {
-    redirectPath = getErrorRedirect(
-      '/dashboard/signin/signup',
-      'Sign up failed.',
-      error.message
-    );
-  } else if (data.session) {
-    redirectPath = getStatusRedirect('/', 'Success!', 'You are now signed in.');
-  } else if (
-    data.user &&
-    data.user.identities &&
-    data.user.identities.length == 0
-  ) {
-    redirectPath = getErrorRedirect(
-      '/dashboard/signin/signup',
-      'Sign up failed.',
-      'There is already an account associated with this email address. Try resetting your password.'
-    );
-  } else if (data.user) {
-    redirectPath = getStatusRedirect(
-      '/',
-      'Success!',
-      'Please check your email for a confirmation link. You may now close this tab.'
-    );
-  } else {
-    redirectPath = getErrorRedirect(
-      '/dashboard/signin/signup',
-      'Hmm... Something went wrong.',
-      'You could not be signed up.'
-    );
-  }
-
-  return redirectPath;
-}
-
 export async function updatePassword(formData: FormData) {
   const password = String(formData.get('password')).trim();
   const passwordConfirm = String(formData.get('passwordConfirm')).trim();
+  const isAdmin = String(formData.get('isAdmin') || '').trim() === 'true';
+  const updatePasswordPath = isAdmin
+    ? '/dashboard/signin/update_password'
+    : '/signin/update_password';
+  const signInPath = isAdmin
+    ? '/dashboard/signin/password_signin'
+    : '/signin/password_signin';
   let redirectPath: string;
 
   // Check that the password and confirmation match
   if (password !== passwordConfirm) {
     redirectPath = getErrorRedirect(
-      '/dashboard/signin/update_password',
-      'Your password could not be updated.',
-      'Passwords do not match.'
+      updatePasswordPath,
+      'Không thể cập nhật mật khẩu.',
+      'Mật khẩu xác nhận không khớp.'
     );
+    return redirectPath;
   }
 
   const supabase = await createClient();
@@ -203,21 +159,21 @@ export async function updatePassword(formData: FormData) {
 
   if (error) {
     redirectPath = getErrorRedirect(
-      '/dashboard/signin/update_password',
-      'Your password could not be updated.',
+      updatePasswordPath,
+      'Không thể cập nhật mật khẩu.',
       error.message
     );
   } else if (data.user) {
     redirectPath = getStatusRedirect(
-      '/',
-      'Success!',
-      'Your password has been updated.'
+      signInPath,
+      'Thành công!',
+      'Mật khẩu của bạn đã được cập nhật. Vui lòng đăng nhập lại.'
     );
   } else {
     redirectPath = getErrorRedirect(
-      '/dashboard/signin/update_password',
-      'Hmm... Something went wrong.',
-      'Your password could not be updated.'
+      updatePasswordPath,
+      'Có lỗi xảy ra.',
+      'Không thể cập nhật mật khẩu.'
     );
   }
 

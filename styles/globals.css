@@ -4,27 +4,27 @@
 
 :root {
   --radius: 10px;
-  --chart: #42a5f5;
-  --background: 210 88% 95%;
+  --chart: #42a4f5;
+  --background: 205 87% 94%;
   --foreground: 210 30% 20%;
-  --muted: 210 90% 86%;
+  --muted: 207 89% 86%;
   --muted-foreground: 210 30% 35%;
-  --card: 210 88% 95%;
+  --card: 205 87% 94%;
   --card-foreground: 210 30% 20%;
-  --popover: 210 88% 95%;
+  --popover: 205 87% 94%;
   --popover-foreground: 210 30% 20%;
-  --border: 210 90% 86%;
-  --input: 210 90% 86%;
+  --border: 207 89% 86%;
+  --input: 207 89% 86%;
   --primary: 207 90% 61%;
   --primary-foreground: 210 40% 98%;
   --secondary: 207 89% 68%;
   --secondary-foreground: 210 30% 20%;
-  --accent: 208 90% 77%;
+  --accent: 207 90% 77%;
   --accent-foreground: 210 30% 20%;
   --destructive: 0 100% 50%;
   --destructive-foreground: 210 40% 98%;
   --ring: 207 90% 61%;
-  --chart-1: #42a5f5;
+  --chart-1: #42a4f5;
   --chart-2: #64b5f6;
   --chart-3: #90caf9;
   --chart-4: #bbdefb;
@@ -32,27 +32,27 @@
 }
 
 :root.dark {
-  --background: 210 88% 95%;
+  --background: 205 87% 94%;
   --foreground: 210 30% 20%;
-  --chart: #42a5f5;
-  --muted: 210 90% 86%;
+  --chart: #42a4f5;
+  --muted: 207 89% 86%;
   --muted-foreground: 210 30% 35%;
-  --card: 210 88% 95%;
+  --card: 205 87% 94%;
   --card-foreground: 210 30% 20%;
-  --popover: 210 88% 95%;
+  --popover: 205 87% 94%;
   --popover-foreground: 210 30% 20%;
-  --border: 210 90% 86%;
-  --input: 210 90% 86%;
+  --border: 207 89% 86%;
+  --input: 207 89% 86%;
   --primary: 207 90% 61%;
   --primary-foreground: 210 40% 98%;
   --secondary: 207 89% 68%;
   --secondary-foreground: 210 30% 20%;
-  --accent: 208 90% 77%;
+  --accent: 207 90% 77%;
   --accent-foreground: 210 30% 20%;
   --destructive: 0 100% 50%;
   --destructive-foreground: 210 40% 98%;
   --ring: 207 90% 61%;
-  --chart-1: #42a5f5;
+  --chart-1: #42a4f5;
   --chart-2: #64b5f6;
   --chart-3: #90caf9;
   --chart-4: #bbdefb;
@@ -100,12 +100,12 @@ img {
 ::-moz-selection {
   /* Code for Firefox */
   color: white;
-  background: #42a5f5;
+  background: #42a4f5;
 }
 
 ::selection {
   color: white;
-  background: #42a5f5;
+  background: #42a4f5;
 }
 
 input.defaultCheckbox {

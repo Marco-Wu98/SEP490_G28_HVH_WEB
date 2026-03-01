@@ -26,6 +26,10 @@ export default function PasswordSignIn({
     setIsSubmitting(false);
   };
 
+  const submitButtonClassName = isAdmin
+    ? 'bg-gradient-to-r from-slate-900 via-blue-950 to-slate-950 text-white hover:from-slate-950 hover:via-blue-950 hover:to-slate-900'
+    : '';
+
   return (
     <div>
       <form
@@ -40,11 +44,11 @@ export default function PasswordSignIn({
         />
         <div className="grid gap-2">
           <div className="grid gap-1">
-            <label className="text-zinc-950 dark:text-white" htmlFor="email">
+            <label className="text-sm font-medium text-foreground" htmlFor="email">
               Email
             </label>
             <Input
-              className="mr-2.5 mb-2 h-full min-h-[44px] w-full px-4 py-3 focus:outline-0 dark:placeholder:text-zinc-400"
+              className="mr-2.5 mb-2 h-full min-h-[44px] w-full px-4 py-3"
               id="email"
               placeholder="name@example.com"
               type="email"
@@ -54,7 +58,7 @@ export default function PasswordSignIn({
               autoCorrect="off"
             />
             <label
-              className="text-zinc-950 mt-2 dark:text-white"
+              className="mt-2 text-sm font-medium text-foreground"
               htmlFor="password"
             >
               Mật khẩu
@@ -65,18 +69,23 @@ export default function PasswordSignIn({
               type="password"
               name="password"
               autoComplete="current-password"
-              className="mr-2.5 mb-2 h-full min-h-[44px] w-full px-4 py-3 focus:outline-0 dark:placeholder:text-zinc-400"
+              className="mr-2.5 mb-2 h-full min-h-[44px] w-full px-4 py-3"
             />
           </div>
           <Button
             type="submit"
-            className="mt-2 flex h-[unset] w-full items-center justify-center rounded-lg px-4 py-4 text-sm font-medium bg-gradient-to-r from-[#0f172a] to-[#1e293b] text-white hover:from-[#1e293b] hover:to-[#0f172a]"
+            disabled={isSubmitting}
+            className={`mt-2 flex h-[unset] w-full items-center justify-center rounded-lg px-4 py-4 text-sm font-medium ${submitButtonClassName}`}
           >
             {isSubmitting ? (
               <svg
                 aria-hidden="true"
                 role="status"
-                className="mr-2 inline h-4 w-4 animate-spin text-zinc-200 duration-500 dark:text-zinc-950"
+                className={`mr-2 inline h-4 w-4 animate-spin duration-500 ${
+                  isAdmin
+                    ? 'text-white/80'
+                    : 'text-primary-foreground/80'
+                }`}
                 viewBox="0 0 100 101"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
@@ -103,19 +112,21 @@ export default function PasswordSignIn({
               ? '/dashboard/signin/forgot_password'
               : '/signin/forgot_password'
           }
-          className="font-medium text-zinc-950 dark:text-white text-sm"
+          className="text-sm font-medium text-foreground hover:text-primary"
         >
           Quên mật khẩu?
         </a>
       </p>
-      <p>
-        <a
-          href={isAdmin ? '/dashboard/signin/signup' : '/signin/signup'}
-          className="font-medium text-zinc-950 dark:text-white text-sm"
-        >
-          Chưa có tài khoản? Đăng ký
-        </a>
-      </p>
+      {!isAdmin && (
+        <p>
+          <a
+            href="/register-org"
+            className="text-sm font-medium text-foreground hover:text-primary"
+          >
+            Chưa có tài khoản? Đăng ký
+          </a>
+        </p>
+      )}
     </div>
   );
 }

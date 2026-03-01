@@ -1,6 +1,6 @@
 import DefaultAuth from '@/components/auth';
 import AuthUI from '@/components/auth/AuthUI';
-import { redirect } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { createClient } from '@/utils/supabase/server';
 import { cookies } from 'next/headers';
 import {
@@ -15,7 +15,7 @@ export default async function SignIn({
   searchParams
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ disable_button: boolean }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { allowPassword } = getAuthTypes();
   const viewTypes = getViewTypes();
@@ -24,6 +24,28 @@ export default async function SignIn({
   // Await dynamic params and searchParams
   const resolvedParams = await params;
   const resolvedSearchParams = await searchParams;
+
+  if (resolvedParams.id === 'signup') {
+    return notFound();
+  }
+
+  const status =
+    typeof resolvedSearchParams.status === 'string'
+      ? resolvedSearchParams.status
+      : undefined;
+  const statusDescription =
+    typeof resolvedSearchParams.status_description === 'string'
+      ? resolvedSearchParams.status_description
+      : undefined;
+  const error =
+    typeof resolvedSearchParams.error === 'string'
+      ? resolvedSearchParams.error
+      : undefined;
+  const errorDescription =
+    typeof resolvedSearchParams.error_description === 'string'
+      ? resolvedSearchParams.error_description
+      : undefined;
+  const disableButton = resolvedSearchParams.disable_button === 'true';
 
   // Declare 'viewProp' and initialize with the default value
   let viewProp: string;
@@ -63,7 +85,11 @@ export default async function SignIn({
           user={user}
           allowPassword={allowPassword}
           redirectMethod={redirectMethod}
-          disableButton={resolvedSearchParams.disable_button}
+          disableButton={disableButton}
+          status={status}
+          statusDescription={statusDescription}
+          error={error}
+          errorDescription={errorDescription}
           isAdmin={true}
         />
       </div>
