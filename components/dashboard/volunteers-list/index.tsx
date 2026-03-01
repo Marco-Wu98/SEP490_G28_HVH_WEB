@@ -21,7 +21,25 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
-import { Eye, Lock, Star, Plus, Pencil } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu';
+import {
+  ArrowDown,
+  ArrowUp,
+  Eye,
+  Filter as Funnel,
+  ListFilter,
+  Lock,
+  Plus,
+  Star,
+  Pencil,
+  X
+} from 'lucide-react';
 import { useMemo, useState } from 'react';
 import {
   Dialog,
@@ -237,6 +255,22 @@ const mockUsers = [
 
 export default function VolunteersList(props: Props) {
   type Volunteer = (typeof mockUsers)[0];
+  type SortKey =
+    | 'none'
+    | 'id'
+    | 'fullName'
+    | 'cccd'
+    | 'phone'
+    | 'email'
+    | 'dob'
+    | 'events'
+    | 'rating'
+    | 'reputation'
+    | 'status';
+  type SortOrder = 'asc' | 'desc';
+  type SortCriterion = { key: Exclude<SortKey, 'none'>; order: SortOrder };
+  type ValueFilterKey = 'fullName' | 'cccd' | 'phone' | 'email' | 'status';
+
   const [users, setUsers] = useState(mockUsers);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedUser, setSelectedUser] = useState<Volunteer | null>(null);
@@ -268,12 +302,29 @@ export default function VolunteersList(props: Props) {
   });
   const [searchField, setSearchField] = useState('name');
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
   const [dobFrom, setDobFrom] = useState('');
   const [dobTo, setDobTo] = useState('');
-  const [sortField, setSortField] = useState('none');
-  const [sortOrder, setSortOrder] = useState('desc');
+  const [sortCriteria, setSortCriteria] = useState<SortCriterion[]>([]);
+  const [columnValueFilters, setColumnValueFilters] = useState<
+    Partial<Record<ValueFilterKey, string[]>>
+  >({});
   const pageSize = 10;
+
+  const setSortForKey = (key: SortKey, order: SortOrder) => {
+    if (key === 'none') return;
+    setSortCriteria((prev) => {
+      const next = prev.filter((c) => c.key !== key);
+      next.unshift({ key, order });
+      return next;
+    });
+    setCurrentPage(1);
+  };
+
+  const clearSortForKey = (key: SortKey) => {
+    if (key === 'none') return;
+    setSortCriteria((prev) => prev.filter((c) => c.key !== key));
+    setCurrentPage(1);
+  };
   const formatDobForInput = (dob: string) => {
     if (!dob) return '';
     if (dob.includes('/')) {
@@ -291,6 +342,487 @@ export default function VolunteersList(props: Props) {
     }
     return dob;
   };
+
+  const normalizeForFilter = (value: unknown) => String(value ?? '').trim();
+
+  const normalizeText = (text: string) =>
+    text
+      .toLowerCase()
+      .normalize('NFD')
+      // remove accents/diacritics
+      .replace(/\p{Diacritic}/gu, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+  const getFilterValueForKey = (user: Volunteer, key: ValueFilterKey) => {
+    switch (key) {
+      case 'fullName':
+        return normalizeForFilter(user.fullName);
+      case 'cccd':
+        return normalizeForFilter(user.cccd);
+      case 'phone':
+        return normalizeForFilter(user.phone);
+      case 'email':
+        return normalizeForFilter(user.email).toLowerCase();
+      case 'status':
+        return normalizeForFilter(user.status);
+      default:
+        return '';
+    }
+  };
+
+  const getUniqueValuesForKey = (key: ValueFilterKey) => {
+    const values = users
+      .map((u) => getFilterValueForKey(u, key))
+      .filter(Boolean);
+    return Array.from(new Set(values)).sort((a, b) => a.localeCompare(b));
+  };
+
+  const ValueFilterDropdown = (props: {
+    columnKey: ValueFilterKey;
+    label: string;
+  }) => {
+    const { columnKey, label } = props;
+    const values = useMemo(
+      () => getUniqueValuesForKey(columnKey),
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      [users]
+    );
+    const applied = columnValueFilters[columnKey] ?? [];
+    const hasActiveFilter = applied.length > 0;
+    const isSearchFilteringThisColumn = Boolean(searchQuery.trim()) &&
+      ((searchField === 'name' && columnKey === 'fullName') ||
+        (searchField === 'cccd' && columnKey === 'cccd') ||
+        (searchField === 'phone' && columnKey === 'phone') ||
+        (searchField === 'email' && columnKey === 'email'));
+    const isSortActive = sortCriteria.some((c) => c.key === columnKey);
+    const isActive = hasActiveFilter || isSearchFilteringThisColumn || isSortActive;
+
+    const [open, setOpen] = useState(false);
+    const [search, setSearch] = useState('');
+    const [localSelected, setLocalSelected] = useState<string[]>(applied);
+
+    const filteredValues = useMemo(() => {
+      const q = normalizeText(search);
+      if (!q) return values;
+      const tokens = q.split(' ').filter(Boolean);
+      return values.filter((v) => {
+        const nv = normalizeText(v);
+        return tokens.every((t) => nv.includes(t));
+      });
+    }, [values, search]);
+
+    const setApplied = (next: string[]) => {
+      setColumnValueFilters((prev) => ({
+        ...prev,
+        [columnKey]: next
+      }));
+      setCurrentPage(1);
+    };
+
+    return (
+      <DropdownMenu
+        open={open}
+        onOpenChange={(nextOpen) => {
+          setOpen(nextOpen);
+          if (nextOpen) {
+            setSearch('');
+            setLocalSelected(applied);
+          }
+        }}
+      >
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className={`h-7 w-7 p-0 ${
+              isActive ? 'text-primary' : 'text-zinc-500'
+            }`}
+            aria-label={`Bộ lọc cột ${label}`}
+          >
+            {isActive ? (
+              <Funnel className="h-4 w-4" />
+            ) : (
+              <ListFilter className="h-4 w-4" />
+            )}
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent
+          align="start"
+          className="w-[320px] p-2 bg-white text-zinc-900 border border-zinc-200 shadow-lg"
+          onCloseAutoFocus={(e) => e.preventDefault()}
+        >
+          <DropdownMenuItem
+            onSelect={(e) => {
+              e.preventDefault();
+              setSortForKey(columnKey, 'asc');
+            }}
+            className="gap-2"
+          >
+            <ArrowUp className="h-4 w-4" />
+            Sắp xếp A đến Z
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onSelect={(e) => {
+              e.preventDefault();
+              setSortForKey(columnKey, 'desc');
+            }}
+            className="gap-2"
+          >
+            <ArrowDown className="h-4 w-4" />
+            Sắp xếp Z đến A
+          </DropdownMenuItem>
+
+          {isSortActive ? (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onSelect={(e) => {
+                  e.preventDefault();
+                  clearSortForKey(columnKey);
+                }}
+                className="gap-2 text-zinc-600"
+              >
+                <X className="h-4 w-4" />
+                Xóa sắp xếp
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+            </>
+          ) : (
+            <DropdownMenuSeparator />
+          )}
+
+          <div className="px-1 pb-2">
+            <div className="flex items-center justify-between gap-2">
+              <Button
+                type="button"
+                variant="link"
+                className="h-auto p-0 text-sm"
+                onClick={() => setLocalSelected(values)}
+              >
+                Chọn tất cả {values.length ? values.length : ''}
+              </Button>
+              <Button
+                type="button"
+                variant="link"
+                className="h-auto p-0 text-sm text-destructive"
+                onClick={() => setLocalSelected([])}
+              >
+                Xóa
+              </Button>
+            </div>
+
+            <div className="mt-2 flex items-center gap-2 rounded-md border border-zinc-200 bg-white px-2 py-1">
+              <Input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Tìm kiếm"
+                className="h-8 border-0 bg-transparent p-0 text-sm shadow-none focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
+              />
+            </div>
+
+            <div className="mt-2 max-h-56 overflow-auto rounded-md border border-zinc-200 bg-white">
+              {filteredValues.length === 0 ? (
+                <div className="p-3 text-sm text-zinc-500">
+                  Không có kết quả
+                </div>
+              ) : (
+                filteredValues.map((v) => {
+                  const checked = localSelected.includes(v);
+                  return (
+                    <button
+                      key={v}
+                      type="button"
+                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-zinc-50"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => {
+                        setLocalSelected((prev) =>
+                          prev.includes(v)
+                            ? prev.filter((x) => x !== v)
+                            : [...prev, v]
+                        );
+                      }}
+                    >
+                      <span
+                        className={`inline-flex h-4 w-4 items-center justify-center rounded border ${
+                          checked
+                            ? 'bg-primary border-primary text-primary-foreground'
+                            : 'bg-white border-zinc-300'
+                        }`}
+                      >
+                        {checked ? '✓' : ''}
+                      </span>
+                      <span className="truncate">{v}</span>
+                    </button>
+                  );
+                })
+              )}
+            </div>
+
+            <div className="mt-2 flex items-center justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                className="h-9 bg-white border-zinc-300 text-zinc-900 hover:bg-zinc-50"
+                onClick={() => {
+                  setOpen(false);
+                  setLocalSelected(applied);
+                }}
+              >
+                Hủy
+              </Button>
+              <Button
+                type="button"
+                className="h-9"
+                onClick={() => {
+                  setApplied(localSelected);
+                  setOpen(false);
+                }}
+              >
+                OK
+              </Button>
+            </div>
+
+            {hasActiveFilter && (
+              <div className="mt-2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="h-8 w-full justify-start gap-2 text-zinc-600"
+                  onClick={() => {
+                    setApplied([]);
+                    setOpen(false);
+                  }}
+                >
+                  <X className="h-4 w-4" />
+                  Xóa bộ lọc cột
+                </Button>
+              </div>
+            )}
+          </div>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  };
+
+  const DobFilterDropdown = () => {
+    const [open, setOpen] = useState(false);
+    const [localFrom, setLocalFrom] = useState(dobFrom);
+    const [localTo, setLocalTo] = useState(dobTo);
+    const hasActive = Boolean(dobFrom || dobTo);
+    const isSortActive = sortCriteria.some((c) => c.key === 'dob');
+    const isActive = hasActive || isSortActive;
+
+    return (
+      <DropdownMenu
+        open={open}
+        onOpenChange={(nextOpen) => {
+          setOpen(nextOpen);
+          if (nextOpen) {
+            setLocalFrom(dobFrom);
+            setLocalTo(dobTo);
+          }
+        }}
+      >
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className={`h-7 w-7 p-0 ${isActive ? 'text-primary' : 'text-zinc-500'}`}
+            aria-label="Bộ lọc cột Ngày sinh"
+          >
+            {isActive ? (
+              <Funnel className="h-4 w-4" />
+            ) : (
+              <ListFilter className="h-4 w-4" />
+            )}
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent
+          align="start"
+          className="w-[320px] p-2 bg-white text-zinc-900 border border-zinc-200 shadow-lg"
+        >
+          <DropdownMenuItem
+            onSelect={(e) => {
+              e.preventDefault();
+              setSortForKey('dob', 'asc');
+            }}
+            className="gap-2"
+          >
+            <ArrowUp className="h-4 w-4" />
+            Sắp xếp tăng dần
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onSelect={(e) => {
+              e.preventDefault();
+              setSortForKey('dob', 'desc');
+            }}
+            className="gap-2"
+          >
+            <ArrowDown className="h-4 w-4" />
+            Sắp xếp giảm dần
+          </DropdownMenuItem>
+
+          {isSortActive ? (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onSelect={(e) => {
+                  e.preventDefault();
+                  clearSortForKey('dob');
+                }}
+                className="gap-2 text-zinc-600"
+              >
+                <X className="h-4 w-4" />
+                Xóa sắp xếp
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+            </>
+          ) : (
+            <DropdownMenuSeparator />
+          )}
+
+          <div className="px-1 pb-2">
+            <p className="text-sm font-medium text-zinc-900">
+              Lọc theo khoảng ngày
+            </p>
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              <Input
+                type="date"
+                value={localFrom}
+                onChange={(e) => setLocalFrom(e.target.value)}
+                className="bg-white border-zinc-200 text-zinc-900 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
+              />
+              <Input
+                type="date"
+                value={localTo}
+                onChange={(e) => setLocalTo(e.target.value)}
+                className="bg-white border-zinc-200 text-zinc-900 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
+              />
+            </div>
+            <div className="mt-2 flex items-center justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                className="h-9 bg-white border-zinc-300 text-zinc-900 hover:bg-zinc-50"
+                onClick={() => {
+                  setOpen(false);
+                  setLocalFrom(dobFrom);
+                  setLocalTo(dobTo);
+                }}
+              >
+                Hủy
+              </Button>
+              <Button
+                type="button"
+                className="h-9"
+                onClick={() => {
+                  setDobFrom(localFrom);
+                  setDobTo(localTo);
+                  setCurrentPage(1);
+                  setOpen(false);
+                }}
+              >
+                OK
+              </Button>
+            </div>
+
+            {hasActive && (
+              <div className="mt-2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="h-8 w-full justify-start gap-2 text-zinc-600"
+                  onClick={() => {
+                    setDobFrom('');
+                    setDobTo('');
+                    setCurrentPage(1);
+                    setOpen(false);
+                  }}
+                >
+                  <X className="h-4 w-4" />
+                  Xóa bộ lọc cột
+                </Button>
+              </div>
+            )}
+          </div>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  };
+
+  const SortOnlyDropdown = (props: { sortKey: SortKey; label: string }) => {
+    const { sortKey, label } = props;
+    const isActive =
+      sortKey !== 'none' && sortCriteria.some((c) => c.key === sortKey);
+    const isSearchFilteringThisColumn =
+      Boolean(searchQuery.trim()) && sortKey === 'id' && searchField === 'id';
+    const isApplied = isActive || isSearchFilteringThisColumn;
+
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className={`h-7 w-7 p-0 ${
+              isApplied
+                ? 'text-primary'
+                : 'text-zinc-500'
+            }`}
+            aria-label={`Sắp xếp cột ${label}`}
+          >
+            {isApplied ? (
+              <Funnel className="h-4 w-4" />
+            ) : (
+              <ListFilter className="h-4 w-4" />
+            )}
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent
+          align="start"
+          className="w-[220px] p-1 bg-white text-zinc-900 border border-zinc-200 shadow-lg"
+        >
+          <DropdownMenuItem
+            onSelect={(e) => {
+              e.preventDefault();
+              setSortForKey(sortKey, 'asc');
+            }}
+            className="gap-2"
+          >
+            <ArrowUp className="h-4 w-4" />
+            Sắp xếp tăng dần
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onSelect={(e) => {
+              e.preventDefault();
+              setSortForKey(sortKey, 'desc');
+            }}
+            className="gap-2"
+          >
+            <ArrowDown className="h-4 w-4" />
+            Sắp xếp giảm dần
+          </DropdownMenuItem>
+          {isActive && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onSelect={(e) => {
+                  e.preventDefault();
+                  clearSortForKey(sortKey);
+                }}
+                className="gap-2 text-zinc-600"
+              >
+                <X className="h-4 w-4" />
+                Xóa sắp xếp
+              </DropdownMenuItem>
+            </>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  };
+
   const filteredUsers = useMemo(() => {
     const parseDob = (dob: string) => {
       const [day, month, year] = dob.split('/').map(Number);
@@ -320,9 +852,14 @@ export default function VolunteersList(props: Props) {
       }
     });
 
-    if (statusFilter !== 'all') {
-      result = result.filter((user) => user.status === statusFilter);
-    }
+    (Object.keys(columnValueFilters) as ValueFilterKey[]).forEach((key) => {
+      const selected = columnValueFilters[key] ?? [];
+      if (selected.length === 0) return;
+      result = result.filter((u) => {
+        const v = getFilterValueForKey(u, key);
+        return selected.includes(v);
+      });
+    });
 
     if (fromDate || toDate) {
       result = result.filter((user) => {
@@ -333,13 +870,63 @@ export default function VolunteersList(props: Props) {
       });
     }
 
-    if (sortField !== 'none') {
+    if (sortCriteria.length > 0) {
       result = [...result].sort((a, b) => {
-        const order = sortOrder === 'asc' ? 1 : -1;
-        if (sortField === 'rating') return (a.rating - b.rating) * order;
-        if (sortField === 'reputation')
-          return (a.reputation - b.reputation) * order;
-        if (sortField === 'events') return (a.events - b.events) * order;
+        for (const criterion of sortCriteria) {
+          const order = criterion.order === 'asc' ? 1 : -1;
+          const key = criterion.key;
+
+          if (key === 'id') {
+            const diff = a.id - b.id;
+            if (diff !== 0) return diff * order;
+            continue;
+          }
+          if (key === 'events') {
+            const diff = a.events - b.events;
+            if (diff !== 0) return diff * order;
+            continue;
+          }
+          if (key === 'rating') {
+            const diff = a.rating - b.rating;
+            if (diff !== 0) return diff * order;
+            continue;
+          }
+          if (key === 'reputation') {
+            const diff = a.reputation - b.reputation;
+            if (diff !== 0) return diff * order;
+            continue;
+          }
+          if (key === 'dob') {
+            const diff = parseDob(a.dob).getTime() - parseDob(b.dob).getTime();
+            if (diff !== 0) return diff * order;
+            continue;
+          }
+          if (key === 'fullName') {
+            const diff = a.fullName.localeCompare(b.fullName);
+            if (diff !== 0) return diff * order;
+            continue;
+          }
+          if (key === 'email') {
+            const diff = a.email.localeCompare(b.email);
+            if (diff !== 0) return diff * order;
+            continue;
+          }
+          if (key === 'phone') {
+            const diff = a.phone.localeCompare(b.phone);
+            if (diff !== 0) return diff * order;
+            continue;
+          }
+          if (key === 'cccd') {
+            const diff = a.cccd.localeCompare(b.cccd);
+            if (diff !== 0) return diff * order;
+            continue;
+          }
+          if (key === 'status') {
+            const diff = a.status.localeCompare(b.status);
+            if (diff !== 0) return diff * order;
+            continue;
+          }
+        }
         return 0;
       });
     }
@@ -349,11 +936,10 @@ export default function VolunteersList(props: Props) {
     users,
     searchField,
     searchQuery,
-    statusFilter,
     dobFrom,
     dobTo,
-    sortField,
-    sortOrder
+    sortCriteria,
+    columnValueFilters
   ]);
 
   const totalPages = Math.max(1, Math.ceil(filteredUsers.length / pageSize));
@@ -501,7 +1087,7 @@ export default function VolunteersList(props: Props) {
                   setCurrentPage(1);
                 }}
               >
-                <SelectTrigger className="w-full md:w-[200px]">
+                <SelectTrigger className="w-full md:w-[200px] !bg-white !border-zinc-200 !text-zinc-900">
                   <SelectValue placeholder="Chọn tiêu chí" />
                 </SelectTrigger>
                 <SelectContent>
@@ -519,6 +1105,7 @@ export default function VolunteersList(props: Props) {
                   setSearchQuery(e.target.value);
                   setCurrentPage(1);
                 }}
+                className="bg-white border-zinc-200 text-zinc-900 placeholder:text-zinc-400"
               />
             </div>
             <Button
@@ -529,101 +1116,89 @@ export default function VolunteersList(props: Props) {
               Thêm mới
             </Button>
           </div>
-          <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
-            <Select
-              value={statusFilter}
-              onValueChange={(value) => {
-                setStatusFilter(value);
-                setCurrentPage(1);
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Lọc theo trạng thái" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tất cả trạng thái</SelectItem>
-                <SelectItem value="active">Hoạt động</SelectItem>
-                <SelectItem value="inactive">Không hoạt động</SelectItem>
-                <SelectItem value="locked">Đã khóa</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Input
-              type="date"
-              value={dobFrom}
-              onChange={(e) => {
-                setDobFrom(e.target.value);
-                setCurrentPage(1);
-              }}
-            />
-            <Input
-              type="date"
-              value={dobTo}
-              onChange={(e) => {
-                setDobTo(e.target.value);
-                setCurrentPage(1);
-              }}
-            />
-
-            <div className="flex flex-col gap-3 md:flex-row">
-              <Select
-                value={sortField}
-                onValueChange={(value) => {
-                  setSortField(value);
-                  setCurrentPage(1);
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Sắp xếp theo" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Không sắp xếp</SelectItem>
-                  <SelectItem value="rating">Rating TB</SelectItem>
-                  <SelectItem value="reputation">Điểm uy tín</SelectItem>
-                  <SelectItem value="events">Số sự kiện</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select
-                value={sortOrder}
-                onValueChange={(value) => {
-                  setSortOrder(value);
-                  setCurrentPage(1);
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Thứ tự" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="desc">Giảm dần</SelectItem>
-                  <SelectItem value="asc">Tăng dần</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
         </div>
-        <div className="rounded-lg border border-zinc-200 bg-card dark:border-zinc-800">
+        <div className="rounded-lg border border-zinc-200 bg-white text-zinc-950 shadow-sm overflow-hidden">
           <div className="w-full overflow-x-auto">
-            <Table className="min-w-[1200px]">
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[60px]">ID</TableHead>
-                  <TableHead className="w-[80px]">Avatar</TableHead>
-                  <TableHead className="min-w-[150px]">Họ và tên</TableHead>
-                  <TableHead className="min-w-[130px]">CCCD</TableHead>
-                  <TableHead className="min-w-[120px]">Số điện thoại</TableHead>
-                  <TableHead className="min-w-[200px]">Email</TableHead>
-                  <TableHead className="w-[100px]">Ngày sinh</TableHead>
+            <Table className="min-w-[1200px] bg-white">
+              <TableHeader className="bg-white">
+                <TableRow className="bg-white">
+                  <TableHead className="w-[60px]">
+                    <div className="flex items-center justify-between gap-2">
+                      <span>ID</span>
+                      <SortOnlyDropdown sortKey="id" label="ID" />
+                    </div>
+                  </TableHead>
+                  <TableHead className="w-[80px]">
+                    <div className="flex items-center justify-between gap-2">
+                      <span>Avatar</span>
+                    </div>
+                  </TableHead>
+                  <TableHead className="min-w-[150px]">
+                    <div className="flex items-center justify-between gap-2">
+                      <span>Họ và tên</span>
+                      <ValueFilterDropdown
+                        columnKey="fullName"
+                        label="Họ và tên"
+                      />
+                    </div>
+                  </TableHead>
+                  <TableHead className="min-w-[130px]">
+                    <div className="flex items-center justify-between gap-2">
+                      <span>CCCD</span>
+                      <ValueFilterDropdown columnKey="cccd" label="CCCD" />
+                    </div>
+                  </TableHead>
+                  <TableHead className="min-w-[120px]">
+                    <div className="flex items-center justify-between gap-2">
+                      <span>Số điện thoại</span>
+                      <ValueFilterDropdown
+                        columnKey="phone"
+                        label="Số điện thoại"
+                      />
+                    </div>
+                  </TableHead>
+                  <TableHead className="min-w-[200px]">
+                    <div className="flex items-center justify-between gap-2">
+                      <span>Email</span>
+                      <ValueFilterDropdown columnKey="email" label="Email" />
+                    </div>
+                  </TableHead>
+                  <TableHead className="w-[140px]">
+                    <div className="flex items-center justify-between gap-2">
+                      <span>Ngày sinh</span>
+                      <DobFilterDropdown />
+                    </div>
+                  </TableHead>
                   <TableHead className="w-[120px] text-center whitespace-nowrap">
-                    Số sự kiện
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="w-full text-center">Số sự kiện</span>
+                      <SortOnlyDropdown sortKey="events" label="Số sự kiện" />
+                    </div>
                   </TableHead>
                   <TableHead className="w-[100px] text-center">
-                    Rating TB
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="w-full text-center">Rating TB</span>
+                      <SortOnlyDropdown sortKey="rating" label="Rating TB" />
+                    </div>
                   </TableHead>
                   <TableHead className="w-[110px] text-center">
-                    Điểm uy tín
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="w-full text-center">Điểm uy tín</span>
+                      <SortOnlyDropdown
+                        sortKey="reputation"
+                        label="Điểm uy tín"
+                      />
+                    </div>
                   </TableHead>
-                  <TableHead className="w-[110px]">Trạng thái</TableHead>
+                  <TableHead className="w-[140px]">
+                    <div className="flex items-center justify-between gap-2">
+                      <span>Trạng thái</span>
+                      <ValueFilterDropdown
+                        columnKey="status"
+                        label="Trạng thái"
+                      />
+                    </div>
+                  </TableHead>
                   <TableHead className="w-[120px] text-center">
                     Thao tác
                   </TableHead>
@@ -631,7 +1206,7 @@ export default function VolunteersList(props: Props) {
               </TableHeader>
               <TableBody>
                 {paginatedUsers.map((user) => (
-                  <TableRow key={user.id}>
+                  <TableRow key={user.id} className="hover:bg-zinc-50">
                     <TableCell className="font-medium">{user.id}</TableCell>
                     <TableCell>
                       <Avatar className="h-10 w-10">
@@ -860,7 +1435,7 @@ export default function VolunteersList(props: Props) {
 
             <div className="space-y-4">
               <div>
-                <label className="text-sm font-medium text-slate-300">
+                <label className="text-sm font-medium text-zinc-700">
                   Họ và tên
                 </label>
                 <Input
@@ -872,7 +1447,7 @@ export default function VolunteersList(props: Props) {
                       fullName: e.target.value
                     })
                   }
-                  className="mt-1"
+                  className="mt-1 text-zinc-900 placeholder:text-zinc-400"
                 />
               </div>
 

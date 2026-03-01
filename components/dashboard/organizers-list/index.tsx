@@ -21,7 +21,24 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
-import { Eye, Lock, Plus, Pencil } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu';
+import {
+  ArrowDown,
+  ArrowUp,
+  Eye,
+  Filter as Funnel,
+  ListFilter,
+  Lock,
+  Plus,
+  Pencil,
+  X
+} from 'lucide-react';
 import { useMemo, useState } from 'react';
 import {
   Dialog,
@@ -256,6 +273,27 @@ const mockOrganizers = [
 
 export default function OrganizersList(props: Props) {
   type Organizer = (typeof mockOrganizers)[0];
+  type SortKey =
+    | 'none'
+    | 'id'
+    | 'orgName'
+    | 'fullName'
+    | 'cccd'
+    | 'phone'
+    | 'email'
+    | 'dob'
+    | 'events'
+    | 'role'
+    | 'status';
+  type ValueFilterKey =
+    | 'orgName'
+    | 'fullName'
+    | 'cccd'
+    | 'phone'
+    | 'email'
+    | 'role'
+    | 'status';
+
   const [organizers, setOrganizers] = useState(mockOrganizers);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedUser, setSelectedUser] = useState<Organizer | null>(null);
@@ -278,12 +316,13 @@ export default function OrganizersList(props: Props) {
   });
   const [searchField, setSearchField] = useState('name');
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [roleFilter, setRoleFilter] = useState('all');
   const [dobFrom, setDobFrom] = useState('');
   const [dobTo, setDobTo] = useState('');
-  const [sortField, setSortField] = useState('none');
+  const [sortField, setSortField] = useState<SortKey>('none');
   const [sortOrder, setSortOrder] = useState('desc');
+  const [columnValueFilters, setColumnValueFilters] = useState<
+    Partial<Record<ValueFilterKey, string[]>>
+  >({});
   const [openAddHostModal, setOpenAddHostModal] = useState(false);
   const [orgSearchQuery, setOrgSearchQuery] = useState('');
   const [filteredOrganizations, setFilteredOrganizations] = useState<
@@ -317,6 +356,480 @@ export default function OrganizersList(props: Props) {
     }
     return dob;
   };
+
+  const normalizeForFilter = (value: unknown) => String(value ?? '').trim();
+
+  const normalizeText = (text: string) =>
+    text
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/\p{Diacritic}/gu, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+  const getOrgNameForFilter = (org: Organizer) => {
+    if (org.orgName) return normalizeForFilter(org.orgName);
+    if (org.fullName.includes(' - ')) {
+      return normalizeForFilter(org.fullName.split(' - ')[0].trim());
+    }
+    return normalizeForFilter(org.fullName);
+  };
+
+  const getPersonNameForFilter = (org: Organizer) => {
+    if (org.fullName.includes(' - ')) {
+      return normalizeForFilter(
+        org.fullName.split(' - ').slice(1).join(' - ').trim()
+      );
+    }
+    return normalizeForFilter(org.fullName);
+  };
+
+  const getFilterValueForKey = (org: Organizer, key: ValueFilterKey) => {
+    switch (key) {
+      case 'orgName':
+        return getOrgNameForFilter(org);
+      case 'fullName':
+        return getPersonNameForFilter(org);
+      case 'cccd':
+        return normalizeForFilter(org.cccd);
+      case 'phone':
+        return normalizeForFilter(org.phone);
+      case 'email':
+        return normalizeForFilter(org.email).toLowerCase();
+      case 'role':
+        return normalizeForFilter(org.role);
+      case 'status':
+        return normalizeForFilter(org.status);
+      default:
+        return '';
+    }
+  };
+
+  const getUniqueValuesForKey = (key: ValueFilterKey) => {
+    const values = organizers
+      .map((o) => getFilterValueForKey(o, key))
+      .filter(Boolean);
+    return Array.from(new Set(values)).sort((a, b) => a.localeCompare(b));
+  };
+
+  const ValueFilterDropdown = (props: {
+    columnKey: ValueFilterKey;
+    label: string;
+  }) => {
+    const { columnKey, label } = props;
+    const values = useMemo(
+      () => getUniqueValuesForKey(columnKey),
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      [organizers]
+    );
+    const applied = columnValueFilters[columnKey] ?? [];
+    const hasActiveFilter = applied.length > 0;
+    const isSearchFilteringThisColumn = Boolean(searchQuery.trim()) &&
+      ((searchField === 'name' && columnKey === 'fullName') ||
+        (searchField === 'cccd' && columnKey === 'cccd') ||
+        (searchField === 'phone' && columnKey === 'phone') ||
+        (searchField === 'email' && columnKey === 'email'));
+    const isSortActive = sortField === columnKey;
+    const isApplied = hasActiveFilter || isSearchFilteringThisColumn || isSortActive;
+
+    const [open, setOpen] = useState(false);
+    const [search, setSearch] = useState('');
+    const [localSelected, setLocalSelected] = useState<string[]>(applied);
+
+    const filteredValues = useMemo(() => {
+      const q = normalizeText(search);
+      if (!q) return values;
+      const tokens = q.split(' ').filter(Boolean);
+      return values.filter((v) => {
+        const nv = normalizeText(v);
+        return tokens.every((t) => nv.includes(t));
+      });
+    }, [values, search]);
+
+    const setApplied = (next: string[]) => {
+      setColumnValueFilters((prev) => ({
+        ...prev,
+        [columnKey]: next
+      }));
+      setCurrentPage(1);
+    };
+
+    return (
+      <DropdownMenu
+        open={open}
+        onOpenChange={(nextOpen) => {
+          setOpen(nextOpen);
+          if (nextOpen) {
+            setSearch('');
+            setLocalSelected(applied);
+          }
+        }}
+      >
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className={`h-7 w-7 p-0 ${
+              isApplied ? 'text-primary' : 'text-zinc-500'
+            }`}
+            aria-label={`Bộ lọc cột ${label}`}
+          >
+            {isApplied ? (
+              <Funnel className="h-4 w-4" />
+            ) : (
+              <ListFilter className="h-4 w-4" />
+            )}
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent
+          align="start"
+          className="w-[320px] p-2 bg-white text-zinc-900 border border-zinc-200 shadow-lg"
+          onCloseAutoFocus={(e) => e.preventDefault()}
+        >
+          <DropdownMenuItem
+            onSelect={(e) => {
+              e.preventDefault();
+              setSortField(columnKey);
+              setSortOrder('asc');
+              setCurrentPage(1);
+            }}
+            className="gap-2"
+          >
+            <ArrowUp className="h-4 w-4" />
+            Sắp xếp A đến Z
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onSelect={(e) => {
+              e.preventDefault();
+              setSortField(columnKey);
+              setSortOrder('desc');
+              setCurrentPage(1);
+            }}
+            className="gap-2"
+          >
+            <ArrowDown className="h-4 w-4" />
+            Sắp xếp Z đến A
+          </DropdownMenuItem>
+
+          <DropdownMenuSeparator />
+
+          <div className="px-1 pb-2">
+            <div className="flex items-center justify-between gap-2">
+              <Button
+                type="button"
+                variant="link"
+                className="h-auto p-0 text-sm"
+                onClick={() => setLocalSelected(values)}
+              >
+                Chọn tất cả {values.length ? values.length : ''}
+              </Button>
+              <Button
+                type="button"
+                variant="link"
+                className="h-auto p-0 text-sm text-destructive"
+                onClick={() => setLocalSelected([])}
+              >
+                Xóa
+              </Button>
+            </div>
+
+            <div className="mt-2 flex items-center gap-2 rounded-md border border-zinc-200 bg-white px-2 py-1">
+              <Input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Tìm kiếm"
+                className="h-8 border-0 bg-transparent p-0 text-sm shadow-none focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
+              />
+            </div>
+
+            <div className="mt-2 max-h-56 overflow-auto rounded-md border border-zinc-200 bg-white">
+              {filteredValues.length === 0 ? (
+                <div className="p-3 text-sm text-zinc-500">
+                  Không có kết quả
+                </div>
+              ) : (
+                filteredValues.map((v) => {
+                  const checked = localSelected.includes(v);
+                  return (
+                    <button
+                      key={v}
+                      type="button"
+                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-zinc-50"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => {
+                        setLocalSelected((prev) =>
+                          prev.includes(v)
+                            ? prev.filter((x) => x !== v)
+                            : [...prev, v]
+                        );
+                      }}
+                    >
+                      <span
+                        className={`inline-flex h-4 w-4 items-center justify-center rounded border ${
+                          checked
+                            ? 'bg-primary border-primary text-primary-foreground'
+                            : 'bg-white border-zinc-300'
+                        }`}
+                      >
+                        {checked ? '✓' : ''}
+                      </span>
+                      <span className="truncate">{v}</span>
+                    </button>
+                  );
+                })
+              )}
+            </div>
+
+            <div className="mt-2 flex items-center justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                className="h-9 bg-white border-zinc-300 text-zinc-900 hover:bg-zinc-50"
+                onClick={() => {
+                  setOpen(false);
+                  setLocalSelected(applied);
+                }}
+              >
+                Hủy
+              </Button>
+              <Button
+                type="button"
+                className="h-9"
+                onClick={() => {
+                  setApplied(localSelected);
+                  setOpen(false);
+                }}
+              >
+                OK
+              </Button>
+            </div>
+
+            {hasActiveFilter && (
+              <div className="mt-2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="h-8 w-full justify-start gap-2 text-zinc-600"
+                  onClick={() => {
+                    setApplied([]);
+                    setOpen(false);
+                  }}
+                >
+                  <X className="h-4 w-4" />
+                  Xóa bộ lọc cột
+                </Button>
+              </div>
+            )}
+          </div>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  };
+
+  const DobFilterDropdown = () => {
+    const [open, setOpen] = useState(false);
+    const [localFrom, setLocalFrom] = useState(dobFrom);
+    const [localTo, setLocalTo] = useState(dobTo);
+    const hasActive = Boolean(dobFrom || dobTo);
+    const isApplied = hasActive || sortField === 'dob';
+
+    return (
+      <DropdownMenu
+        open={open}
+        onOpenChange={(nextOpen) => {
+          setOpen(nextOpen);
+          if (nextOpen) {
+            setLocalFrom(dobFrom);
+            setLocalTo(dobTo);
+          }
+        }}
+      >
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className={`h-7 w-7 p-0 ${isApplied ? 'text-primary' : 'text-zinc-500'}`}
+            aria-label="Bộ lọc cột Ngày sinh"
+          >
+            {isApplied ? (
+              <Funnel className="h-4 w-4" />
+            ) : (
+              <ListFilter className="h-4 w-4" />
+            )}
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent
+          align="start"
+          className="w-[320px] p-2 bg-white text-zinc-900 border border-zinc-200 shadow-lg"
+        >
+          <DropdownMenuItem
+            onSelect={(e) => {
+              e.preventDefault();
+              setSortField('dob');
+              setSortOrder('asc');
+              setCurrentPage(1);
+            }}
+            className="gap-2"
+          >
+            <ArrowUp className="h-4 w-4" />
+            Sắp xếp tăng dần
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onSelect={(e) => {
+              e.preventDefault();
+              setSortField('dob');
+              setSortOrder('desc');
+              setCurrentPage(1);
+            }}
+            className="gap-2"
+          >
+            <ArrowDown className="h-4 w-4" />
+            Sắp xếp giảm dần
+          </DropdownMenuItem>
+
+          <DropdownMenuSeparator />
+
+          <div className="px-1 pb-2">
+            <p className="text-sm font-medium text-zinc-900">
+              Lọc theo khoảng ngày
+            </p>
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              <Input
+                type="date"
+                value={localFrom}
+                onChange={(e) => setLocalFrom(e.target.value)}
+                className="bg-white border-zinc-200 text-zinc-900 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
+              />
+              <Input
+                type="date"
+                value={localTo}
+                onChange={(e) => setLocalTo(e.target.value)}
+                className="bg-white border-zinc-200 text-zinc-900 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
+              />
+            </div>
+            <div className="mt-2 flex items-center justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                className="h-9 bg-white border-zinc-300 text-zinc-900 hover:bg-zinc-50"
+                onClick={() => {
+                  setOpen(false);
+                  setLocalFrom(dobFrom);
+                  setLocalTo(dobTo);
+                }}
+              >
+                Hủy
+              </Button>
+              <Button
+                type="button"
+                className="h-9"
+                onClick={() => {
+                  setDobFrom(localFrom);
+                  setDobTo(localTo);
+                  setCurrentPage(1);
+                  setOpen(false);
+                }}
+              >
+                OK
+              </Button>
+            </div>
+
+            {hasActive && (
+              <div className="mt-2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="h-8 w-full justify-start gap-2 text-zinc-600"
+                  onClick={() => {
+                    setDobFrom('');
+                    setDobTo('');
+                    setCurrentPage(1);
+                    setOpen(false);
+                  }}
+                >
+                  <X className="h-4 w-4" />
+                  Xóa bộ lọc cột
+                </Button>
+              </div>
+            )}
+          </div>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  };
+
+  const SortOnlyDropdown = (props: { sortKey: SortKey; label: string }) => {
+    const { sortKey, label } = props;
+    const isActive = sortField === sortKey;
+    const isSearchFilteringThisColumn =
+      Boolean(searchQuery.trim()) && sortKey === 'id' && searchField === 'id';
+    const isApplied = isActive || isSearchFilteringThisColumn;
+
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className={`h-7 w-7 p-0 ${isApplied ? 'text-primary' : 'text-zinc-500'}`}
+            aria-label={`Sắp xếp cột ${label}`}
+          >
+            {isApplied ? (
+              <Funnel className="h-4 w-4" />
+            ) : (
+              <ListFilter className="h-4 w-4" />
+            )}
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent
+          align="start"
+          className="w-[220px] p-1 bg-white text-zinc-900 border border-zinc-200 shadow-lg"
+        >
+          <DropdownMenuItem
+            onSelect={(e) => {
+              e.preventDefault();
+              setSortField(sortKey);
+              setSortOrder('asc');
+              setCurrentPage(1);
+            }}
+            className="gap-2"
+          >
+            <ArrowUp className="h-4 w-4" />
+            Sắp xếp tăng dần
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onSelect={(e) => {
+              e.preventDefault();
+              setSortField(sortKey);
+              setSortOrder('desc');
+              setCurrentPage(1);
+            }}
+            className="gap-2"
+          >
+            <ArrowDown className="h-4 w-4" />
+            Sắp xếp giảm dần
+          </DropdownMenuItem>
+          {isActive && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onSelect={(e) => {
+                  e.preventDefault();
+                  setSortField('none');
+                  setCurrentPage(1);
+                }}
+                className="gap-2 text-zinc-600"
+              >
+                <X className="h-4 w-4" />
+                Xóa sắp xếp
+              </DropdownMenuItem>
+            </>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  };
+
   const filteredOrganizers = useMemo(() => {
     const parseDob = (dob: string) => {
       const [day, month, year] = dob.split('/').map(Number);
@@ -346,13 +859,14 @@ export default function OrganizersList(props: Props) {
       }
     });
 
-    if (statusFilter !== 'all') {
-      result = result.filter((org) => org.status === statusFilter);
-    }
-
-    if (roleFilter !== 'all') {
-      result = result.filter((org) => org.role === roleFilter);
-    }
+    (Object.keys(columnValueFilters) as ValueFilterKey[]).forEach((key) => {
+      const selected = columnValueFilters[key] ?? [];
+      if (selected.length === 0) return;
+      result = result.filter((org) => {
+        const v = getFilterValueForKey(org, key);
+        return selected.includes(v);
+      });
+    });
 
     if (fromDate || toDate) {
       result = result.filter((org) => {
@@ -366,7 +880,31 @@ export default function OrganizersList(props: Props) {
     if (sortField !== 'none') {
       result = [...result].sort((a, b) => {
         const order = sortOrder === 'asc' ? 1 : -1;
+        if (sortField === 'id') return (a.id - b.id) * order;
         if (sortField === 'events') return (a.events - b.events) * order;
+        if (sortField === 'dob')
+          return (
+            (parseDob(a.dob).getTime() - parseDob(b.dob).getTime()) * order
+          );
+
+        if (sortField === 'orgName')
+          return (
+            getOrgNameForFilter(a).localeCompare(getOrgNameForFilter(b)) * order
+          );
+        if (sortField === 'fullName')
+          return (
+            getPersonNameForFilter(a).localeCompare(getPersonNameForFilter(b)) *
+            order
+          );
+        if (sortField === 'email')
+          return a.email.localeCompare(b.email) * order;
+        if (sortField === 'phone')
+          return a.phone.localeCompare(b.phone) * order;
+        if (sortField === 'cccd') return a.cccd.localeCompare(b.cccd) * order;
+        if (sortField === 'role') return a.role.localeCompare(b.role) * order;
+        if (sortField === 'status')
+          return a.status.localeCompare(b.status) * order;
+
         return 0;
       });
     }
@@ -376,8 +914,7 @@ export default function OrganizersList(props: Props) {
     organizers,
     searchField,
     searchQuery,
-    statusFilter,
-    roleFilter,
+    columnValueFilters,
     dobFrom,
     dobTo,
     sortField,
@@ -590,7 +1127,7 @@ export default function OrganizersList(props: Props) {
                   setCurrentPage(1);
                 }}
               >
-                <SelectTrigger className="w-full md:w-[200px]">
+                <SelectTrigger className="w-full md:w-[200px] !bg-white !border-zinc-200 !text-zinc-900">
                   <SelectValue placeholder="Chọn tiêu chí" />
                 </SelectTrigger>
                 <SelectContent>
@@ -608,6 +1145,7 @@ export default function OrganizersList(props: Props) {
                   setSearchQuery(e.target.value);
                   setCurrentPage(1);
                 }}
+                className="bg-white border-zinc-200 text-zinc-900 placeholder:text-zinc-400"
               />
             </div>
             <Button
@@ -618,110 +1156,89 @@ export default function OrganizersList(props: Props) {
               Thêm mới
             </Button>
           </div>
-          <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-6">
-            <Select
-              value={statusFilter}
-              onValueChange={(value) => {
-                setStatusFilter(value);
-                setCurrentPage(1);
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Lọc theo trạng thái" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tất cả trạng thái</SelectItem>
-                <SelectItem value="active">Hoạt động</SelectItem>
-                <SelectItem value="inactive">Không hoạt động</SelectItem>
-                <SelectItem value="locked">Đã khóa</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select
-              value={roleFilter}
-              onValueChange={(value) => {
-                setRoleFilter(value);
-                setCurrentPage(1);
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Lọc theo vai trò" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tất cả vai trò</SelectItem>
-                <SelectItem value="Manager">Manager</SelectItem>
-                <SelectItem value="Host">Host</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Input
-              type="date"
-              value={dobFrom}
-              onChange={(e) => {
-                setDobFrom(e.target.value);
-                setCurrentPage(1);
-              }}
-            />
-            <Input
-              type="date"
-              value={dobTo}
-              onChange={(e) => {
-                setDobTo(e.target.value);
-                setCurrentPage(1);
-              }}
-            />
-
-            <Select
-              value={sortField}
-              onValueChange={(value) => {
-                setSortField(value);
-                setCurrentPage(1);
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Sắp xếp theo" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">Không sắp xếp</SelectItem>
-                <SelectItem value="events">Số sự kiện</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select
-              value={sortOrder}
-              onValueChange={(value) => {
-                setSortOrder(value);
-                setCurrentPage(1);
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Thứ tự" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="desc">Giảm dần</SelectItem>
-                <SelectItem value="asc">Tăng dần</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
         </div>
-        <div className="rounded-lg border border-zinc-200 bg-card dark:border-zinc-800">
+        <div className="rounded-lg border border-zinc-200 bg-white text-zinc-950 shadow-sm overflow-hidden">
           <div className="w-full overflow-x-auto">
-            <Table className="min-w-[1200px]">
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[60px]">ID</TableHead>
-                  <TableHead className="w-[80px]">Avatar</TableHead>
-                  <TableHead className="min-w-[160px]">Tên tổ chức</TableHead>
-                  <TableHead className="min-w-[150px]">Họ và tên</TableHead>
-                  <TableHead className="min-w-[130px]">CCCD</TableHead>
-                  <TableHead className="min-w-[120px]">Số điện thoại</TableHead>
-                  <TableHead className="min-w-[200px]">Email</TableHead>
-                  <TableHead className="w-[100px]">Ngày sinh</TableHead>
-                  <TableHead className="w-[120px] text-center whitespace-nowrap">
-                    Số sự kiện
+            <Table className="min-w-[1200px] bg-white">
+              <TableHeader className="bg-white">
+                <TableRow className="bg-white">
+                  <TableHead className="w-[60px]">
+                    <div className="flex items-center justify-between gap-2">
+                      <span>ID</span>
+                      <SortOnlyDropdown sortKey="id" label="ID" />
+                    </div>
                   </TableHead>
-                  <TableHead className="w-[120px]">Vai trò</TableHead>
-                  <TableHead className="w-[110px]">Trạng thái</TableHead>
+                  <TableHead className="w-[80px]">
+                    <div className="flex items-center justify-between gap-2">
+                      <span>Avatar</span>
+                    </div>
+                  </TableHead>
+                  <TableHead className="min-w-[160px]">
+                    <div className="flex items-center justify-between gap-2">
+                      <span>Tên tổ chức</span>
+                      <ValueFilterDropdown
+                        columnKey="orgName"
+                        label="Tên tổ chức"
+                      />
+                    </div>
+                  </TableHead>
+                  <TableHead className="min-w-[150px]">
+                    <div className="flex items-center justify-between gap-2">
+                      <span>Họ và tên</span>
+                      <ValueFilterDropdown
+                        columnKey="fullName"
+                        label="Họ và tên"
+                      />
+                    </div>
+                  </TableHead>
+                  <TableHead className="min-w-[130px]">
+                    <div className="flex items-center justify-between gap-2">
+                      <span>CCCD</span>
+                      <ValueFilterDropdown columnKey="cccd" label="CCCD" />
+                    </div>
+                  </TableHead>
+                  <TableHead className="min-w-[120px]">
+                    <div className="flex items-center justify-between gap-2">
+                      <span>Số điện thoại</span>
+                      <ValueFilterDropdown
+                        columnKey="phone"
+                        label="Số điện thoại"
+                      />
+                    </div>
+                  </TableHead>
+                  <TableHead className="min-w-[200px]">
+                    <div className="flex items-center justify-between gap-2">
+                      <span>Email</span>
+                      <ValueFilterDropdown columnKey="email" label="Email" />
+                    </div>
+                  </TableHead>
+                  <TableHead className="w-[140px]">
+                    <div className="flex items-center justify-between gap-2">
+                      <span>Ngày sinh</span>
+                      <DobFilterDropdown />
+                    </div>
+                  </TableHead>
+                  <TableHead className="w-[120px] text-center whitespace-nowrap">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="w-full text-center">Số sự kiện</span>
+                      <SortOnlyDropdown sortKey="events" label="Số sự kiện" />
+                    </div>
+                  </TableHead>
+                  <TableHead className="w-[120px]">
+                    <div className="flex items-center justify-between gap-2">
+                      <span>Vai trò</span>
+                      <ValueFilterDropdown columnKey="role" label="Vai trò" />
+                    </div>
+                  </TableHead>
+                  <TableHead className="w-[110px]">
+                    <div className="flex items-center justify-between gap-2">
+                      <span>Trạng thái</span>
+                      <ValueFilterDropdown
+                        columnKey="status"
+                        label="Trạng thái"
+                      />
+                    </div>
+                  </TableHead>
                   <TableHead className="w-[120px] text-center">
                     Thao tác
                   </TableHead>
@@ -729,7 +1246,7 @@ export default function OrganizersList(props: Props) {
               </TableHeader>
               <TableBody>
                 {paginatedOrganizers.map((org) => (
-                  <TableRow key={org.id}>
+                  <TableRow key={org.id} className="hover:bg-zinc-50">
                     <TableCell className="font-medium">{org.id}</TableCell>
                     <TableCell>
                       <Avatar className="h-10 w-10">
@@ -830,7 +1347,7 @@ export default function OrganizersList(props: Props) {
         </div>
         {/* Detail Modal */}
         <Dialog open={openDetailModal} onOpenChange={setOpenDetailModal}>
-          <DialogContent className="max-w-2xl bg-card dark:bg-zinc-950">
+          <DialogContent className="max-w-2xl bg-white">
             <DialogHeader>
               <DialogTitle className="text-zinc-900 dark:text-white">
                 Chi tiết thông tin người tổ chức
@@ -931,7 +1448,7 @@ export default function OrganizersList(props: Props) {
         </Dialog>
         {/* Edit Organizer Modal */}
         <Dialog open={openEditModal} onOpenChange={setOpenEditModal}>
-          <DialogContent className="max-w-2xl bg-card dark:bg-zinc-950">
+          <DialogContent className="max-w-2xl bg-white">
             <DialogHeader>
               <DialogTitle className="text-zinc-900 dark:text-white">
                 Cập nhật thông tin người tổ chức
@@ -1049,13 +1566,13 @@ export default function OrganizersList(props: Props) {
               <div className="flex justify-end gap-2 pt-4">
                 <Button
                   onClick={() => setOpenEditModal(false)}
-                  className="bg-zinc-100 text-zinc-700 hover:bg-zinc-200"
+                  className="bg-red-600 hover:bg-red-700 text-white"
                 >
                   Hủy
                 </Button>
                 <Button
                   onClick={handleConfirmEdit}
-                  className="bg-blue-600 hover:bg-blue-700"
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
                 >
                   Cập nhật
                 </Button>
@@ -1065,7 +1582,7 @@ export default function OrganizersList(props: Props) {
         </Dialog>
         {/* Lock Confirmation Modal */}
         <Dialog open={openLockModal} onOpenChange={setOpenLockModal}>
-          <DialogContent className="max-w-md bg-card dark:bg-zinc-950">
+          <DialogContent className="max-w-md bg-white">
             <DialogHeader>
               <DialogTitle className="text-zinc-900 dark:text-white">
                 Xác nhận thay đổi trạng thái
@@ -1094,13 +1611,13 @@ export default function OrganizersList(props: Props) {
             <div className="flex justify-end gap-2">
               <Button
                 onClick={() => setOpenLockModal(false)}
-                className="bg-zinc-100 text-zinc-700 hover:bg-zinc-200"
+                className="bg-red-600 hover:bg-red-700 text-white"
               >
                 Hủy
               </Button>
               <Button
                 onClick={handleConfirmLock}
-                className="bg-red-600 hover:bg-red-700"
+                className="bg-blue-600 hover:bg-blue-700 text-white"
               >
                 Xác nhận
               </Button>
@@ -1109,7 +1626,7 @@ export default function OrganizersList(props: Props) {
         </Dialog>
         {/* Add Host Modal */}
         <Dialog open={openAddHostModal} onOpenChange={setOpenAddHostModal}>
-          <DialogContent className="max-w-2xl bg-card dark:bg-zinc-950">
+          <DialogContent className="max-w-2xl bg-white">
             <DialogHeader>
               <DialogTitle className="text-zinc-900 dark:text-white">
                 Tạo tài khoản Host mới
@@ -1286,13 +1803,13 @@ export default function OrganizersList(props: Props) {
                   });
                   setOrgSearchQuery('');
                 }}
-                className="bg-zinc-100 text-zinc-700 hover:bg-zinc-200"
+                className="bg-red-600 hover:bg-red-700 text-white"
               >
                 Hủy
               </Button>
               <Button
                 onClick={handleAddHost}
-                className="bg-blue-600 hover:bg-blue-700"
+                className="bg-blue-600 hover:bg-blue-700 text-white"
               >
                 Tạo tài khoản
               </Button>

@@ -184,7 +184,7 @@ function CheckTable(props: { tableData: any }) {
   return (
     <Card
       className={
-        'h-full w-full border-zinc-200 p-0 dark:border-zinc-800 sm:overflow-auto'
+        'h-full w-full border-zinc-200 bg-white p-0 text-zinc-950 shadow-sm sm:overflow-auto'
       }
     >
       <div className="overflow-x-scroll xl:overflow-x-hidden">
@@ -192,16 +192,16 @@ function CheckTable(props: { tableData: any }) {
           {table.getHeaderGroups().map((headerGroup) => (
             <TableHeader
               key={headerGroup.id}
-              className="border-b-[1px] border-zinc-200 p-6 dark:border-zinc-800"
+              className="border-b-[1px] border-zinc-200 bg-white p-6"
             >
-              <tr className="dark:border-zinc-800">
+              <tr>
                 {headerGroup.headers.map((header) => {
                   return (
                     <TableHead
                       key={header.id}
                       colSpan={header.colSpan}
                       onClick={header.column.getToggleSortingHandler()}
-                      className="cursor-pointer border-zinc-200 pl-5 pr-4 pt-2 text-start dark:border-zinc-800"
+                      className="cursor-pointer border-zinc-200 pl-5 pr-4 pt-2 text-start"
                     >
                       {flexRender(
                         header.column.columnDef.header,
@@ -223,15 +223,12 @@ function CheckTable(props: { tableData: any }) {
               .rows.slice(0, 7)
               .map((row) => {
                 return (
-                  <TableRow
-                    key={row.id}
-                    className="px-6 dark:hover:bg-gray-900"
-                  >
+                  <TableRow key={row.id} className="px-6 hover:bg-zinc-50">
                     {row.getVisibleCells().map((cell) => {
                       return (
                         <TableCell
                           key={cell.id}
-                          className="w-max border-b-[1px] border-zinc-200 py-5 pl-5 pr-4 dark:border-white/10"
+                          className="w-max border-b-[1px] border-zinc-200 py-5 pl-5 pr-4"
                         >
                           {flexRender(
                             cell.column.columnDef.cell,
