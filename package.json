@@ -82,6 +82,7 @@
     "embla-carousel-react": "^8.6.0",
     "endent": "^2.1.0",
     "eventsource-parser": "^1.1.2",
+    "firebase": "^12.10.0",
     "framer-motion": "^11.2.6",
     "input-otp": "^1.4.2",
     "lucide-react": "^0.379.0",

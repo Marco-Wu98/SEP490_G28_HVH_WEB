@@ -49,6 +49,12 @@ interface Props {
   badgeFromStatus?: boolean;
   badgeClassName?: string;
   badgeClassNameByStatus?: Partial<Record<string, string>>;
+  notificationButton?: {
+    permission: 'granted' | 'denied' | 'default' | 'unsupported';
+    isLoading: boolean;
+    isMounted: boolean;
+    onRequest: () => void;
+  };
 }
 
 const mockPendingEvents = [
@@ -140,7 +146,8 @@ export default function PendingEvents({
   badgeText = 'Chờ phê duyệt',
   badgeFromStatus = false,
   badgeClassName = 'rounded-full bg-gray-500 text-white font-semibold px-3 py-0.5 text-xs transition-colors duration-150 hover:bg-gray-400',
-  badgeClassNameByStatus
+  badgeClassNameByStatus,
+  notificationButton
 }: Props) {
   type PendingEvent = (typeof mockPendingEvents)[0];
   type SortKey =
@@ -742,6 +749,33 @@ export default function PendingEvents({
             className="bg-white border-zinc-200 text-zinc-900 placeholder:text-zinc-500 focus-visible:ring-0 focus-visible:ring-offset-0"
           />
         </div>
+
+        {/* Button yêu cầu quyền thông báo */}
+        {notificationButton && notificationButton.isMounted && (
+          <div className="mb-6">
+            <button
+              onClick={notificationButton.onRequest}
+              disabled={
+                notificationButton.permission === 'granted' ||
+                notificationButton.permission === 'unsupported' ||
+                notificationButton.isLoading
+              }
+              className={`px-4 py-2 rounded-lg text-white font-medium transition-colors ${
+                notificationButton.permission === 'granted'
+                  ? 'bg-green-600 cursor-not-allowed opacity-75'
+                  : notificationButton.permission === 'unsupported'
+                    ? 'bg-gray-400 cursor-not-allowed'
+                    : 'bg-blue-600 hover:bg-blue-700'
+              }`}
+            >
+              {notificationButton.isLoading
+                ? 'Đang yêu cầu...'
+                : notificationButton.permission === 'granted'
+                  ? '✓ Đã cấp quyền thông báo'
+                  : '🔔 Yêu cầu quyền thông báo'}
+            </button>
+          </div>
+        )}
 
         <div className="rounded-lg border border-zinc-200 bg-white overflow-hidden">
           <Table>

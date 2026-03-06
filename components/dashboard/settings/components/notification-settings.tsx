@@ -3,7 +3,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import Notification from '@/components/notification';
+import Notification from '@/components/Notification';
 import { HiOutlineBellAlert } from 'react-icons/hi2';
 import { Switch } from '@/components/ui/switch';
 import { HiOutlineCheck } from 'react-icons/hi';

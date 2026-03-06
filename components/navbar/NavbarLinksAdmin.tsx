@@ -80,11 +80,13 @@ export default function HeaderLinks(props: {
       </Button>
       <Link className="w-full" href={settingsPath}>
         <Avatar className="h-9 min-w-9 md:min-h-10 md:min-w-10">
-          <AvatarImage src={user?.user_metadata.avatar_url} />
+          <AvatarImage
+            src={user?.user_metadata?.avatar_url || '/default-avatar.png'}
+          />
           <AvatarFallback className="font-bold">
-            {user?.user_metadata.full_name
-              ? `${user?.user_metadata.full_name[0]}`
-              : `${user?.email[0].toUpperCase()}`}
+            {user?.user_metadata?.full_name
+              ? `${user?.user_metadata?.full_name[0]}`
+              : user?.email?.[0]?.toUpperCase() || 'U'}
           </AvatarFallback>
         </Avatar>
       </Link>
