@@ -1,8 +1,8 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { signInWithPassword } from '@/utils/auth-helpers/server';
-import { handleRequest } from '@/utils/auth-helpers/client';
+import { useSupabase } from '@/app/supabase-provider';
+import { getErrorRedirect, getStatusRedirect } from '@/utils/helpers';
 import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
 import { Input } from '../ui/input';
@@ -17,13 +17,62 @@ export default function PasswordSignIn({
   isAdmin = false
 }: PasswordSignInProps) {
   const router = useRouter();
-  const routerForRedirect = redirectMethod === 'client' ? router : null;
+  const { supabase } = useSupabase();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    setIsSubmitting(true); // Disable the button while the request is being handled
-    await handleRequest(e, signInWithPassword, routerForRedirect);
-    setIsSubmitting(false);
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      const formData = new FormData(e.currentTarget);
+      const email = String(formData.get('email') || '').trim();
+      const password = String(formData.get('password') || '').trim();
+
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (error) {
+        router.push(
+          getErrorRedirect(
+            isAdmin
+              ? '/dashboard/signin/password_signin'
+              : '/signin/password_signin',
+            'Sign in failed.',
+            error.message
+          )
+        );
+        return;
+      }
+
+      const userRole = data.user?.app_metadata?.role;
+      if (isAdmin && userRole !== 'SYS_ADMIN') {
+        await supabase.auth.signOut();
+        router.push(
+          getErrorRedirect(
+            '/dashboard/signin/password_signin',
+            'Đăng nhập thất bại.',
+            'Chỉ tài khoản SYS_ADMIN mới được phép đăng nhập vào trang quản trị.'
+          )
+        );
+        return;
+      }
+
+      document.cookie =
+        'preferredSignInView=password_signin; path=/; SameSite=Lax';
+
+      router.push(
+        getStatusRedirect(
+          isAdmin ? '/dashboard/main' : '/organizer/main',
+          'Success!',
+          'You are now signed in.'
+        )
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const submitButtonClassName = isAdmin
@@ -44,7 +93,10 @@ export default function PasswordSignIn({
         />
         <div className="grid gap-2">
           <div className="grid gap-1">
-            <label className="text-sm font-medium text-foreground" htmlFor="email">
+            <label
+              className="text-sm font-medium text-foreground"
+              htmlFor="email"
+            >
               Email
             </label>
             <Input
@@ -82,9 +134,7 @@ export default function PasswordSignIn({
                 aria-hidden="true"
                 role="status"
                 className={`mr-2 inline h-4 w-4 animate-spin duration-500 ${
-                  isAdmin
-                    ? 'text-white/80'
-                    : 'text-primary-foreground/80'
+                  isAdmin ? 'text-white/80' : 'text-primary-foreground/80'
                 }`}
                 viewBox="0 0 100 101"
                 fill="none"

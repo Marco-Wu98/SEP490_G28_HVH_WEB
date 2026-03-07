@@ -1,13 +1,12 @@
 'use client';
 
 import type { Database } from '@/types/types_db';
-import { createPagesBrowserClient } from '@supabase/auth-helpers-nextjs';
-import type { SupabaseClient } from '@supabase/auth-helpers-nextjs';
+import { createClient } from '@/utils/supabase/client';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
 import { createContext, useContext, useEffect, useState } from 'react';
 import { SWRConfig } from 'swr';
 import { swrFetcher } from '@/utils/swr-fetcher';
-import { useNotificationPermission } from '@/hooks/use-notification-permission';
 
 type SupabaseContext = {
   supabase: SupabaseClient<Database>;
@@ -20,40 +19,26 @@ export default function SupabaseProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const [supabase] = useState(() => createPagesBrowserClient());
+  const [supabase] = useState<SupabaseClient<Database>>(() => createClient());
   const router = useRouter();
-  const { requestPermission } = useNotificationPermission();
 
   useEffect(() => {
-    const triggerNotificationRegistration = async () => {
-      try {
-        await requestPermission();
-      } catch (error) {
-        console.error('Failed to trigger notification registration flow:', error);
-      }
-    };
-
-    // Login qua server action thường không bắn SIGNED_IN ở client,
-    // nên chủ động kiểm tra session hiện tại khi component mount.
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) {
-        void triggerNotificationRegistration();
-      }
-    });
-
     const {
       data: { subscription }
     } = supabase.auth.onAuthStateChange(async (event) => {
-      if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+      if (
+        event === 'SIGNED_IN' ||
+        event === 'SIGNED_OUT' ||
+        event === 'INITIAL_SESSION'
+      ) {
         router.refresh();
-        await triggerNotificationRegistration();
       }
     });
 
     return () => {
       subscription.unsubscribe();
     };
-  }, [requestPermission, router, supabase]);
+  }, [router, supabase]);
 
   return (
     <Context.Provider value={{ supabase }}>

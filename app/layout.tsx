@@ -1,4 +1,5 @@
 import SupabaseProvider from './supabase-provider';
+import NotificationManager from '@/components/NotificationManager';
 import { PropsWithChildren } from 'react';
 import { Roboto } from 'next/font/google';
 import '@/styles/globals.css';
@@ -99,6 +100,7 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <SupabaseProvider>
+          <NotificationManager />
           <main id="skip">{children}</main>
         </SupabaseProvider>
       </body>

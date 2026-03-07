@@ -108,27 +108,18 @@ export function useNotificationPermission(): UseNotificationPermissionResult {
 
       // Nếu đã được cấp quyền thì luôn lấy token và đăng ký với backend
       if (currentPermission === 'granted') {
-        console.log('🔥 Getting Firebase token...');
         token = await requestFirebaseToken();
         if (token) {
-          console.log('✅ Firebase token obtained successfully!');
           window.localStorage.setItem(NOTIFICATION_FCM_TOKEN_KEY, token);
 
-          try {
-            await registerToken({
-              token,
-              platform: 'WEB',
-              deviceId: getOrCreateDeviceId()
-            });
-            console.log('✅ Notification token registered successfully!');
-          } catch (registerError) {
-            console.error(
-              '❌ Failed to register notification token:',
-              registerError
-            );
-          }
+          const deviceId = getOrCreateDeviceId();
+          await registerToken({
+            token,
+            platform: 'WEB',
+            deviceId
+          });
         } else {
-          console.log('❌ Failed to get Firebase token');
+          throw new Error('Failed to get Firebase token');
         }
       }
 
@@ -136,8 +127,7 @@ export function useNotificationPermission(): UseNotificationPermissionResult {
         permission: currentPermission as NotificationPermission,
         token
       };
-    } catch (error) {
-      console.error('Error requesting notification permission:', error);
+    } catch {
       return {
         permission: 'denied' as NotificationPermission,
         token: null
