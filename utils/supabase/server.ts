@@ -1,10 +1,19 @@
+import { Database } from '@/types/types_db';
 import { createServerClient } from '@supabase/ssr';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
+
+export type ServerSupabaseClient = SupabaseClient<
+  Database,
+  'public',
+  'public',
+  Database['public']
+>;
 
 export const createClient = async () => {
   const cookieStore = await cookies();
 
-  return createServerClient(
+  return createServerClient<Database, 'public', Database['public']>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
@@ -25,5 +34,5 @@ export const createClient = async () => {
         }
       }
     }
-  );
+  ) as unknown as ServerSupabaseClient;
 };

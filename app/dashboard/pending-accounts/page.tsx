@@ -1,10 +1,15 @@
 import PendingAccounts from '@/components/dashboard/pending-accounts';
+import type { Tables } from '@/types/types_db';
 import { createClient } from '@/utils/supabase/server';
 import { getUser, getUserDetails } from '@/utils/supabase/queries';
 import { redirect } from 'next/navigation';
 
+type PendingVerification = Tables<'identity_verifications'>;
+type Volunteer = Tables<'volunteers'>;
+
 export default async function PendingAccountsPage() {
   const supabase = await createClient();
+
   const [user, userDetails] = await Promise.all([
     getUser(supabase),
     getUserDetails(supabase)
@@ -14,28 +19,32 @@ export default async function PendingAccountsPage() {
     return redirect('/dashboard/signin');
   }
 
-  const { data: verifications } = await supabase
+  const { data: verificationsData } = await supabase
     .from('identity_verifications')
     .select('id, email, phone, cid, status, created_at, volunteer_id')
     .eq('status', 'PENDING')
     .order('created_at', { ascending: false });
 
-  const volunteerIds = (verifications || [])
+  const verifications: PendingVerification[] = verificationsData ?? [];
+
+  const volunteerIds = verifications
     .map((item) => item.volunteer_id)
     .filter(Boolean) as string[];
 
-  const { data: volunteers } = volunteerIds.length
+  const { data: volunteersData } = volunteerIds.length
     ? await supabase
         .from('volunteers')
         .select('id, full_name')
         .in('id', volunteerIds)
     : { data: [] };
 
+  const volunteers: Volunteer[] = volunteersData ?? [];
+
   const volunteerMap = new Map(
-    (volunteers || []).map((volunteer) => [volunteer.id, volunteer.full_name])
+    volunteers.map((volunteer) => [volunteer.id, volunteer.full_name])
   );
 
-  const accounts = (verifications || []).map((item) => ({
+  const accounts = verifications.map((item) => ({
     id: item.id,
     fullName: item.volunteer_id
       ? (volunteerMap.get(item.volunteer_id) ?? null)

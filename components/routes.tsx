@@ -80,7 +80,7 @@ export const routes: IRoute[] = [
     collapse: false
   },
   {
-    name: 'Trang giới thiệu',
+    name: 'Về chúng tôi',
     path: '/about-us',
     icon: (
       <HiOutlineDocumentText className="-mt-[7px] h-4 w-4 stroke-2 text-inherit" />
@@ -108,6 +108,14 @@ export const organizerRoutes: IRoute[] = [
     path: '/organizer/approved-events',
     icon: (
       <CircleCheckBig className="-mt-[7px] h-4 w-4 stroke-2 text-inherit" />
+    ),
+    collapse: false
+  },
+  {
+    name: 'Về chúng tôi',
+    path: '/about-us',
+    icon: (
+      <HiOutlineDocumentText className="-mt-[7px] h-4 w-4 stroke-2 text-inherit" />
     ),
     collapse: false
   }

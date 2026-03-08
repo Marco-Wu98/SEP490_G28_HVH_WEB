@@ -178,27 +178,78 @@ export interface Database {
           }
         ];
       };
+      identity_verifications: {
+        Row: {
+          cid: string | null;
+          created_at: string | null;
+          email: string | null;
+          id: string;
+          phone: string | null;
+          status: string | null;
+          volunteer_id: string | null;
+        };
+        Insert: {
+          cid?: string | null;
+          created_at?: string | null;
+          email?: string | null;
+          id?: string;
+          phone?: string | null;
+          status?: string | null;
+          volunteer_id?: string | null;
+        };
+        Update: {
+          cid?: string | null;
+          created_at?: string | null;
+          email?: string | null;
+          id?: string;
+          phone?: string | null;
+          status?: string | null;
+          volunteer_id?: string | null;
+        };
+        Relationships: [];
+      };
+      volunteers: {
+        Row: {
+          full_name: string | null;
+          id: string;
+        };
+        Insert: {
+          full_name?: string | null;
+          id?: string;
+        };
+        Update: {
+          full_name?: string | null;
+          id?: string;
+        };
+        Relationships: [];
+      };
       users: {
         Row: {
           avatar_url: string | null;
           billing_address: Json | null;
+          credits: number | null;
           full_name: string | null;
           id: string;
           payment_method: Json | null;
+          trial_credits: number | null;
         };
         Insert: {
           avatar_url?: string | null;
           billing_address?: Json | null;
+          credits?: number | null;
           full_name?: string | null;
           id: string;
           payment_method?: Json | null;
+          trial_credits?: number | null;
         };
         Update: {
           avatar_url?: string | null;
           billing_address?: Json | null;
+          credits?: number | null;
           full_name?: string | null;
           id?: string;
           payment_method?: Json | null;
+          trial_credits?: number | null;
         };
         Relationships: [
           {
@@ -211,7 +262,18 @@ export interface Database {
       };
     };
     Views: {
-      [_ in never]: never;
+      user_details: {
+        Row: {
+          avatar_url: string | null;
+          billing_address: Json | null;
+          first_name: string | null;
+          full_name: string | null;
+          id: string | null;
+          last_name: string | null;
+          payment_method: Json | null;
+        };
+        Relationships: [];
+      };
     };
     Functions: {
       [_ in never]: never;
@@ -407,27 +469,78 @@ export interface DatabaseTTS {
           }
         ];
       };
+      identity_verifications: {
+        Row: {
+          cid: string | null;
+          created_at: string | null;
+          email: string | null;
+          id: string;
+          phone: string | null;
+          status: string | null;
+          volunteer_id: string | null;
+        };
+        Insert: {
+          cid?: string | null;
+          created_at?: string | null;
+          email?: string | null;
+          id?: string;
+          phone?: string | null;
+          status?: string | null;
+          volunteer_id?: string | null;
+        };
+        Update: {
+          cid?: string | null;
+          created_at?: string | null;
+          email?: string | null;
+          id?: string;
+          phone?: string | null;
+          status?: string | null;
+          volunteer_id?: string | null;
+        };
+        Relationships: [];
+      };
+      volunteers: {
+        Row: {
+          full_name: string | null;
+          id: string;
+        };
+        Insert: {
+          full_name?: string | null;
+          id?: string;
+        };
+        Update: {
+          full_name?: string | null;
+          id?: string;
+        };
+        Relationships: [];
+      };
       users: {
         Row: {
           avatar_url: string | null;
           billing_address: Json | null;
+          credits: number | null;
           full_name: string | null;
           id: string;
           payment_method: Json | null;
+          trial_credits: number | null;
         };
         Insert: {
           avatar_url?: string | null;
           billing_address?: Json | null;
+          credits?: number | null;
           full_name?: string | null;
           id: string;
           payment_method?: Json | null;
+          trial_credits?: number | null;
         };
         Update: {
           avatar_url?: string | null;
           billing_address?: Json | null;
+          credits?: number | null;
           full_name?: string | null;
           id?: string;
           payment_method?: Json | null;
+          trial_credits?: number | null;
         };
         Relationships: [
           {
@@ -440,7 +553,18 @@ export interface DatabaseTTS {
       };
     };
     Views: {
-      [_ in never]: never;
+      user_details: {
+        Row: {
+          avatar_url: string | null;
+          billing_address: Json | null;
+          first_name: string | null;
+          full_name: string | null;
+          id: string | null;
+          last_name: string | null;
+          payment_method: Json | null;
+        };
+        Relationships: [];
+      };
     };
     Functions: {
       [_ in never]: never;
@@ -480,14 +604,14 @@ export type Tables<
     ? R
     : never
   : PublicTableNameOrOptions extends keyof (Database['public']['Tables'] &
-      Database['public']['Views'])
-  ? (Database['public']['Tables'] &
-      Database['public']['Views'])[PublicTableNameOrOptions] extends {
-      Row: infer R;
-    }
-    ? R
-    : never
-  : never;
+        Database['public']['Views'])
+    ? (Database['public']['Tables'] &
+        Database['public']['Views'])[PublicTableNameOrOptions] extends {
+        Row: infer R;
+      }
+      ? R
+      : never
+    : never;
 
 export type TablesInsert<
   PublicTableNameOrOptions extends
@@ -503,12 +627,12 @@ export type TablesInsert<
     ? I
     : never
   : PublicTableNameOrOptions extends keyof Database['public']['Tables']
-  ? Database['public']['Tables'][PublicTableNameOrOptions] extends {
-      Insert: infer I;
-    }
-    ? I
-    : never
-  : never;
+    ? Database['public']['Tables'][PublicTableNameOrOptions] extends {
+        Insert: infer I;
+      }
+      ? I
+      : never
+    : never;
 
 export type TablesUpdate<
   PublicTableNameOrOptions extends
@@ -524,12 +648,12 @@ export type TablesUpdate<
     ? U
     : never
   : PublicTableNameOrOptions extends keyof Database['public']['Tables']
-  ? Database['public']['Tables'][PublicTableNameOrOptions] extends {
-      Update: infer U;
-    }
-    ? U
-    : never
-  : never;
+    ? Database['public']['Tables'][PublicTableNameOrOptions] extends {
+        Update: infer U;
+      }
+      ? U
+      : never
+    : never;
 
 export type Enums<
   PublicEnumNameOrOptions extends
@@ -541,5 +665,5 @@ export type Enums<
 > = PublicEnumNameOrOptions extends { schema: keyof Database }
   ? Database[PublicEnumNameOrOptions['schema']]['Enums'][EnumName]
   : PublicEnumNameOrOptions extends keyof Database['public']['Enums']
-  ? Database['public']['Enums'][PublicEnumNameOrOptions]
-  : never;
+    ? Database['public']['Enums'][PublicEnumNameOrOptions]
+    : never;

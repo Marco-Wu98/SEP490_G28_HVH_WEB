@@ -1,15 +1,15 @@
 'use client';
 
-import type { Database } from '@/types/types_db';
 import { createClient } from '@/utils/supabase/client';
-import type { SupabaseClient } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
 import { createContext, useContext, useEffect, useState } from 'react';
 import { SWRConfig } from 'swr';
 import { swrFetcher } from '@/utils/swr-fetcher';
 
+type BrowserSupabaseClient = ReturnType<typeof createClient>;
+
 type SupabaseContext = {
-  supabase: SupabaseClient<Database>;
+  supabase: BrowserSupabaseClient;
 };
 
 const Context = createContext<SupabaseContext | undefined>(undefined);
@@ -19,7 +19,7 @@ export default function SupabaseProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const [supabase] = useState<SupabaseClient<Database>>(() => createClient());
+  const [supabase] = useState(createClient);
   const router = useRouter();
 
   useEffect(() => {

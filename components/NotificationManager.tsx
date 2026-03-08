@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useNotificationPermission } from '@/hooks/use-notification-permission';
 import { useSupabase } from '@/app/supabase-provider';
 
@@ -17,15 +17,15 @@ export default function NotificationManager() {
   // Always keep the latest requestPermission function
   requestPermissionRef.current = requestPermission;
 
-  const getStoredRegisteredUserId = () => {
+  const getStoredRegisteredUserId = useCallback(() => {
     if (typeof window === 'undefined') {
       return null;
     }
 
     return sessionStorage.getItem(NOTIFICATION_REGISTERED_USER_KEY);
-  };
+  }, []);
 
-  const resetRegistrationState = (reason: string) => {
+  const resetRegistrationState = useCallback((reason: string) => {
     hasTriggeredRef.current = false;
     isProcessingRef.current = false;
     lastRegisteredUserIdRef.current = null;
@@ -33,41 +33,42 @@ export default function NotificationManager() {
     if (typeof window !== 'undefined') {
       sessionStorage.removeItem(NOTIFICATION_REGISTERED_USER_KEY);
     }
-  };
+  }, []);
 
-  const syncRegistrationState = (
-    session: { user?: { id?: string } } | null
-  ) => {
-    const currentUserId = session?.user?.id ?? null;
-    const storedUserId = getStoredRegisteredUserId();
+  const syncRegistrationState = useCallback(
+    (session: { user?: { id?: string } } | null) => {
+      const currentUserId = session?.user?.id ?? null;
+      const storedUserId = getStoredRegisteredUserId();
 
-    if (!currentUserId) {
-      resetRegistrationState('no active session');
-      return null;
-    }
+      if (!currentUserId) {
+        resetRegistrationState('no active session');
+        return null;
+      }
 
-    if (storedUserId && storedUserId !== currentUserId) {
-      resetRegistrationState(
-        `stored user changed from ${storedUserId} to ${currentUserId}`
-      );
-    }
+      if (storedUserId && storedUserId !== currentUserId) {
+        resetRegistrationState(
+          `stored user changed from ${storedUserId} to ${currentUserId}`
+        );
+      }
 
-    if (
-      lastRegisteredUserIdRef.current &&
-      lastRegisteredUserIdRef.current !== currentUserId
-    ) {
-      resetRegistrationState(
-        `ref user changed from ${lastRegisteredUserIdRef.current} to ${currentUserId}`
-      );
-    }
+      if (
+        lastRegisteredUserIdRef.current &&
+        lastRegisteredUserIdRef.current !== currentUserId
+      ) {
+        resetRegistrationState(
+          `ref user changed from ${lastRegisteredUserIdRef.current} to ${currentUserId}`
+        );
+      }
 
-    if (storedUserId === currentUserId) {
-      hasTriggeredRef.current = true;
-      lastRegisteredUserIdRef.current = currentUserId;
-    }
+      if (storedUserId === currentUserId) {
+        hasTriggeredRef.current = true;
+        lastRegisteredUserIdRef.current = currentUserId;
+      }
 
-    return currentUserId;
-  };
+      return currentUserId;
+    },
+    [getStoredRegisteredUserId, resetRegistrationState]
+  );
 
   const markUserAsRegistered = (userId: string) => {
     hasTriggeredRef.current = true;
@@ -188,7 +189,7 @@ export default function NotificationManager() {
       subscription.unsubscribe();
       clearInterval(pollInterval);
     };
-  }, [supabase]);
+  }, [supabase, resetRegistrationState, syncRegistrationState]);
 
   return null;
 }

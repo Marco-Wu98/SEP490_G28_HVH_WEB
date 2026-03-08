@@ -27,7 +27,7 @@ import {
   ListFilter,
   X
 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/utils/cn';
 import type { IRoute } from '@/types/types';
@@ -214,20 +214,23 @@ export default function PendingEvents({
     return new Date(year, month - 1, day, 23, 59, 59, 999);
   };
 
-  const getFilterValueForKey = (event: PendingEvent, key: ValueFilterKey) => {
-    switch (key) {
-      case 'eventName':
-        return normalizeForFilter(event.eventName);
-      case 'organizer':
-        return normalizeForFilter(event.organizer);
-      case 'location':
-        return normalizeForFilter(event.location);
-      case 'status':
-        return normalizeForFilter(event.status);
-      default:
-        return '';
-    }
-  };
+  const getFilterValueForKey = useCallback(
+    (event: PendingEvent, key: ValueFilterKey) => {
+      switch (key) {
+        case 'eventName':
+          return normalizeForFilter(event.eventName);
+        case 'organizer':
+          return normalizeForFilter(event.organizer);
+        case 'location':
+          return normalizeForFilter(event.location);
+        case 'status':
+          return normalizeForFilter(event.status);
+        default:
+          return '';
+      }
+    },
+    []
+  );
 
   const getUniqueValuesForKey = (key: ValueFilterKey) => {
     const unique = new Set<string>();
@@ -706,7 +709,8 @@ export default function PendingEvents({
     submittedDateTo,
     sortCriteria,
     statusFilter,
-    statusFilters
+    statusFilters,
+    getFilterValueForKey
   ]);
 
   const totalPages = Math.max(1, Math.ceil(filteredEvents.length / pageSize));
