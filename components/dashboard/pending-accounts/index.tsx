@@ -30,7 +30,7 @@ import {
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { usePendingAccounts } from '@/hooks/features/uc044-identity-verification/usePendingAccountsList';
-import { ACCOUNT_STATUS } from '@/constants/account-status';
+import { EAccountStatus } from '@/constants/account-status';
 import type { PendingAccountItem } from '@/hooks/entity';
 import { cn } from '@/utils/cn';
 
@@ -72,7 +72,7 @@ export default function PendingAccounts({ user, userDetails }: Props) {
   const { data, error, isLoading } = usePendingAccounts({
     pageNumber: Math.max(0, currentPage - 1),
     pageSize,
-    status: ACCOUNT_STATUS.PENDING,
+    status: EAccountStatus.PENDING,
     email: searchQuery,
     baseUrl: apiBaseUrl
   });
@@ -91,7 +91,7 @@ export default function PendingAccounts({ user, userDetails }: Props) {
 
   const filteredAccounts = useMemo(() => {
     return effectiveAccounts.filter(
-      (account) => account.status === ACCOUNT_STATUS.PENDING
+      (account) => account.status === EAccountStatus.PENDING
     );
   }, [effectiveAccounts]);
 

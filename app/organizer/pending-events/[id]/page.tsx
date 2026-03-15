@@ -50,7 +50,6 @@ export default function OrganizerPendingEventDetailPage() {
     <PendingEventDetail
       user={user}
       userDetails={userDetails}
-      eventId={id ?? ''}
       backBasePath="/organizer/pending-events"
       routes={organizerRoutes}
       colorVariant="organizer"

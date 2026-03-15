@@ -1,6 +1,12 @@
-/* eslint-disable @next/next/no-img-element */
-
 'use client';
+/* eslint-disable @next/next/no-img-element */
+// Helper to get full image URL for Supabase Storage (giống PendingOrgDetail)
+function getFullImageUrl(url: string) {
+  if (!url) return '';
+  if (url.startsWith('http')) return url;
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+  return supabaseUrl + '/storage/v1' + url;
+}
 
 import DashboardLayout from '@/components/layout';
 import { Badge } from '@/components/ui/badge';
@@ -17,20 +23,29 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { User } from '@supabase/supabase-js';
 import { Mail, Phone, UserRound } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { IRoute } from '@/types/types';
-import type { EventDetailsResponseForManager } from '@/hooks/dto';
+import type {
+  EventDetailsResponseForSystemAdmin,
+  EventDetailsResponseForManager
+} from '@/hooks/dto';
 import { EEventStatus, EVENT_STATUS_LABELS } from '@/constants/event-status';
 import { EServedTarget, SERVED_TARGET_LABELS } from '@/constants/served-target';
 import {
   EServingPlaceType,
   SERVING_PLACE_TYPE_LABELS
 } from '@/constants/serving-place-type';
+// No data fetching here; handled by container
 
-interface Props {
+type Props = {
   user: User | null | undefined;
-  userDetails: { [x: string]: any } | null;
-  eventId: string;
+  userDetails: Record<string, any> | null;
+  externalData?:
+    | EventDetailsResponseForManager
+    | EventDetailsResponseForSystemAdmin
+    | null;
+  externalIsLoading?: boolean;
+  externalError?: Error | null;
   backBasePath?: string;
   routes?: IRoute[];
   colorVariant?: 'admin' | 'organizer';
@@ -41,14 +56,13 @@ interface Props {
   showActions?: boolean;
   showApprovedActions?: boolean;
   showHostInfo?: boolean;
-  externalData?: EventDetailsResponseForManager | null;
-  externalIsLoading?: boolean;
-  externalError?: Error | null;
-}
+};
 export default function PendingEventDetail({
   user,
   userDetails,
-  eventId,
+  externalData,
+  externalIsLoading,
+  externalError,
   backBasePath = '/dashboard/pending-events',
   routes,
   colorVariant,
@@ -58,10 +72,7 @@ export default function PendingEventDetail({
   infoText = 'Thông tin chi tiết sự kiện chờ phê duyệt',
   showActions = true,
   showApprovedActions = false,
-  showHostInfo,
-  externalData,
-  externalIsLoading,
-  externalError
+  showHostInfo
 }: Props) {
   const router = useRouter();
   const effectiveVariant = colorVariant ?? 'admin';
@@ -131,88 +142,188 @@ export default function PendingEventDetail({
     return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
   };
 
-  const normalizeEvent = (raw: EventDetailsResponseForManager): EventData => {
-    const r = raw as Record<string, unknown>;
-    const sessionsRaw = Array.isArray(r.eventSessions)
-      ? (r.eventSessions as Array<Record<string, unknown>>)
-      : [];
-    const sessions = sessionsRaw.map((s) => ({
-      id: getStr(s.id),
-      startDateTime: getStr(s.startDateTime),
-      endDateTime: getStr(s.endDateTime),
-      expectedVolAmount:
-        typeof s.expectedVolAmount === 'number'
-          ? s.expectedVolAmount
-          : Number(s.expectedVolAmount ?? 0),
-      expectedSerAmount:
-        typeof s.expectedSerAmount === 'number'
-          ? s.expectedSerAmount
-          : Number(s.expectedSerAmount ?? 0)
-    }));
-
-    const firstSession = sessions[0];
-    const lastSession = sessions[sessions.length - 1];
-
-    return {
-      id: getStr(r.id),
-      eventName: getStr(r.name, r.eventName, r.title),
-      organizer: getStr(r.organizationName, r.organizer),
-      approvalMode: getStr(r.approvalMode, r.registrationMethod),
-      status: getStr(r.status, r.eventStatus),
-      location: getStr(r.location, r.address),
-      region: getStr(r.region, r.ward, r.district),
-      date: fmtDate(r.startDate ?? firstSession?.startDateTime ?? r.startedAt),
-      endDate: fmtDate(lastSession?.endDateTime ?? r.endDate ?? r.endedAt),
-      startTime: fmtTime(
-        firstSession?.startDateTime ?? r.startTime ?? r.startedAt
-      ),
-      endTime: fmtTime(lastSession?.endDateTime ?? r.endTime ?? r.endedAt),
-      registrationDeadline: fmtDate(
-        r.recruitmentEndDate ?? r.registrationDeadline
-      ),
-      submittedDate: fmtDate(r.createdAt ?? r.submittedDate),
-      volunteers:
-        typeof r.maxVolunteers === 'number'
-          ? r.maxVolunteers
-          : sessions.reduce((sum, s) => sum + s.expectedVolAmount, 0),
-      expectedBeneficiaries: sessions.reduce(
-        (sum, s) => sum + s.expectedSerAmount,
-        0
-      ),
-      serviceTarget: (() => {
-        const val = getStr(
-          r.servedTarget,
-          r.serviceTarget,
-          r.targetBeneficiary
-        );
-        return SERVED_TARGET_LABELS[val as EServedTarget] || val || '-';
-      })(),
-      serviceField: getStr(
-        r.activitySubDomain,
-        r.serviceField,
-        r.activityDomain
-      ),
-      checkinPointName: getStr(r.checkinPointName, r.checkInPoint),
-      geofencingRadius: getStr(r.geofencingRadius, r.radius),
-      hostName: getStr(r.hostName, r.hostFullName),
-      hostEmail: getStr(r.hostEmail),
-      hostPhone: getStr(r.hostPhone, r.hostPhoneNumber),
-      description: getStr(r.description),
-      images: Array.isArray(r.images)
-        ? (r.images as string[])
-        : Array.isArray(r.imageUrls)
-          ? (r.imageUrls as string[])
+  function normalizeEvent(
+    raw: EventDetailsResponseForManager | EventDetailsResponseForSystemAdmin
+  ): EventData {
+    // Type guard for SystemAdmin
+    const isSystemAdmin = (e: any): e is EventDetailsResponseForSystemAdmin =>
+      'imageUrls' in e && 'address' in e;
+    if (isSystemAdmin(raw)) {
+      const sessions = Array.isArray(raw.eventSessions)
+        ? raw.eventSessions.map((s) => ({
+            id: s.id,
+            startDateTime:
+              (s as any).startTime || (s as any).startDateTime || '',
+            endDateTime: (s as any).endTime || (s as any).endDateTime || '',
+            expectedVolAmount: (s as any).expectedVolAmount ?? 0,
+            expectedSerAmount: (s as any).expectedSerAmount ?? 0
+          }))
+        : [];
+      const firstSession = sessions[0];
+      const lastSession = sessions[sessions.length - 1];
+      return {
+        id: raw.id,
+        eventName: raw.name,
+        organizer: (raw as any).orgName || '',
+        approvalMode: '',
+        status: raw.status,
+        location: raw.address,
+        region: '',
+        date: fmtDate(raw.startDate ?? firstSession?.startDateTime),
+        endDate: fmtDate(lastSession?.endDateTime),
+        startTime: fmtTime(firstSession?.startDateTime),
+        endTime: fmtTime(lastSession?.endDateTime),
+        registrationDeadline: fmtDate((raw as any).recruitmentEndDate),
+        submittedDate: fmtDate(raw.createdAt),
+        volunteers: (raw as any).numberOfRegisteredVolunteers ?? 0,
+        expectedBeneficiaries: (raw as any).numberOfJoinedVolunteers ?? 0,
+        serviceTarget:
+          SERVED_TARGET_LABELS[(raw as any).servedTarget] ||
+          (raw as any).servedTarget ||
+          '-',
+        serviceField: (raw as any).activitySubDomain || '-',
+        checkinPointName: '',
+        geofencingRadius: (raw as any).checkInAccuracyMeters?.toString() ?? '',
+        hostName: '',
+        hostEmail: '',
+        hostPhone: (raw as any).hostPhone || '',
+        description: raw.description || '',
+        images: Array.isArray((raw as any).imageUrls)
+          ? (raw as any).imageUrls
           : [],
-      servingPlaceType: (() => {
-        const val = getStr(r.servingPlaceType);
-        return (
-          SERVING_PLACE_TYPE_LABELS[val as EServingPlaceType] || val || '-'
-        );
-      })(),
-      note: getStr(r.note),
-      sessions
-    };
-  };
+        servingPlaceType:
+          SERVING_PLACE_TYPE_LABELS[(raw as any).servingPlaceType] ||
+          (raw as any).servingPlaceType ||
+          '-',
+        note: (raw as any).note || '',
+        sessions
+      };
+    } else {
+      // Manager type
+      const r = raw as Record<string, unknown>;
+      const sessionsRaw = Array.isArray(r.eventSessions)
+        ? (r.eventSessions as Array<Record<string, unknown>>)
+        : [];
+      const sessions = sessionsRaw.map((s) => ({
+        id: getStr(s.id),
+        startDateTime: getStr(s.startDateTime),
+        endDateTime: getStr(s.endDateTime),
+        expectedVolAmount:
+          typeof s.expectedVolAmount === 'number'
+            ? s.expectedVolAmount
+            : Number(s.expectedVolAmount ?? 0),
+        expectedSerAmount:
+          typeof s.expectedSerAmount === 'number'
+            ? s.expectedSerAmount
+            : Number(s.expectedSerAmount ?? 0)
+      }));
+      const firstSession = sessions[0];
+      const lastSession = sessions[sessions.length - 1];
+      return {
+        id: getStr(r.id),
+        eventName: getStr(r.name, r.eventName, r.title),
+        organizer: getStr(r.organizationName, r.organizer),
+        approvalMode: getStr(r.approvalMode, r.registrationMethod),
+        status: getStr(r.status, r.eventStatus),
+        location: getStr(r.location, r.address),
+        region: getStr(r.region, r.ward, r.district),
+        date: fmtDate(
+          r.startDate ?? firstSession?.startDateTime ?? r.startedAt
+        ),
+        endDate: fmtDate(lastSession?.endDateTime ?? r.endDate ?? r.endedAt),
+        startTime: fmtTime(
+          firstSession?.startDateTime ?? r.startTime ?? r.startedAt
+        ),
+        endTime: fmtTime(lastSession?.endDateTime ?? r.endTime ?? r.endedAt),
+        registrationDeadline: fmtDate(
+          r.recruitmentEndDate ?? r.registrationDeadline
+        ),
+        submittedDate: fmtDate(r.createdAt ?? r.submittedDate),
+        volunteers:
+          typeof r.maxVolunteers === 'number'
+            ? r.maxVolunteers
+            : sessions.reduce((sum, s) => sum + s.expectedVolAmount, 0),
+        expectedBeneficiaries: sessions.reduce(
+          (sum, s) => sum + s.expectedSerAmount,
+          0
+        ),
+        serviceTarget: (() => {
+          const val = getStr(
+            r.servedTarget,
+            r.serviceTarget,
+            r.targetBeneficiary
+          );
+          return SERVED_TARGET_LABELS[val as EServedTarget] || val || '-';
+        })(),
+        serviceField: getStr(
+          r.activitySubDomain,
+          r.serviceField,
+          r.activityDomain
+        ),
+        checkinPointName: getStr(r.checkinPointName, r.checkInPoint),
+        geofencingRadius: getStr(r.geofencingRadius, r.radius),
+        hostName: getStr(r.hostName, r.hostFullName),
+        hostEmail: getStr(r.hostEmail),
+        hostPhone: getStr(r.hostPhone, r.hostPhoneNumber),
+        description: getStr(r.description),
+        images: Array.isArray(r.images)
+          ? (r.images as string[])
+          : Array.isArray(r.imageUrls)
+            ? (r.imageUrls as string[])
+            : [],
+        servingPlaceType: (() => {
+          const val = getStr(r.servingPlaceType);
+          return (
+            SERVING_PLACE_TYPE_LABELS[val as EServingPlaceType] || val || '-'
+          );
+        })(),
+        note: getStr(r.note),
+        sessions
+      };
+    }
+  }
+
+  if (externalIsLoading) {
+    return (
+      <DashboardLayout
+        user={user}
+        userDetails={userDetails}
+        title="Chi tiết sự kiện"
+        description={pageDescription}
+        routes={routes}
+        colorVariant={colorVariant}
+        signInPath={signInPath}
+        shellClassName={shellClassName}
+      >
+        <div className="w-full">
+          <Card className="border-zinc-200 bg-white p-6 text-zinc-900 shadow-sm">
+            <p className="text-zinc-600">Đang tải dữ liệu...</p>
+          </Card>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (externalError) {
+    return (
+      <DashboardLayout
+        user={user}
+        userDetails={userDetails}
+        title="Chi tiết sự kiện"
+        description={pageDescription}
+        routes={routes}
+        colorVariant={colorVariant}
+        signInPath={signInPath}
+        shellClassName={shellClassName}
+      >
+        <div className="w-full">
+          <Card className="border-zinc-200 bg-white p-6 text-zinc-900 shadow-sm">
+            <p className="text-red-600">Không thể tải dữ liệu.</p>
+          </Card>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   const event: EventData | null = externalData
     ? normalizeEvent(externalData)
@@ -311,8 +422,11 @@ export default function PendingEventDetail({
                   <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3">
                     <p className="text-xs text-zinc-500">Trạng thái</p>
                     <p className="mt-1 text-sm font-semibold text-zinc-800">
-                      {EVENT_STATUS_LABELS[event.status as EEventStatus] ||
-                        event.status}
+                      {Object.values(EEventStatus).includes(
+                        event.status as EEventStatus
+                      )
+                        ? EVENT_STATUS_LABELS[event.status as EEventStatus]
+                        : event.status || 'Không xác định'}
                     </p>
                   </div>
                   <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3">
@@ -353,28 +467,31 @@ export default function PendingEventDetail({
                 <div className="mt-4">
                   <Carousel opts={{ align: 'start' }}>
                     <CarouselContent>
-                      {event.images?.map((src, index) => (
-                        <CarouselItem
-                          key={`${event.id}-img-${index}`}
-                          className="basis-full sm:basis-1/2 lg:basis-1/3"
-                        >
-                          <button
-                            type="button"
-                            className="w-full"
-                            onClick={() => setPreviewImage(src)}
-                            aria-label={`Xem ảnh ${index + 1}`}
+                      {event.images?.map((src, index) => {
+                        const fullImageUrl = getFullImageUrl(src);
+                        return (
+                          <CarouselItem
+                            key={`${event.id}-img-${index}`}
+                            className="basis-full sm:basis-1/2 lg:basis-1/3"
                           >
-                            <div className="overflow-hidden rounded-lg border border-zinc-200">
-                              <img
-                                src={src}
-                                alt={`${event.eventName} - ảnh ${index + 1}`}
-                                className="h-56 w-full object-cover"
-                                loading="lazy"
-                              />
-                            </div>
-                          </button>
-                        </CarouselItem>
-                      ))}
+                            <button
+                              type="button"
+                              className="w-full"
+                              onClick={() => setPreviewImage(fullImageUrl)}
+                              aria-label={`Xem ảnh ${index + 1}`}
+                            >
+                              <div className="overflow-hidden rounded-lg border border-zinc-200">
+                                <img
+                                  src={fullImageUrl}
+                                  alt={`${event.eventName} - ảnh ${index + 1}`}
+                                  className="h-56 w-full object-cover"
+                                  loading="lazy"
+                                />
+                              </div>
+                            </button>
+                          </CarouselItem>
+                        );
+                      })}
                     </CarouselContent>
                     <CarouselPrevious className="left-0" />
                     <CarouselNext className="right-0" />

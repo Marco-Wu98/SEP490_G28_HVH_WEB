@@ -25,7 +25,7 @@ export const usePendingEventsList = ({
       queryParams.append('name', name.trim());
     }
 
-    const path = `/event/manager/pending?${queryParams.toString()}`;
+    const path = `/org-manager/event/pending?${queryParams.toString()}`;
 
     return baseUrl ? `${baseUrl}${path}` : path;
   }, [baseUrl, name, pageNumber, pageSize]);

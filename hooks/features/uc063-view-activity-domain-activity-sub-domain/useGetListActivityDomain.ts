@@ -3,21 +3,21 @@ import { useMemo } from 'react';
 import useSWR from 'swr';
 
 interface Params {
-  pageNumber: number;
-  pageSize: number;
+  pageNumber?: number;
+  pageSize?: number;
   inputActive?: boolean | string;
   name?: string;
   baseUrl?: string;
 }
 
 export const useGetListActivityDomain = ({
-  pageNumber,
-  pageSize,
+  pageNumber = 0,
+  pageSize = 10,
   inputActive,
   name = '',
   baseUrl = ''
 }: Params) => {
-  const activityDomainsUrl = useMemo(() => {
+  const url = useMemo(() => {
     const queryParams = new URLSearchParams({
       pageNumber: String(Math.max(0, pageNumber)),
       pageSize: String(pageSize)
@@ -39,5 +39,5 @@ export const useGetListActivityDomain = ({
     return baseUrl ? `${baseUrl}${path}` : path;
   }, [baseUrl, inputActive, name, pageNumber, pageSize]);
 
-  return useSWR<ActivityDomainListResponse>(activityDomainsUrl);
+  return useSWR<ActivityDomainListResponse>(url);
 };

@@ -1,4 +1,4 @@
-import PendingEventDetail from '@/components/dashboard/pending-events/detail';
+import PendingEventDetailContainer from '@/components/dashboard/pending-events/detail-container';
 import { createClient } from '@/utils/supabase/server';
 import { getUser, getUserDetails } from '@/utils/supabase/queries';
 import { redirect } from 'next/navigation';
@@ -25,10 +25,10 @@ export default async function PendingEventDetailPage({
   }
 
   return (
-    <PendingEventDetail
+    <PendingEventDetailContainer
       user={user}
       userDetails={userDetails}
-      eventId={eventId}
+      id={eventId}
     />
   );
 }

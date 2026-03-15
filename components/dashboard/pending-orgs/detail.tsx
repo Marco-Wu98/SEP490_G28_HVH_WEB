@@ -22,6 +22,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { useEffect } from 'react';
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 
 interface OrgRegistrationDetail {
   id: string;
@@ -136,13 +137,10 @@ const splitEvidenceString = (value?: string | null) => {
 };
 
 // Thêm hàm tiện ích để lấy full URL cho ảnh Supabase
-const SUPABASE_DOMAIN =
-  process.env.NEXT_PUBLIC_SUPABASE_URL ||
-  'https://kbmxlrqkzgjbtkmlbaei.supabase.co';
+const SUPABASE_DOMAIN = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 function getFullUrl(url: string) {
   if (!url) return '';
   if (url.startsWith('http')) return url;
-  // BE trả về /object/sign/... => cần nối prefix storage/v1
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
   return supabaseUrl + '/storage/v1' + url;
 }
@@ -153,6 +151,8 @@ export default function PendingOrgDetail({ user, userDetails, detail }: Props) {
   const [openRejectModal, setOpenRejectModal] = useState(false);
   const [openApproveModal, setOpenApproveModal] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
+  // State để mở modal xem ảnh
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   const { trigger: verify, isMutating: isVerifying } = useVerifyOrgRegistration(
     {
@@ -305,12 +305,18 @@ export default function PendingOrgDetail({ user, userDetails, detail }: Props) {
                     {detail.legalDocumentsUrls.map((url, idx) => {
                       const path = url.split('?')[0];
                       return path.match(/\.(jpg|jpeg|png|gif|webp|png)$/i) ? (
-                        <img
+                        <button
                           key={url}
-                          src={getFullUrl(url)}
-                          alt={`Giấy phép đăng ký ${idx + 1}`}
-                          className="rounded-md border border-zinc-200 object-cover max-w-xs max-h-60"
-                        />
+                          type="button"
+                          onClick={() => setPreviewImage(getFullUrl(url))}
+                          className="focus:outline-none"
+                        >
+                          <img
+                            src={getFullUrl(url)}
+                            alt={`Giấy phép đăng ký ${idx + 1}`}
+                            className="rounded-md border border-zinc-200 object-cover max-w-xs max-h-60 cursor-pointer hover:opacity-80 transition"
+                          />
+                        </button>
                       ) : (
                         <a
                           key={url}
@@ -363,12 +369,20 @@ export default function PendingOrgDetail({ user, userDetails, detail }: Props) {
                     CCCD mặt trước
                   </p>
                   {detail.managerCidFrontUrl ? (
-                    <img
-                      src={getFullUrl(detail.managerCidFrontUrl)}
-                      alt="CCCD mặt trước"
-                      className="mt-2 h-40 w-full rounded-md border border-zinc-200 object-cover"
-                      loading="lazy"
-                    />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setPreviewImage(getFullUrl(detail.managerCidFrontUrl))
+                      }
+                      className="w-full focus:outline-none"
+                    >
+                      <img
+                        src={getFullUrl(detail.managerCidFrontUrl)}
+                        alt="CCCD mặt trước"
+                        className="mt-2 h-40 w-full rounded-md border border-zinc-200 object-cover cursor-pointer hover:opacity-80 transition"
+                        loading="lazy"
+                      />
+                    </button>
                   ) : (
                     <div className="mt-2 flex h-40 w-full items-center justify-center rounded-md border border-dashed border-zinc-200 bg-zinc-50 text-xs text-zinc-500">
                       CCCD mặt trước
@@ -380,12 +394,20 @@ export default function PendingOrgDetail({ user, userDetails, detail }: Props) {
                     CCCD mặt sau
                   </p>
                   {detail.managerCidBackUrl ? (
-                    <img
-                      src={getFullUrl(detail.managerCidBackUrl)}
-                      alt="CCCD mặt sau"
-                      className="mt-2 h-40 w-full rounded-md border border-zinc-200 object-cover"
-                      loading="lazy"
-                    />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setPreviewImage(getFullUrl(detail.managerCidBackUrl))
+                      }
+                      className="w-full focus:outline-none"
+                    >
+                      <img
+                        src={getFullUrl(detail.managerCidBackUrl)}
+                        alt="CCCD mặt sau"
+                        className="mt-2 h-40 w-full rounded-md border border-zinc-200 object-cover cursor-pointer hover:opacity-80 transition"
+                        loading="lazy"
+                      />
+                    </button>
                   ) : (
                     <div className="mt-2 flex h-40 w-full items-center justify-center rounded-md border border-dashed border-zinc-200 bg-zinc-50 text-xs text-zinc-500">
                       CCCD mặt sau
@@ -397,12 +419,20 @@ export default function PendingOrgDetail({ user, userDetails, detail }: Props) {
                     Ảnh cầm CCCD
                   </p>
                   {detail.managerCidHoldingUrl ? (
-                    <img
-                      src={getFullUrl(detail.managerCidHoldingUrl)}
-                      alt="Ảnh cầm CCCD"
-                      className="mt-2 h-40 w-full rounded-md border border-zinc-200 object-cover"
-                      loading="lazy"
-                    />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setPreviewImage(getFullUrl(detail.managerCidHoldingUrl))
+                      }
+                      className="w-full focus:outline-none"
+                    >
+                      <img
+                        src={getFullUrl(detail.managerCidHoldingUrl)}
+                        alt="Ảnh cầm CCCD"
+                        className="mt-2 h-40 w-full rounded-md border border-zinc-200 object-cover cursor-pointer hover:opacity-80 transition"
+                        loading="lazy"
+                      />
+                    </button>
                   ) : (
                     <div className="mt-2 flex h-40 w-full items-center justify-center rounded-md border border-dashed border-zinc-200 bg-zinc-50 text-xs text-zinc-500">
                       Ảnh cầm CCCD
@@ -411,6 +441,35 @@ export default function PendingOrgDetail({ user, userDetails, detail }: Props) {
                 </div>
               </div>
             </Card>
+
+            {/* Modal xem ảnh lớn */}
+            <Dialog
+              open={!!previewImage}
+              onOpenChange={() => setPreviewImage(null)}
+            >
+              <DialogContent className="max-w-4xl border-0 bg-transparent p-0 shadow-none">
+                <DialogTitle>
+                  {previewImage?.includes('managerCidFrontUrl') &&
+                    'CCCD mặt trước'}
+                  {previewImage?.includes('managerCidBackUrl') &&
+                    'CCCD mặt sau'}
+                  {previewImage?.includes('managerCidHoldingUrl') &&
+                    'Ảnh cầm CCCD'}
+                  {detail?.legalDocumentsUrls?.some(
+                    (url) => previewImage === getFullUrl(url)
+                  ) && 'Giấy phép đăng ký'}
+                  {!previewImage && 'Dialog Title'}
+                </DialogTitle>
+                {previewImage && (
+                  <img
+                    src={previewImage}
+                    alt="Ảnh minh họa"
+                    className="h-auto w-full rounded-md object-contain"
+                    style={{ maxHeight: '80vh' }}
+                  />
+                )}
+              </DialogContent>
+            </Dialog>
 
             <Card className="border-zinc-200 bg-white p-6 shadow-sm">
               <h2 className="text-xl font-semibold leading-snug tracking-tight text-zinc-900 md:text-2xl">
@@ -489,12 +548,18 @@ export default function PendingOrgDetail({ user, userDetails, detail }: Props) {
                   {mergedEvidenceUrls.map((url) => {
                     const path = url.split('?')[0];
                     return path.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
-                      <img
+                      <button
                         key={url}
-                        src={getFullUrl(url)}
-                        alt="Bằng chứng bổ sung"
-                        className="rounded-md border border-zinc-200 object-cover max-w-xs max-h-60"
-                      />
+                        type="button"
+                        onClick={() => setPreviewImage(getFullUrl(url))}
+                        className="focus:outline-none"
+                      >
+                        <img
+                          src={getFullUrl(url)}
+                          alt="Bằng chứng bổ sung"
+                          className="rounded-md border border-zinc-200 object-cover max-w-xs max-h-60 cursor-pointer hover:opacity-80 transition"
+                        />
+                      </button>
                     ) : (
                       <a
                         key={url}
@@ -593,6 +658,19 @@ export default function PendingOrgDetail({ user, userDetails, detail }: Props) {
               {isVerifying ? 'Đang xử lý...' : 'Xác nhận phê duyệt'}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      {/* Modal xem ảnh lớn */}
+      <Dialog open={!!previewImage} onOpenChange={() => setPreviewImage(null)}>
+        <DialogContent className="max-w-4xl border-0 bg-transparent p-0 shadow-none">
+          {previewImage && (
+            <img
+              src={previewImage}
+              alt="Ảnh minh họa"
+              className="h-auto w-full rounded-md object-contain"
+              style={{ maxHeight: '80vh' }}
+            />
+          )}
         </DialogContent>
       </Dialog>
     </DashboardLayout>

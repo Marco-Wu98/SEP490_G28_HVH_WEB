@@ -8,7 +8,7 @@ interface Params {
 }
 
 export const useReject = ({ id, baseUrl = '' }: Params) => {
-  const path = `/event/admin/${id}/reject`;
+  const path = `/sys-admin/event/${id}/reject`;
   const url = baseUrl ? `${baseUrl}${path}` : path;
 
   return useSWRMutation<void, Error, string, RejectEventRequest>(

@@ -1,4 +1,4 @@
-import PendingEventDetail from '@/components/dashboard/pending-events/detail';
+import PendingEventDetailContainer from '@/components/dashboard/pending-events/detail-container';
 import { organizerRoutes } from '@/components/routes';
 import { createClient } from '@/utils/supabase/server';
 import { getUser, getUserDetails } from '@/utils/supabase/queries';
@@ -26,18 +26,10 @@ export default async function OrganizerApprovedEventDetailPage({
   }
 
   return (
-    <PendingEventDetail
+    <PendingEventDetailContainer
       user={user}
       userDetails={userDetails}
-      eventId={eventId}
-      backBasePath="/organizer/approved-events"
-      routes={organizerRoutes}
-      colorVariant="organizer"
-      signInPath="/signin/password_signin"
-      pageDescription="Thông tin chi tiết sự kiện đã phê duyệt"
-      infoText="Thông tin chi tiết sự kiện đã phê duyệt"
-      showActions={false}
-      showApprovedActions={true}
+      id={eventId}
     />
   );
 }
