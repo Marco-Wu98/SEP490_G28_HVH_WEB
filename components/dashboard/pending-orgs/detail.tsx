@@ -175,7 +175,6 @@ export default function PendingOrgDetail({ user, userDetails, detail }: Props) {
         description:
           error instanceof Error ? error.message : 'Vui lòng thử lại.'
       });
-      console.error('Approve organization error:', error);
     }
   };
 
@@ -197,7 +196,6 @@ export default function PendingOrgDetail({ user, userDetails, detail }: Props) {
         description:
           error instanceof Error ? error.message : 'Vui lòng thử lại.'
       });
-      console.error('Reject organization error:', error);
     }
   };
 

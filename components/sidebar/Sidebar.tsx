@@ -149,7 +149,7 @@ function Sidebar(props: SidebarProps) {
               {colorVariant === 'organizer' && (
                 <div className="mx-auto mt-4 w-[92%] max-w-[260px] rounded-xl border border-[#CBE3EF]/70 bg-white/18 px-4 py-2.5 text-center shadow-lg shadow-[#3A4163]/20 backdrop-blur-sm">
                   <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#EDF3FB]">
-                    To chuc
+                    Tổ chức
                   </p>
                   <p className="mt-0.5 truncate text-base font-extrabold tracking-[0.01em] text-white">
                     {organizerDisplayName}

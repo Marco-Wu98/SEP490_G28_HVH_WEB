@@ -163,7 +163,6 @@ export default function EventSettings(props: Props) {
           ? error.message
           : 'Lỗi khi tạo lĩnh vực, vui lòng thử lại';
       setCreateError(errorMessage);
-      console.error('Failed to create activity domain:', error);
     }
   };
 
@@ -235,7 +234,6 @@ export default function EventSettings(props: Props) {
           ? error.message
           : 'Lỗi khi cập nhật lĩnh vực, vui lòng thử lại';
       setCreateError(errorMessage);
-      console.error('Failed to update activity domain:', error);
     }
   };
 

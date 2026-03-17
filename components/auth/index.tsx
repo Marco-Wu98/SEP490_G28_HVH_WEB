@@ -53,7 +53,7 @@ export default function DefaultAuthLayout(props: DefaultAuthLayoutProps) {
             className={`absolute flex h-full w-full flex-col items-end justify-center ${
               isAdmin
                 ? 'bg-gradient-to-br from-slate-900 via-blue-950 to-slate-950'
-                : 'bg-[#5AA8D6]'
+                : 'bg-gradient-to-br from-[#5AA8D6] via-[#7ED6FB] to-[#2988B9]'
             }`}
           >
             <div

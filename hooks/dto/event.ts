@@ -36,17 +36,32 @@ export interface PendingEventsResponse {
 export interface EventDetailsResponseForManager {
   id: string;
   name: string;
+  imageUrls: string[];
   description: string;
-  status: string;
-  startedAt: string;
-  endedAt: string;
-  location: string;
-  maxVolunteers: number;
-  currentVolunteers: number;
-  createdAt: string;
-  updatedAt: string;
-  organizationId: string;
-  organizationName: string;
+  address: string;
+  activitySubDomain: string;
+  servedTarget: EServedTarget;
+  servingPlaceType: EServingPlaceType;
+  startDate: string; // ISO date string
+  recruitmentEndDate: string; // ISO date string
+  autoApprove: boolean;
+  latCheckInLocation: number;
+  lngCheckInLocation: number;
+  checkInAccuracyMeters: number;
+  createdAt: string; // ISO date-time string
+  hostId: string;
+  hostName: string;
+  hostEmail: string;
+  hostPhone: string;
+  status: EEventStatus;
+  eventSessions: EventSessionDetailsResponse[];
+  conflictSessions: EventSessionDetailsResponse[];
+  note: string;
+  // Additional fields
+  numberOfRegisteredVolunteers?: number;
+  numberOfJoinedVolunteers?: number;
+  numberOfCheckedInVolunteers?: number;
+  averageRating?: number;
   [key: string]: unknown;
 }
 

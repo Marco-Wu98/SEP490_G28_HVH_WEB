@@ -85,12 +85,6 @@ export default function PendingOrgDetailContainer({
       }
     : null;
 
-  // Debug log: check API data
-  console.log('API data:', data);
-
-  // Debug log: check mapped detail
-  console.log('Mapped detail:', detail);
-
   return (
     <PendingOrgDetail user={user} userDetails={userDetails} detail={detail} />
   );

@@ -1,4 +1,18 @@
 'use client';
+import dynamic from 'next/dynamic';
+const MapSection = dynamic(
+  () =>
+    import('./MapSection') as Promise<{
+      default: React.ComponentType<{
+        lat: number;
+        lng: number;
+        popupText: string;
+      }>;
+    }>,
+  { ssr: false }
+);
+import ReverseGeocode from './ReverseGeocode';
+// ...existing code...
 /* eslint-disable @next/next/no-img-element */
 // Helper to get full image URL for Supabase Storage
 function getFullImageUrl(url: string) {
@@ -120,8 +134,10 @@ export default function PendingEventDetail({
     expectedBeneficiaries: number;
     serviceTarget: string;
     serviceField: string;
-    checkinPointName: string;
+    // checkinPointName removed, use reverse geocode instead
     geofencingRadius: string;
+    latCheckInLocation: number | null;
+    lngCheckInLocation: number | null;
     hostName: string;
     hostEmail: string;
     hostPhone: string;
@@ -203,10 +219,11 @@ export default function PendingEventDetail({
           (raw as any).servedTarget ||
           '-',
         serviceField: (raw as any).activitySubDomain || '-',
-        checkinPointName: '',
         geofencingRadius: (raw as any).checkInAccuracyMeters?.toString() ?? '',
-        hostName: '',
-        hostEmail: '',
+        latCheckInLocation: (raw as any).latCheckInLocation ?? null,
+        lngCheckInLocation: (raw as any).lngCheckInLocation ?? null,
+        hostName: (raw as any).hostName || '',
+        hostEmail: (raw as any).hostEmail || '',
         hostPhone: (raw as any).hostPhone || '',
         description: raw.description || '',
         images: Array.isArray((raw as any).imageUrls)
@@ -278,8 +295,19 @@ export default function PendingEventDetail({
           r.serviceField,
           r.activityDomain
         ),
-        checkinPointName: getStr(r.checkinPointName, r.checkInPoint),
         geofencingRadius: getStr(r.geofencingRadius, r.radius),
+        latCheckInLocation:
+          typeof r.latCheckInLocation === 'number'
+            ? r.latCheckInLocation
+            : r.latCheckInLocation !== undefined
+              ? Number(r.latCheckInLocation)
+              : null,
+        lngCheckInLocation:
+          typeof r.lngCheckInLocation === 'number'
+            ? r.lngCheckInLocation
+            : r.lngCheckInLocation !== undefined
+              ? Number(r.lngCheckInLocation)
+              : null,
         hostName: getStr(r.hostName, r.hostFullName),
         hostEmail: getStr(r.hostEmail),
         hostPhone: getStr(r.hostPhone, r.hostPhoneNumber),
@@ -653,17 +681,41 @@ export default function PendingEventDetail({
                   <div className="mt-4 grid gap-4 md:grid-cols-2">
                     <div className="space-y-1">
                       <p className="text-sm text-zinc-500">Điểm check-in</p>
-                      <p className="text-sm text-zinc-700">
-                        {displayValue(event.checkinPointName)}
-                      </p>
+                      {/* Địa chỉ từ reverse geocode */}
+                      {typeof event.latCheckInLocation === 'number' &&
+                      typeof event.lngCheckInLocation === 'number' ? (
+                        <ReverseGeocode
+                          lat={event.latCheckInLocation}
+                          lng={event.lngCheckInLocation}
+                        >
+                          {(address) => (
+                            <p className="text-sm text-zinc-700">
+                              {address ? address : 'Chưa cập nhật'}
+                            </p>
+                          )}
+                        </ReverseGeocode>
+                      ) : (
+                        <p className="text-sm text-zinc-700">Chưa cập nhật</p>
+                      )}
                     </div>
                     <div className="space-y-1">
                       <p className="text-sm text-zinc-500">Bán kính</p>
                       <p className="text-sm text-zinc-700">
-                        {displayValue(event.geofencingRadius)}
+                        {displayValue(event.geofencingRadius)} m
                       </p>
                     </div>
                   </div>
+                  {/* Map hiển thị vị trí check-in */}
+                  {typeof event.latCheckInLocation === 'number' &&
+                    typeof event.lngCheckInLocation === 'number' && (
+                      <div className="mt-6 h-[300px] w-full rounded-lg overflow-hidden border border-zinc-200">
+                        <MapSection
+                          lat={event.latCheckInLocation}
+                          lng={event.lngCheckInLocation}
+                          popupText={event.location || ''}
+                        />
+                      </div>
+                    )}
                 </Card>
               </div>
 

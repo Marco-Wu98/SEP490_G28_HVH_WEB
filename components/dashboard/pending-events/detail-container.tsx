@@ -57,9 +57,6 @@ export default function PendingEventDetailContainer({
     );
   }
 
-  // Debug log: check API data
-  console.log('API data:', data);
-
   return (
     <PendingEventDetail
       user={user}

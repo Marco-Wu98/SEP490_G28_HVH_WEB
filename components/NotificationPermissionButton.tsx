@@ -8,12 +8,7 @@ export function NotificationPermissionButton() {
 
   const handleRequestPermission = async () => {
     const result = await requestPermission();
-    console.log('Notification permission result:', result);
-
-    if (result.token) {
-      console.log('Firebase token received:', result.token);
-      // Có thể gửi token lên server để lưu trữ
-    }
+    // ...existing code...
   };
 
   const getButtonText = () => {

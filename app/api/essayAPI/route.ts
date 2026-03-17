@@ -5,13 +5,8 @@ export const runtime = 'edge';
 
 export async function GET(req: Request): Promise<Response> {
   try {
-    const {
-      topic,
-      words,
-      essayType,
-      model,
-      apiKey
-    } = (await req.json()) as EssayBody;
+    const { topic, words, essayType, model, apiKey } =
+      (await req.json()) as EssayBody;
 
     let apiKeyFinal;
     if (apiKey) {
@@ -30,19 +25,13 @@ export async function GET(req: Request): Promise<Response> {
 
     return new Response(stream);
   } catch (error) {
-    console.error(error);
     return new Response('Error', { status: 500 });
   }
 }
 export async function POST(req: Request): Promise<Response> {
   try {
-    const {
-      topic,
-      words,
-      essayType,
-      model,
-      apiKey
-    } = (await req.json()) as EssayBody;
+    const { topic, words, essayType, model, apiKey } =
+      (await req.json()) as EssayBody;
 
     let apiKeyFinal;
     if (apiKey) {
@@ -61,7 +50,6 @@ export async function POST(req: Request): Promise<Response> {
 
     return new Response(stream);
   } catch (error) {
-    console.error(error);
     return new Response('Error', { status: 500 });
   }
 }

@@ -97,7 +97,6 @@ export default function PendingAccountDetail({
         description:
           error instanceof Error ? error.message : 'Vui lòng thử lại.'
       });
-      console.error('Approve error:', error);
     }
   };
 
@@ -122,7 +121,6 @@ export default function PendingAccountDetail({
         description:
           error instanceof Error ? error.message : 'Vui lòng thử lại.'
       });
-      console.error('Reject error:', error);
     }
   };
 
