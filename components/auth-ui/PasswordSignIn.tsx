@@ -36,6 +36,7 @@ export default function PasswordSignIn({
         password
       });
 
+
       if (error) {
         router.push(
           getErrorRedirect(

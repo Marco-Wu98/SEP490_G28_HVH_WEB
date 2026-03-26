@@ -1,4 +1,5 @@
-import PendingEventDetailContainer from '@/components/dashboard/pending-events/detail-container';
+import ApprovedEventDetailContainer from '@/components/dashboard/approved-events/detail-container';
+import { organizerRoutes } from '@/components/routes';
 import { getUser, getUserDetails } from '@/utils/supabase/queries';
 import { createClient } from '@/utils/supabase/server';
 import { redirect } from 'next/navigation';
@@ -25,10 +26,12 @@ export default async function OrganizerApprovedEventDetailPage({
   }
 
   return (
-    <PendingEventDetailContainer
+    <ApprovedEventDetailContainer
       user={user}
       userDetails={userDetails}
       id={eventId}
+      routes={organizerRoutes}
+      colorVariant="organizer"
     />
   );
 }

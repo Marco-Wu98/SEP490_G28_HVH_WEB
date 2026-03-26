@@ -1,0 +1,20 @@
+import type { EventDetailsResponseForManager } from '@/hooks/dto';
+import { useMemo } from 'react';
+import useSWR from 'swr';
+
+interface Params {
+  id: string;
+  baseUrl?: string;
+}
+
+export const useViewApprovedEventDetailsByOrgManager = ({
+  id,
+  baseUrl = ''
+}: Params) => {
+  const url = useMemo(() => {
+    const path = `/org-manager/event/event-details/${id}`;
+    return id ? (baseUrl ? `${baseUrl}${path}` : path) : null;
+  }, [id, baseUrl]);
+
+  return useSWR<EventDetailsResponseForManager>(url);
+};
