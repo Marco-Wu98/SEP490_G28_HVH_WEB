@@ -138,6 +138,12 @@ export default function PendingEventDetail({
   showApprovedActions = false,
   showHostInfo
 }: Props) {
+  // Host dialog state hooks (must be at top level)
+  const [hostDialogOpen, setHostDialogOpen] = useState(false);
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [selectedHost, setSelectedHost] = useState<any>(null);
+  const [changingHost, setChangingHost] = useState(false);
+  // --- Host change dialog state (must be at top level) ---
   // --- Safe event handlers for approve/reject (no setState/toast in render) ---
   const handleRejectEvent = async () => {
     setRejectError('');
@@ -499,7 +505,6 @@ export default function PendingEventDetail({
       )
     : false;
 
-  // --- Host change dialog state (move to top level) ---
   // Extended mock data for hosts (10+ entries)
   const mockHosts = [
     {
@@ -587,10 +592,6 @@ export default function PendingEventDetail({
       eventCount: 7
     }
   ];
-  const [hostDialogOpen, setHostDialogOpen] = useState(false);
-  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
-  const [selectedHost, setSelectedHost] = useState<any>(null);
-  const [changingHost, setChangingHost] = useState(false);
 
   return (
     <>
@@ -1078,7 +1079,7 @@ export default function PendingEventDetail({
                               <br />
                               cho sự kiện:{' '}
                               <span className="font-semibold">
-                                "{event?.eventName}"
+                                &quot;{event?.eventName}&quot;
                               </span>
                             </div>
                             <DialogFooter className="flex gap-2">
