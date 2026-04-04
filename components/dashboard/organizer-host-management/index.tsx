@@ -711,7 +711,7 @@ export default function OrganizerHostManagement({
                                     `/organizer/host-management/${host.id}`
                                   );
                                 }}
-                                className="cursor-pointer"
+                                className="cursor-pointer text-zinc-900 focus:bg-blue-100 focus:text-blue-800 data-[highlighted]:bg-blue-100 data-[highlighted]:text-blue-800"
                               >
                                 Xem chi tiết
                               </DropdownMenuItem>
@@ -720,7 +720,7 @@ export default function OrganizerHostManagement({
                                   event.preventDefault();
                                   setConfirmActionHost(host);
                                 }}
-                                className="cursor-pointer"
+                                className="cursor-pointer text-zinc-900 focus:bg-blue-50 focus:text-blue-800 data-[highlighted]:bg-blue-50 data-[highlighted]:text-blue-800"
                               >
                                 {host.status === 'Hoạt động'
                                   ? 'Khóa tài khoản'

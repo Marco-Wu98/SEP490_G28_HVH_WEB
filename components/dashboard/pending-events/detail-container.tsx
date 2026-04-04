@@ -18,7 +18,12 @@ export default function PendingEventDetailContainer({
   id
 }: Props) {
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL!;
-  const { data, error, isLoading } = useViewEventDetailsBySysAdmin({
+  const {
+    data,
+    error,
+    isLoading,
+    mutate: refetchEventDetails
+  } = useViewEventDetailsBySysAdmin({
     id,
     baseUrl: apiBaseUrl
   });
@@ -62,6 +67,7 @@ export default function PendingEventDetailContainer({
       user={user}
       userDetails={userDetails}
       externalData={data}
+      onRefetchEventDetails={() => refetchEventDetails()}
     />
   );
 }

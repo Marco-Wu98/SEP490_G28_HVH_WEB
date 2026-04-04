@@ -31,12 +31,18 @@ import {
 import {
   ArrowDown,
   ArrowUp,
+  Building2,
+  CalendarDays,
   Eye,
   Filter as Funnel,
   ListFilter,
   Lock,
+  Mail,
   Plus,
   Pencil,
+  Phone,
+  ChevronRight,
+  Users,
   X
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -1360,99 +1366,163 @@ export default function OrganizersList(props: Props) {
         </div>
         {/* Detail Modal */}
         <Dialog open={openDetailModal} onOpenChange={setOpenDetailModal}>
-          <DialogContent className="max-w-2xl bg-white">
+          <DialogContent className="max-w-5xl overflow-hidden border border-blue-100 bg-gradient-to-br from-white via-white to-blue-50 p-0 shadow-2xl shadow-blue-100/50">
             <DialogHeader>
-              <DialogTitle className="text-zinc-900 dark:text-white">
-                Chi tiết thông tin người tổ chức
-              </DialogTitle>
-              <DialogDescription>
-                Thông tin chi tiết về người tổ chức được chọn
-              </DialogDescription>
+              <div className="border-b border-blue-100/80 bg-white/70 px-6 pt-6 pb-4 backdrop-blur-sm">
+                <DialogTitle className="text-xl font-semibold text-slate-900">
+                  Chi tiết thông tin người tổ chức
+                </DialogTitle>
+              </div>
             </DialogHeader>
 
             {selectedUser && (
-              <div className="space-y-6">
-                {/* Avatar and Basic Info */}
-                <div className="flex items-start gap-6">
-                  <Avatar className="h-20 w-20">
-                    <AvatarImage
-                      src={selectedUser.avatar}
-                      alt={getPersonDisplayName(selectedUser)}
-                    />
-                    <AvatarFallback>
-                      {getPersonDisplayName(selectedUser).charAt(0)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <h2 className="text-2xl font-bold">
-                      {getPersonDisplayName(selectedUser)}
-                    </h2>
-                    <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                      ID: {selectedUser.id}
-                    </p>
-                    <div className="mt-3">
-                      <Badge
-                        variant={
-                          selectedUser.status === 'active'
-                            ? 'default'
+              <div className="space-y-6 px-6 pb-6 pt-6">
+                <div className="rounded-[24px] border border-blue-100 bg-gradient-to-br from-white via-white to-sky-50 p-6 shadow-lg shadow-sky-100/40">
+                  <div className="flex items-start gap-6">
+                    <Avatar className="h-28 w-28 border border-white shadow-lg shadow-blue-100/50 ring-4 ring-blue-50">
+                      <AvatarImage
+                        src={selectedUser.avatar}
+                        alt={getPersonDisplayName(selectedUser)}
+                      />
+                      <AvatarFallback className="bg-gradient-to-br from-blue-600 via-sky-500 to-cyan-500 text-4xl font-semibold text-white">
+                        {getPersonDisplayName(selectedUser)
+                          .split(' ')
+                          .map((part) => part[0])
+                          .join('')
+                          .slice(0, 2)}
+                      </AvatarFallback>
+                    </Avatar>
+
+                    <div className="min-w-0 flex-1 pt-1">
+                      <h2 className="text-3xl font-bold leading-tight text-slate-900">
+                        {getPersonDisplayName(selectedUser)}
+                      </h2>
+                      <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-slate-500">
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1 text-blue-700">
+                          <Building2 className="h-4 w-4 text-blue-500" />
+                          {selectedUser.role === 'Manager'
+                            ? 'Organization Manager'
+                            : 'Organization Host'}
+                        </span>
+                      </div>
+                      <div className="mt-3">
+                        <Badge
+                          className={
+                            selectedUser.status === 'active'
+                              ? 'rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-700'
+                              : selectedUser.status === 'locked'
+                                ? 'rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-rose-700 hover:bg-rose-50 hover:text-rose-700'
+                                : 'rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-amber-700 hover:bg-amber-50 hover:text-amber-700'
+                          }
+                        >
+                          {selectedUser.status === 'active'
+                            ? 'Đang hoạt động'
                             : selectedUser.status === 'locked'
-                              ? 'secondary'
-                              : 'outline'
-                        }
-                      >
-                        {selectedUser.status === 'active'
-                          ? 'Hoạt động'
-                          : selectedUser.status === 'locked'
-                            ? 'Bị khóa'
-                            : 'Không hoạt động'}
-                      </Badge>
+                              ? 'Bị khóa'
+                              : 'Không hoạt động'}
+                        </Badge>
+                      </div>
+
+                      <div className="mt-6 grid gap-5 md:grid-cols-2">
+                        <div className="space-y-4">
+                          <div className="flex items-start gap-3">
+                            <Mail className="mt-0.5 h-5 w-5 text-sky-500" />
+                            <div>
+                              <p className="text-sm text-slate-500">Email</p>
+                              <p className="text-sm font-medium text-slate-900">
+                                {selectedUser.email}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-start gap-3">
+                            <CalendarDays className="mt-0.5 h-5 w-5 text-amber-500" />
+                            <div>
+                              <p className="text-sm text-slate-500">
+                                Ngày sinh
+                              </p>
+                              <p className="text-sm font-medium text-slate-900">
+                                {selectedUser.dob}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-start gap-3">
+                            <Phone className="mt-0.5 h-5 w-5 text-emerald-500" />
+                            <div>
+                              <p className="text-sm text-slate-500">
+                                Số điện thoại
+                              </p>
+                              <p className="text-sm font-medium text-slate-900">
+                                {selectedUser.phone}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="space-y-4">
+                          <div className="flex items-start gap-3">
+                            <Building2 className="mt-0.5 h-5 w-5 text-violet-500" />
+                            <div>
+                              <p className="text-sm text-slate-500">CCCD</p>
+                              <p className="text-sm font-medium text-slate-900">
+                                {selectedUser.cccd}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-start gap-3">
+                            <Users className="mt-0.5 h-5 w-5 text-cyan-500" />
+                            <div>
+                              <p className="text-sm text-slate-500">Vai trò</p>
+                              <div className="mt-1">
+                                {getRoleBadge(selectedUser.role)}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-start gap-3">
+                            <Building2 className="mt-0.5 h-5 w-5 text-orange-500" />
+                            <div>
+                              <p className="text-sm text-slate-500">
+                                Sự kiện đã host
+                              </p>
+                              <p className="text-sm font-medium text-slate-900">
+                                {selectedUser.events}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Contact and Personal Details */}
-                <div className="grid grid-cols-2 gap-4 rounded-lg bg-zinc-50 p-4 dark:bg-zinc-900">
-                  <div>
-                    <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">
-                      CCCD
+                <div className="relative overflow-hidden rounded-[24px] border border-sky-100 bg-gradient-to-br from-sky-50 via-white to-indigo-50 p-6 shadow-lg shadow-sky-100/40">
+                  <div className="mb-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-600">
+                      Tổ chức đang quản lý
                     </p>
-                    <p className="text-sm font-medium">{selectedUser.cccd}</p>
                   </div>
-                  <div>
-                    <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">
-                      Vai trò
-                    </p>
-                    <div className="mt-1">
-                      {getRoleBadge(selectedUser.role)}
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">
-                      Số điện thoại
-                    </p>
-                    <p className="text-sm font-medium">{selectedUser.phone}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">
-                      Email
-                    </p>
-                    <p className="text-sm font-medium">{selectedUser.email}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">
-                      Ngày sinh
-                    </p>
-                    <p className="text-sm font-medium">{selectedUser.dob}</p>
-                  </div>
-                </div>
 
-                {/* Statistics Cards */}
-                <div className="grid grid-cols-1 gap-4">
-                  <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900">
-                    <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">
-                      Sự kiện
-                    </p>
-                    <p className="text-2xl font-bold">{selectedUser.events}</p>
+                  <div className="rounded-2xl border border-sky-200 bg-white/90 p-4 shadow-[0_14px_32px_rgba(59,130,246,0.08)] backdrop-blur-sm">
+                    <div className="flex items-center gap-4">
+                      <div className="flex h-16 w-16 items-center justify-center rounded-full border border-sky-100 bg-gradient-to-br from-blue-600 via-sky-500 to-cyan-400 text-xl font-semibold text-white shadow-md shadow-sky-200/50">
+                        {(selectedUser.orgName || 'OT').slice(0, 2)}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-lg font-bold text-slate-900">
+                          {selectedUser.orgName}
+                        </p>
+                        <div className="mt-1 flex flex-wrap items-center gap-4 text-sm text-slate-700">
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 font-medium text-emerald-700">
+                            <Users className="h-4 w-4 text-emerald-500" />
+                            150 thành viên
+                          </span>
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 font-medium text-amber-700">
+                            <Building2 className="h-4 w-4 text-amber-500" />
+                            {selectedUser.events} sự kiện
+                          </span>
+                        </div>
+                      </div>
+                      <ChevronRight className="h-5 w-5 text-sky-500" />
+                    </div>
                   </div>
                 </div>
               </div>

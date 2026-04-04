@@ -140,13 +140,17 @@ export default function HostDetailPage() {
     >
       <div className="w-full max-w-none">
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-          <div></div>
+          <div>
+            <p className="mt-2 text-zinc-500">
+              Thông tin chi tiết tài khoản host
+            </p>
+          </div>
           <Button
             variant="outline"
-            className="bg-white border-blue-200 text-blue-700 hover:bg-blue-50 hover:text-blue-800"
+            className="bg-white border-zinc-300 text-zinc-900 hover:bg-zinc-50"
             onClick={() => router.back()}
           >
-            &larr; Quay lại
+            Quay lại
           </Button>
         </div>
 

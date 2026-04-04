@@ -1321,108 +1321,125 @@ export default function VolunteersList(props: Props) {
 
         {/* Detail Modal */}
         <Dialog open={openDetailModal} onOpenChange={setOpenDetailModal}>
-          <DialogContent className="max-w-2xl bg-white">
+          <DialogContent className="max-w-2xl overflow-hidden border border-blue-100 bg-gradient-to-br from-white via-white to-blue-50 p-0 shadow-2xl shadow-blue-100/50">
             <DialogHeader>
-              <DialogTitle className="text-zinc-900 dark:text-white">
-                Chi tiết thông tin tình nguyện viên
-              </DialogTitle>
-              <DialogDescription>
-                Thông tin chi tiết về tình nguyện viên được chọn
-              </DialogDescription>
+              <div className="border-b border-blue-100/80 bg-white/70 px-6 pt-6 pb-4 backdrop-blur-sm">
+                <DialogTitle className="text-xl font-semibold text-slate-900">
+                  Chi tiết thông tin tình nguyện viên
+                </DialogTitle>
+                <DialogDescription className="mt-1 text-slate-500">
+                  Thông tin chi tiết về tình nguyện viên được chọn
+                </DialogDescription>
+              </div>
             </DialogHeader>
 
             {selectedUser && (
-              <div className="space-y-6">
+              <div className="space-y-6 px-6 pb-6 pt-6">
                 {/* Avatar and Basic Info */}
-                <div className="flex items-start gap-6">
-                  <Avatar className="h-20 w-20">
-                    <AvatarImage
-                      src={selectedUser.avatar}
-                      alt={selectedUser.fullName}
-                    />
-                    <AvatarFallback>
-                      {selectedUser.fullName.charAt(0)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <h2 className="text-2xl font-bold">
-                      {selectedUser.fullName}
-                    </h2>
-                    <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                      ID: {selectedUser.id}
-                    </p>
-                    <div className="mt-3">
-                      <Badge
-                        variant={
-                          selectedUser.status === 'active'
-                            ? 'default'
+                <div className="rounded-2xl border border-blue-100 bg-gradient-to-br from-white via-white to-sky-50 p-5 shadow-lg shadow-sky-100/40">
+                  <div className="flex items-start gap-6">
+                    <Avatar className="h-20 w-20 border border-white shadow-lg shadow-blue-100/50 ring-4 ring-blue-50">
+                      <AvatarImage
+                        src={selectedUser.avatar}
+                        alt={selectedUser.fullName}
+                      />
+                      <AvatarFallback className="bg-gradient-to-br from-blue-600 via-sky-500 to-cyan-500 text-2xl font-semibold text-white">
+                        {selectedUser.fullName
+                          .split(' ')
+                          .map((part) => part[0])
+                          .join('')
+                          .slice(0, 2)}
+                      </AvatarFallback>
+                    </Avatar>
+
+                    <div className="flex-1">
+                      <h2 className="text-2xl font-bold text-slate-900">
+                        {selectedUser.fullName}
+                      </h2>
+                      <p className="text-sm text-slate-500">
+                        ID: {selectedUser.id}
+                      </p>
+                      <div className="mt-3">
+                        <Badge
+                          className={
+                            selectedUser.status === 'active'
+                              ? 'rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-700'
+                              : selectedUser.status === 'locked'
+                                ? 'rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-rose-700 hover:bg-rose-50 hover:text-rose-700'
+                                : 'rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-amber-700 hover:bg-amber-50 hover:text-amber-700'
+                          }
+                        >
+                          {selectedUser.status === 'active'
+                            ? 'Hoạt động'
                             : selectedUser.status === 'locked'
-                              ? 'secondary'
-                              : 'outline'
-                        }
-                      >
-                        {selectedUser.status === 'active'
-                          ? 'Hoạt động'
-                          : selectedUser.status === 'locked'
-                            ? 'Bị khóa'
-                            : 'Không hoạt động'}
-                      </Badge>
+                              ? 'Bị khóa'
+                              : 'Không hoạt động'}
+                        </Badge>
+                      </div>
                     </div>
                   </div>
                 </div>
 
                 {/* Contact and Personal Details */}
-                <div className="grid grid-cols-2 gap-4 rounded-lg bg-zinc-50 p-4 dark:bg-zinc-900">
+                <div className="grid grid-cols-2 gap-4 rounded-2xl border border-sky-100 bg-gradient-to-br from-sky-50 via-white to-indigo-50 p-4 shadow-md shadow-sky-100/30">
                   <div>
-                    <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">
-                      CCCD
+                    <p className="text-xs font-semibold text-slate-500">CCCD</p>
+                    <p className="text-sm font-medium text-slate-900">
+                      {selectedUser.cccd}
                     </p>
-                    <p className="text-sm font-medium">{selectedUser.cccd}</p>
                   </div>
                   <div>
-                    <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">
+                    <p className="text-xs font-semibold text-slate-500">
                       Số điện thoại
                     </p>
-                    <p className="text-sm font-medium">{selectedUser.phone}</p>
+                    <p className="text-sm font-medium text-slate-900">
+                      {selectedUser.phone}
+                    </p>
                   </div>
                   <div>
-                    <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">
+                    <p className="text-xs font-semibold text-slate-500">
                       Email
                     </p>
-                    <p className="text-sm font-medium">{selectedUser.email}</p>
+                    <p className="text-sm font-medium text-slate-900">
+                      {selectedUser.email}
+                    </p>
                   </div>
                   <div>
-                    <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">
+                    <p className="text-xs font-semibold text-slate-500">
                       Ngày sinh
                     </p>
-                    <p className="text-sm font-medium">{selectedUser.dob}</p>
+                    <p className="text-sm font-medium text-slate-900">
+                      {selectedUser.dob}
+                    </p>
                   </div>
                 </div>
 
                 {/* Statistics Cards */}
                 <div className="grid grid-cols-3 gap-4">
-                  <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900">
-                    <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">
+                  <div className="rounded-xl border border-blue-100 bg-gradient-to-br from-blue-50 to-white p-4 shadow-sm shadow-blue-100/50">
+                    <p className="text-xs font-semibold text-blue-700">
                       Sự kiện
                     </p>
-                    <p className="text-2xl font-bold">{selectedUser.events}</p>
+                    <p className="text-2xl font-bold text-slate-900">
+                      {selectedUser.events}
+                    </p>
                   </div>
-                  <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900">
-                    <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">
+                  <div className="rounded-xl border border-amber-100 bg-gradient-to-br from-amber-50 to-white p-4 shadow-sm shadow-amber-100/50">
+                    <p className="text-xs font-semibold text-amber-700">
                       Đánh giá
                     </p>
                     <div className="flex items-center gap-1">
-                      <span className="text-2xl font-bold">
+                      <span className="text-2xl font-bold text-slate-900">
                         {selectedUser.rating.toFixed(1)}
                       </span>
                       <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
                     </div>
                   </div>
-                  <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900">
-                    <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">
+                  <div className="rounded-xl border border-emerald-100 bg-gradient-to-br from-emerald-50 to-white p-4 shadow-sm shadow-emerald-100/50">
+                    <p className="text-xs font-semibold text-emerald-700">
                       Uy tín
                     </p>
-                    <p className="text-2xl font-bold">
+                    <p className="text-2xl font-bold text-slate-900">
                       {selectedUser.reputation}
                     </p>
                   </div>

@@ -24,7 +24,12 @@ export default function ApprovedEventDetailContainer({
   signInPath = '/signin/password_signin'
 }: Props) {
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL!;
-  const { data, error, isLoading } = useViewApprovedEventDetailsByOrgManager({
+  const {
+    data,
+    error,
+    isLoading,
+    mutate: refetchEventDetails
+  } = useViewApprovedEventDetailsByOrgManager({
     id,
     baseUrl: apiBaseUrl
   });
@@ -85,6 +90,7 @@ export default function ApprovedEventDetailContainer({
       showActions={false}
       showApprovedActions={true}
       showHostInfo={true}
+      onRefetchEventDetails={() => refetchEventDetails()}
     />
   );
 }

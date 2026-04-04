@@ -45,51 +45,14 @@ import type {
   EventDetailsResponseForManager,
   EventDetailsResponseForSystemAdmin
 } from '@/hooks/dto';
+import { useViewHostList } from '@/hooks/features/uc065-view-host-list/useViewHostList';
+import { useAssignHost } from '@/hooks/features/uc081-assign-host-to-event/useAssignHost';
 import { useRejectEventByOrgManager } from '@/hooks/features/uc080-approve-reject-event-by-org-manager/useReject';
 import type { IRoute } from '@/types/types';
 import { User } from '@supabase/supabase-js';
 import { AlertCircle, Mail, Phone, UserRound } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
-
-// Mock host data
-const mockHosts = [
-  {
-    id: 1,
-    name: 'Nguyễn Văn An',
-    email: 'nguyenvanan@email.com',
-    phone: '0901234567',
-    eventCount: 12
-  },
-  {
-    id: 2,
-    name: 'Lê Minh Cường',
-    email: 'leminhcuong@email.com',
-    phone: '0923456789',
-    eventCount: 8
-  },
-  {
-    id: 3,
-    name: 'Trần Thị Bích',
-    email: 'tranbich@email.com',
-    phone: '0912345678',
-    eventCount: 15
-  },
-  {
-    id: 4,
-    name: 'Phạm Thu Dung',
-    email: 'phamthudung@email.com',
-    phone: '0934567890',
-    eventCount: 6
-  },
-  {
-    id: 5,
-    name: 'Hoàng Văn Đức',
-    email: 'hoangvanduc@email.com',
-    phone: '0945678901',
-    eventCount: 9
-  }
-];
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { useApproveEventByOrgManager } from '@/hooks/features/uc080-approve-reject-event-by-org-manager/useApprove';
 // No data fetching here; handled by container
@@ -215,7 +178,23 @@ type Props = {
   showActions?: boolean;
   showApprovedActions?: boolean;
   showHostInfo?: boolean;
+  onRefetchEventDetails?: () => Promise<unknown>;
 };
+
+type HostCandidate = {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  eventCount: number;
+};
+
+type HostDisplayInfo = {
+  name: string;
+  email: string;
+  phone: string;
+};
+
 export default function PendingEventDetail({
   user,
   userDetails,
@@ -231,13 +210,16 @@ export default function PendingEventDetail({
   infoText = 'Thông tin chi tiết sự kiện chờ phê duyệt',
   showActions = true,
   showApprovedActions = false,
-  showHostInfo
+  showHostInfo,
+  onRefetchEventDetails
 }: Props) {
   // Host dialog state hooks (must be at top level)
   const [hostDialogOpen, setHostDialogOpen] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
-  const [selectedHost, setSelectedHost] = useState<any>(null);
-  const [changingHost, setChangingHost] = useState(false);
+  const [selectedHost, setSelectedHost] = useState<HostCandidate | null>(null);
+  const [assignedHostOverride, setAssignedHostOverride] =
+    useState<HostDisplayInfo | null>(null);
+  const lastResolvedEventIdRef = useRef<string | null>(null);
   // --- Host change dialog state (must be at top level) ---
   // --- Safe event handlers for approve/reject (no setState/toast in render) ---
   const handleRejectEvent = async () => {
@@ -293,6 +275,19 @@ export default function PendingEventDetail({
   const [rejectError, setRejectError] = useState('');
   const [rejectSuccess, setRejectSuccess] = useState('');
   const eventId = externalData?.id || '';
+  useEffect(() => {
+    if (!eventId) return;
+
+    if (
+      lastResolvedEventIdRef.current &&
+      lastResolvedEventIdRef.current !== eventId
+    ) {
+      setAssignedHostOverride(null);
+    }
+
+    lastResolvedEventIdRef.current = eventId;
+  }, [eventId]);
+
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL!;
   // Role-based approve/reject hooks
   const isAdmin = effectiveVariant === 'admin';
@@ -315,6 +310,57 @@ export default function PendingEventDetail({
     useRejectEventByAdmin({ id: eventId, baseUrl });
   const { trigger: approveEventByAdmin, isMutating: isApprovingAdmin } =
     useApproveEventByAdmin({ id: eventId, baseUrl });
+  const { trigger: assignHost, isMutating: isAssigningHost } = useAssignHost({
+    id: eventId,
+    baseUrl
+  });
+
+  const {
+    data: hostListData,
+    isLoading: isHostListLoading,
+    error: hostListError
+  } = useViewHostList({
+    pageNumber: 0,
+    pageSize: 100,
+    baseUrl,
+    enabled: isOrganizer && hostDialogOpen
+  });
+
+  const availableHosts = useMemo(() => {
+    return (hostListData?.content ?? []).map((host) => ({
+      id: host.id,
+      name: host.fullName?.trim() || 'Chưa cập nhật',
+      email: host.email?.trim() || '-',
+      phone: host.phone?.trim() || '-',
+      eventCount: host.hostedEventCount ?? 0
+    }));
+  }, [hostListData?.content]);
+
+  const handleAssignHost = async () => {
+    if (!selectedHost?.id) {
+      toast.error('Vui lòng chọn host hợp lệ.');
+      return;
+    }
+
+    try {
+      await assignHost({ hostId: selectedHost.id });
+      setAssignedHostOverride({
+        name: selectedHost.name,
+        email: selectedHost.email,
+        phone: selectedHost.phone
+      });
+      setConfirmDialogOpen(false);
+      setSelectedHost(null);
+      toast.success('Đã thay đổi host thành công!');
+      if (onRefetchEventDetails) {
+        await onRefetchEventDetails();
+      } else {
+        router.refresh();
+      }
+    } catch (err: any) {
+      toast.error(err?.message || 'Không thể thay đổi host.');
+    }
+  };
   // (Đã chuyển toàn bộ logic phụ thuộc event vào trong IIFE ở phần render, không còn khai báo ngoài hàm render)
 
   interface EventData {
@@ -575,6 +621,13 @@ export default function PendingEventDetail({
   const event: EventData | null = externalData
     ? normalizeEvent(externalData)
     : null;
+
+  const resolvedHostName = assignedHostOverride?.name ?? event?.hostName ?? '-';
+  const resolvedHostEmail =
+    assignedHostOverride?.email ?? event?.hostEmail ?? '-';
+  const resolvedHostPhone =
+    assignedHostOverride?.phone ?? event?.hostPhone ?? '-';
+
   const displayValue = (value: string) => {
     if (!value || value.trim() === '' || value === '-') {
       return 'Chưa cập nhật';
@@ -610,94 +663,6 @@ export default function PendingEventDetail({
         'Đang diễn ra'
       ].includes(event.status as EEventStatus | string)
     : false;
-
-  // Extended mock data for hosts (10+ entries)
-  const mockHosts = [
-    {
-      id: 1,
-      name: 'Nguyễn Văn An',
-      email: 'an.nguyen@example.com',
-      phone: '0901234567',
-      eventCount: 5
-    },
-    {
-      id: 2,
-      name: 'Trần Thị Bình',
-      email: 'binh.tran@example.com',
-      phone: '0912345678',
-      eventCount: 3
-    },
-    {
-      id: 3,
-      name: 'Lê Quốc Cường',
-      email: 'cuong.le@example.com',
-      phone: '0923456789',
-      eventCount: 7
-    },
-    {
-      id: 4,
-      name: 'Phạm Minh Dũng',
-      email: 'dung.pham@example.com',
-      phone: '0934567890',
-      eventCount: 2
-    },
-    {
-      id: 5,
-      name: 'Vũ Thị Hạnh',
-      email: 'hanh.vu@example.com',
-      phone: '0945678901',
-      eventCount: 4
-    },
-    {
-      id: 6,
-      name: 'Đỗ Văn Hòa',
-      email: 'hoa.do@example.com',
-      phone: '0956789012',
-      eventCount: 6
-    },
-    {
-      id: 7,
-      name: 'Ngô Thị Lan',
-      email: 'lan.ngo@example.com',
-      phone: '0967890123',
-      eventCount: 1
-    },
-    {
-      id: 8,
-      name: 'Bùi Quốc Minh',
-      email: 'minh.bui@example.com',
-      phone: '0978901234',
-      eventCount: 8
-    },
-    {
-      id: 9,
-      name: 'Lý Thị Ngọc',
-      email: 'ngoc.ly@example.com',
-      phone: '0989012345',
-      eventCount: 2
-    },
-    {
-      id: 10,
-      name: 'Trịnh Văn Phúc',
-      email: 'phuc.trinh@example.com',
-      phone: '0990123456',
-      eventCount: 5
-    },
-    {
-      id: 11,
-      name: 'Tạ Thị Quỳnh',
-      email: 'quynh.ta@example.com',
-      phone: '0902345678',
-      eventCount: 3
-    },
-    {
-      id: 12,
-      name: 'Phan Văn Sơn',
-      email: 'son.phan@example.com',
-      phone: '0913456789',
-      eventCount: 7
-    }
-  ];
 
   return (
     <>
@@ -1120,38 +1085,60 @@ export default function PendingEventDetail({
                                   <DialogTitle>Chọn host mới</DialogTitle>
                                 </DialogHeader>
                                 <div className="space-y-3 max-h-[60vh] overflow-y-auto">
-                                  {mockHosts.map((host) => (
-                                    <button
-                                      key={host.id}
-                                      className="w-full flex items-center gap-3 rounded-lg border border-zinc-200 bg-zinc-50 p-4 hover:bg-zinc-100 transition"
-                                      onClick={() => {
-                                        setSelectedHost(host);
-                                        setHostDialogOpen(false);
-                                        setTimeout(
-                                          () => setConfirmDialogOpen(true),
-                                          200
-                                        );
-                                      }}
-                                    >
-                                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-cyan-500 text-white font-bold text-lg">
-                                        {host.name.charAt(0)}
-                                      </div>
-                                      <div className="flex-1 min-w-0 text-left">
-                                        <div className="font-semibold text-zinc-900 truncate">
-                                          {host.name}
+                                  {isHostListLoading && (
+                                    <p className="text-sm text-zinc-500">
+                                      Đang tải danh sách host...
+                                    </p>
+                                  )}
+
+                                  {hostListError && (
+                                    <p className="text-sm text-rose-600">
+                                      Không thể tải danh sách host.
+                                    </p>
+                                  )}
+
+                                  {!isHostListLoading &&
+                                    !hostListError &&
+                                    availableHosts.length === 0 && (
+                                      <p className="text-sm text-zinc-500">
+                                        Không có host khả dụng.
+                                      </p>
+                                    )}
+
+                                  {!isHostListLoading &&
+                                    !hostListError &&
+                                    availableHosts.map((host) => (
+                                      <button
+                                        key={host.id}
+                                        className="w-full flex items-center gap-3 rounded-lg border border-zinc-200 bg-zinc-50 p-4 hover:bg-zinc-100 transition"
+                                        onClick={() => {
+                                          setSelectedHost(host);
+                                          setHostDialogOpen(false);
+                                          setTimeout(
+                                            () => setConfirmDialogOpen(true),
+                                            200
+                                          );
+                                        }}
+                                      >
+                                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 text-white font-bold text-lg">
+                                          {host.name.charAt(0)}
                                         </div>
-                                        <div className="text-xs text-zinc-600 truncate">
-                                          {host.email}
+                                        <div className="flex-1 min-w-0 text-left">
+                                          <div className="font-semibold text-zinc-900 truncate">
+                                            {host.name}
+                                          </div>
+                                          <div className="text-xs text-zinc-600 truncate">
+                                            {host.email}
+                                          </div>
+                                          <div className="text-xs text-zinc-600">
+                                            {host.phone}
+                                          </div>
+                                          <div className="text-xs text-zinc-500 mt-1">
+                                            {host.eventCount} sự kiện
+                                          </div>
                                         </div>
-                                        <div className="text-xs text-zinc-600">
-                                          {host.phone}
-                                        </div>
-                                        <div className="text-xs text-zinc-500 mt-1">
-                                          {host.eventCount} sự kiện
-                                        </div>
-                                      </div>
-                                    </button>
-                                  ))}
+                                      </button>
+                                    ))}
                                 </div>
                               </DialogContent>
                             </Dialog>
@@ -1171,7 +1158,7 @@ export default function PendingEventDetail({
                                   Bạn có chắc chắn muốn thay đổi host từ:
                                   <br />
                                   <span className="font-semibold text-red-600">
-                                    {event?.hostName}
+                                    {displayValue(resolvedHostName)}
                                   </span>
                                   <span className="mx-2">→</span>
                                   <span className="font-semibold text-green-600">
@@ -1188,27 +1175,18 @@ export default function PendingEventDetail({
                                     variant="outline"
                                     className="bg-red-500 border-none hover:bg-red-600 text-white hover:text-white"
                                     onClick={() => setConfirmDialogOpen(false)}
-                                    disabled={changingHost}
+                                    disabled={isAssigningHost}
                                   >
                                     Hủy bỏ
                                   </Button>
                                   <Button
                                     className="bg-blue-600 text-white hover:bg-blue-700"
-                                    disabled={changingHost}
-                                    onClick={async () => {
-                                      setChangingHost(true);
-                                      // Giả lập đổi host, thực tế gọi API ở đây
-                                      setTimeout(() => {
-                                        setChangingHost(false);
-                                        setConfirmDialogOpen(false);
-                                        toast.success(
-                                          'Đã thay đổi host thành công!'
-                                        );
-                                        // Có thể reload lại trang hoặc cập nhật state event.hostName nếu muốn
-                                      }, 1200);
-                                    }}
+                                    disabled={isAssigningHost}
+                                    onClick={handleAssignHost}
                                   >
-                                    Xác nhận thay đổi
+                                    {isAssigningHost
+                                      ? 'Đang thay đổi...'
+                                      : 'Xác nhận thay đổi'}
                                   </Button>
                                 </DialogFooter>
                               </DialogContent>
@@ -1225,7 +1203,7 @@ export default function PendingEventDetail({
                           <div className="min-w-0">
                             <p className="text-xs text-zinc-500">Host</p>
                             <p className="truncate text-sm text-zinc-800">
-                              {displayValue(event.hostName)}
+                              {displayValue(resolvedHostName)}
                             </p>
                           </div>
                         </div>
@@ -1239,7 +1217,7 @@ export default function PendingEventDetail({
                               Email liên hệ
                             </p>
                             <p className="truncate text-sm text-zinc-800">
-                              {displayValue(event.hostEmail)}
+                              {displayValue(resolvedHostEmail)}
                             </p>
                           </div>
                         </div>
@@ -1253,7 +1231,7 @@ export default function PendingEventDetail({
                               Số điện thoại
                             </p>
                             <p className="truncate text-sm text-zinc-800">
-                              {displayValue(event.hostPhone)}
+                              {displayValue(resolvedHostPhone)}
                             </p>
                           </div>
                         </div>

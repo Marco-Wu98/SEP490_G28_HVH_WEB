@@ -16,10 +16,12 @@ export default function AdminNavbar(props: {
 
   const navClassName =
     colorVariant === 'organizer'
-      ? 'border border-[#BFDBFE] bg-[#FFFFFF]/90 shadow-[0_10px_24px_rgba(59,130,246,0.18)]'
+      ? 'overflow-hidden border border-white/60 bg-white/20 shadow-[0_16px_40px_rgba(59,130,246,0.24)] ring-1 ring-white/35'
       : 'border border-[#1E2939]/80 bg-[#121A2A]/88 shadow-[0_10px_30px_rgba(10,16,28,0.28)]';
   const navEffectClassName =
-    colorVariant === 'organizer' ? 'backdrop-blur-0' : 'backdrop-blur-xl';
+    colorVariant === 'organizer'
+      ? 'backdrop-blur-2xl backdrop-saturate-150 supports-[backdrop-filter]:bg-white/18'
+      : 'backdrop-blur-xl';
   const crumbBaseClassName =
     colorVariant === 'organizer'
       ? 'text-xs font-normal text-[#1E3A8A] hover:underline hover:text-[#1D4ED8]'
@@ -43,7 +45,10 @@ export default function AdminNavbar(props: {
     <nav
       className={`fixed right-3 top-3 z-[40] flex w-[calc(100vw_-_6%)] flex-row items-center justify-between rounded-lg py-2 transition-all md:right-[30px] md:top-4 md:w-[calc(100vw_-_8%)] md:p-2 lg:w-[calc(100vw_-_6%)] xl:top-[20px] xl:w-[calc(100vw_-_365px)] 2xl:w-[calc(100vw_-_380px)] ${navClassName} ${navEffectClassName}`}
     >
-      <div className="ml-[6px]">
+      {colorVariant === 'organizer' && (
+        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.55)_0%,rgba(255,255,255,0.24)_38%,rgba(147,197,253,0.16)_100%)]" />
+      )}
+      <div className="relative z-10 ml-[6px]">
         <div className="h-6 md:mb-2 md:w-[224px] md:pt-1">
           <a className={`hidden md:inline ${crumbBaseClassName}`} href="">
             Pages
@@ -59,7 +64,7 @@ export default function AdminNavbar(props: {
           </NavLink>
         </p>
       </div>
-      <div className="w-[154px] min-w-max md:ml-auto md:w-[unset]">
+      <div className="relative z-10 w-[154px] min-w-max md:ml-auto md:w-[unset]">
         <AdminNavbarLinks
           colorVariant={colorVariant}
           signInPath={props.signInPath}

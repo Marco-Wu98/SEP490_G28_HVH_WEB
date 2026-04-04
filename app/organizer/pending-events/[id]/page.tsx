@@ -17,7 +17,8 @@ export default function OrganizerPendingEventDetailPage() {
   const {
     data: eventData,
     isLoading: isEventLoading,
-    error: eventError
+    error: eventError,
+    mutate: refetchEventDetails
   } = useViewPendingEventDetailsByOrgManager({
     id: id ?? '',
     baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL!
@@ -57,6 +58,7 @@ export default function OrganizerPendingEventDetailPage() {
       externalData={eventData}
       externalIsLoading={isEventLoading}
       externalError={eventError ?? null}
+      onRefetchEventDetails={() => refetchEventDetails()}
     />
   );
 }
