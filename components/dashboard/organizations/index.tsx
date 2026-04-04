@@ -115,9 +115,9 @@ const mockOrganizations: OrganizationItem[] = [
 
 const statusBadgeClass = (status: OrganizationItem['status']) => {
   if (status === 'Hoạt động') {
-    return 'border-green-200 bg-green-50 text-green-700';
+    return 'border-green-200 bg-green-50 text-green-700 hover:bg-green-50 hover:text-green-700';
   }
-  return 'border-red-200 bg-red-50 text-red-700';
+  return 'border-red-200 bg-red-50 text-red-700 hover:bg-red-50 hover:text-red-700';
 };
 
 const renderStars = (rating: number) => {
@@ -340,10 +340,10 @@ export default function OrganizationsPage({ user, userDetails }: Props) {
                         {org.name}
                       </p>
                       <div className="mt-2 flex flex-wrap items-center gap-2">
-                        <Badge className="border-blue-200 bg-blue-50 text-blue-700">
+                        <Badge className="border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-50 hover:text-blue-700">
                           {org.location}
                         </Badge>
-                        <Badge className="border-violet-200 bg-violet-50 text-violet-700">
+                        <Badge className="border-violet-200 bg-violet-50 text-violet-700 hover:bg-violet-50 hover:text-violet-700">
                           {org.orgType}
                         </Badge>
                         <Badge className={statusBadgeClass(org.status)}>
@@ -370,7 +370,7 @@ export default function OrganizationsPage({ user, userDetails }: Props) {
                     {org.tags.map((tag) => (
                       <Badge
                         key={`${org.id}-${tag.label}`}
-                        className="border-slate-200 bg-slate-50 text-slate-600"
+                        className="border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-50 hover:text-slate-600"
                         variant="outline"
                       >
                         {tag.label}

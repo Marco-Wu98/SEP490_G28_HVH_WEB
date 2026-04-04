@@ -12,10 +12,14 @@ import { createClient } from '@/utils/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Mail, Phone, ShieldCheck, UserRound } from 'lucide-react';
+import type { IRoute } from '@/types/types';
 
 interface Props {
   user: User | null | undefined;
   userDetails: { [x: string]: any } | null;
+  routes?: IRoute[];
+  colorVariant?: 'admin' | 'organizer';
+  signInPath?: string;
 }
 
 const supabase = createClient();
@@ -150,6 +154,9 @@ export default function Settings(props: Props) {
       userDetails={props.userDetails}
       title="Cài đặt hồ sơ"
       description="Quản lý và cập nhật thông tin tài khoản từ Supabase."
+      routes={props.routes}
+      colorVariant={props.colorVariant}
+      signInPath={props.signInPath}
     >
       <div className="mx-auto w-full max-w-6xl pb-16 pt-2">
         <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">

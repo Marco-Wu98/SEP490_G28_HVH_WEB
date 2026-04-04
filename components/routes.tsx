@@ -132,6 +132,12 @@ export const organizerRoutes: IRoute[] = [
     collapse: false
   },
   {
+    name: 'Cài đặt hồ sơ',
+    path: '/organizer/settings',
+    icon: <HiOutlineUser className="-mt-[7px] h-4 w-4 stroke-2 text-inherit" />,
+    collapse: false
+  },
+  {
     name: 'Về chúng tôi',
     path: '/about-us',
     icon: (

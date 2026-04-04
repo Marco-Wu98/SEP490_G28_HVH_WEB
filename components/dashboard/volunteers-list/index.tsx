@@ -31,13 +31,17 @@ import {
 import {
   ArrowDown,
   ArrowUp,
+  CalendarDays,
   Eye,
   Filter as Funnel,
   ListFilter,
   Lock,
+  MapPin,
   Plus,
   Star,
   Pencil,
+  Search,
+  ShieldCheck,
   X
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -253,6 +257,54 @@ const mockUsers = [
   }
 ];
 
+type VolunteerActivityStatus = 'completed' | 'ongoing' | 'cancelled';
+
+type VolunteerActivity = {
+  id: string;
+  eventName: string;
+  date: string;
+  location: string;
+  role: string;
+  rating: number;
+  reputationGain: number;
+  status: VolunteerActivityStatus;
+};
+
+const mockVolunteerActivitiesByUserId: Record<number, VolunteerActivity[]> = {
+  1: [
+    {
+      id: 'v1-1',
+      eventName: 'Chuong trinh Mua he xanh 2025',
+      date: '15/06/2025',
+      location: 'Huyen Binh Chanh, TP.HCM',
+      role: 'Tinh nguyen vien',
+      rating: 4.5,
+      reputationGain: 4,
+      status: 'completed'
+    },
+    {
+      id: 'v1-2',
+      eventName: 'Hien mau nhan dao',
+      date: '20/08/2025',
+      location: 'Benh vien Cho Ray',
+      role: 'Tinh nguyen vien',
+      rating: 4.8,
+      reputationGain: 3,
+      status: 'completed'
+    },
+    {
+      id: 'v1-3',
+      eventName: 'Trong cay xanh tai khu vuc noi thanh',
+      date: '10/01/2026',
+      location: 'Cong vien Tao Dan, Quan 1',
+      role: 'Truong nhom',
+      rating: 4.8,
+      reputationGain: 5,
+      status: 'completed'
+    }
+  ]
+};
+
 export default function VolunteersList(props: Props) {
   type Volunteer = (typeof mockUsers)[0];
   type SortKey =
@@ -284,6 +336,10 @@ export default function VolunteersList(props: Props) {
   const [selectedEditUser, setSelectedEditUser] = useState<Volunteer | null>(
     null
   );
+  const [activityQuery, setActivityQuery] = useState('');
+  const [activityStatusFilter, setActivityStatusFilter] = useState<
+    'all' | VolunteerActivityStatus
+  >('all');
   const [editVolunteer, setEditVolunteer] = useState({
     fullName: '',
     cccd: '',
@@ -959,10 +1015,33 @@ export default function VolunteersList(props: Props) {
     currentPage * pageSize
   );
 
+  const volunteerActivities = useMemo(() => {
+    if (!selectedUser) return [];
+    return mockVolunteerActivitiesByUserId[selectedUser.id] ?? [];
+  }, [selectedUser]);
+
+  const filteredVolunteerActivities = useMemo(() => {
+    const query = activityQuery.trim().toLowerCase();
+
+    return volunteerActivities.filter((activity) => {
+      const matchesQuery =
+        !query ||
+        activity.eventName.toLowerCase().includes(query) ||
+        activity.location.toLowerCase().includes(query);
+      const matchesStatus =
+        activityStatusFilter === 'all' ||
+        activity.status === activityStatusFilter;
+
+      return matchesQuery && matchesStatus;
+    });
+  }, [activityQuery, activityStatusFilter, volunteerActivities]);
+
   const handleView = (userId: number) => {
     const user = users.find((u) => u.id === userId);
     if (user) {
       setSelectedUser(user);
+      setActivityQuery('');
+      setActivityStatusFilter('all');
       setOpenDetailModal(true);
     }
   };
@@ -1321,7 +1400,7 @@ export default function VolunteersList(props: Props) {
 
         {/* Detail Modal */}
         <Dialog open={openDetailModal} onOpenChange={setOpenDetailModal}>
-          <DialogContent className="max-w-2xl overflow-hidden border border-blue-100 bg-gradient-to-br from-white via-white to-blue-50 p-0 shadow-2xl shadow-blue-100/50">
+          <DialogContent className="max-w-6xl overflow-hidden border border-blue-100 bg-gradient-to-br from-white via-white to-blue-50 p-0 shadow-2xl shadow-blue-100/50">
             <DialogHeader>
               <div className="border-b border-blue-100/80 bg-white/70 px-6 pt-6 pb-4 backdrop-blur-sm">
                 <DialogTitle className="text-xl font-semibold text-slate-900">
@@ -1334,11 +1413,10 @@ export default function VolunteersList(props: Props) {
             </DialogHeader>
 
             {selectedUser && (
-              <div className="space-y-6 px-6 pb-6 pt-6">
-                {/* Avatar and Basic Info */}
-                <div className="rounded-2xl border border-blue-100 bg-gradient-to-br from-white via-white to-sky-50 p-5 shadow-lg shadow-sky-100/40">
-                  <div className="flex items-start gap-6">
-                    <Avatar className="h-20 w-20 border border-white shadow-lg shadow-blue-100/50 ring-4 ring-blue-50">
+              <div className="grid gap-5 px-6 pb-6 pt-6 lg:grid-cols-[320px_minmax(0,1fr)]">
+                <div className="rounded-2xl border border-blue-100 bg-white p-5 shadow-md shadow-blue-100/35">
+                  <div className="flex flex-col items-center text-center">
+                    <Avatar className="h-24 w-24 border border-white shadow-lg shadow-blue-100/50 ring-4 ring-blue-50">
                       <AvatarImage
                         src={selectedUser.avatar}
                         alt={selectedUser.fullName}
@@ -1351,97 +1429,145 @@ export default function VolunteersList(props: Props) {
                           .slice(0, 2)}
                       </AvatarFallback>
                     </Avatar>
-
-                    <div className="flex-1">
-                      <h2 className="text-2xl font-bold text-slate-900">
-                        {selectedUser.fullName}
-                      </h2>
-                      <p className="text-sm text-slate-500">
-                        ID: {selectedUser.id}
-                      </p>
-                      <div className="mt-3">
-                        <Badge
-                          className={
-                            selectedUser.status === 'active'
-                              ? 'rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-700'
-                              : selectedUser.status === 'locked'
-                                ? 'rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-rose-700 hover:bg-rose-50 hover:text-rose-700'
-                                : 'rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-amber-700 hover:bg-amber-50 hover:text-amber-700'
-                          }
-                        >
-                          {selectedUser.status === 'active'
-                            ? 'Hoạt động'
-                            : selectedUser.status === 'locked'
-                              ? 'Bị khóa'
-                              : 'Không hoạt động'}
-                        </Badge>
-                      </div>
-                    </div>
+                    <h3 className="mt-3 text-xl font-bold text-slate-900">
+                      {selectedUser.fullName}
+                    </h3>
+                    <p className="text-sm text-slate-500">Tình nguyện viên</p>
+                    <Badge
+                      className={`mt-3 rounded-full px-3 py-1 ${
+                        selectedUser.status === 'active'
+                          ? 'border border-emerald-200 bg-emerald-50 text-emerald-700'
+                          : selectedUser.status === 'locked'
+                            ? 'border border-rose-200 bg-rose-50 text-rose-700'
+                            : 'border border-amber-200 bg-amber-50 text-amber-700'
+                      }`}
+                    >
+                      {selectedUser.status === 'active'
+                        ? 'Hoạt động'
+                        : selectedUser.status === 'locked'
+                          ? 'Bị khóa'
+                          : 'Không hoạt động'}
+                    </Badge>
                   </div>
-                </div>
 
-                {/* Contact and Personal Details */}
-                <div className="grid grid-cols-2 gap-4 rounded-2xl border border-sky-100 bg-gradient-to-br from-sky-50 via-white to-indigo-50 p-4 shadow-md shadow-sky-100/30">
-                  <div>
-                    <p className="text-xs font-semibold text-slate-500">CCCD</p>
-                    <p className="text-sm font-medium text-slate-900">
+                  <div className="mt-5 space-y-3 border-t border-zinc-200 pt-4 text-sm">
+                    <p className="text-zinc-700">
+                      <span className="font-semibold text-zinc-500">CCCD:</span>{' '}
                       {selectedUser.cccd}
                     </p>
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-slate-500">
-                      Số điện thoại
-                    </p>
-                    <p className="text-sm font-medium text-slate-900">
+                    <p className="text-zinc-700">
+                      <span className="font-semibold text-zinc-500">
+                        Số điện thoại:
+                      </span>{' '}
                       {selectedUser.phone}
                     </p>
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-slate-500">
-                      Email
-                    </p>
-                    <p className="text-sm font-medium text-slate-900">
+                    <p className="text-zinc-700">
+                      <span className="font-semibold text-zinc-500">
+                        Email:
+                      </span>{' '}
                       {selectedUser.email}
                     </p>
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-slate-500">
-                      Ngày sinh
-                    </p>
-                    <p className="text-sm font-medium text-slate-900">
+                    <p className="text-zinc-700">
+                      <span className="font-semibold text-zinc-500">
+                        Ngày sinh:
+                      </span>{' '}
                       {selectedUser.dob}
                     </p>
                   </div>
                 </div>
 
-                {/* Statistics Cards */}
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="rounded-xl border border-blue-100 bg-gradient-to-br from-blue-50 to-white p-4 shadow-sm shadow-blue-100/50">
-                    <p className="text-xs font-semibold text-blue-700">
-                      Sự kiện
-                    </p>
-                    <p className="text-2xl font-bold text-slate-900">
-                      {selectedUser.events}
-                    </p>
-                  </div>
-                  <div className="rounded-xl border border-amber-100 bg-gradient-to-br from-amber-50 to-white p-4 shadow-sm shadow-amber-100/50">
-                    <p className="text-xs font-semibold text-amber-700">
-                      Đánh giá
-                    </p>
-                    <div className="flex items-center gap-1">
-                      <span className="text-2xl font-bold text-slate-900">
-                        {selectedUser.rating.toFixed(1)}
-                      </span>
-                      <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
+                <div className="rounded-2xl border border-blue-100 bg-white p-5 shadow-md shadow-blue-100/35">
+                  <h3 className="text-xl font-semibold text-slate-900">
+                    Lịch sử hoạt động thiện nguyện
+                  </h3>
+                  <p className="mt-1 text-sm text-zinc-500">
+                    Danh sách các hoạt động đã tham gia (
+                    {filteredVolunteerActivities.length} hoạt động)
+                  </p>
+
+                  <div className="mt-4 grid gap-3 md:grid-cols-[1fr_220px]">
+                    <div className="relative">
+                      <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+                      <Input
+                        value={activityQuery}
+                        onChange={(e) => setActivityQuery(e.target.value)}
+                        placeholder="Tìm kiếm theo tên hoạt động..."
+                        className="pl-9"
+                      />
                     </div>
+                    <Select
+                      value={activityStatusFilter}
+                      onValueChange={(value) =>
+                        setActivityStatusFilter(
+                          value as 'all' | VolunteerActivityStatus
+                        )
+                      }
+                    >
+                      <SelectTrigger className="bg-white border-zinc-200 text-zinc-900">
+                        <SelectValue placeholder="Tất cả trạng thái" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white text-zinc-900 border border-zinc-200">
+                        <SelectItem value="all">Tất cả trạng thái</SelectItem>
+                        <SelectItem value="completed">Hoàn thành</SelectItem>
+                        <SelectItem value="ongoing">Đang diễn ra</SelectItem>
+                        <SelectItem value="cancelled">Đã hủy</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
-                  <div className="rounded-xl border border-emerald-100 bg-gradient-to-br from-emerald-50 to-white p-4 shadow-sm shadow-emerald-100/50">
-                    <p className="text-xs font-semibold text-emerald-700">
-                      Uy tín
-                    </p>
-                    <p className="text-2xl font-bold text-slate-900">
-                      {selectedUser.reputation}
-                    </p>
+
+                  <div className="mt-4 space-y-3 max-h-[420px] overflow-y-auto pr-1">
+                    {filteredVolunteerActivities.length === 0 ? (
+                      <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-sm text-zinc-500">
+                        Không có hoạt động phù hợp.
+                      </div>
+                    ) : (
+                      filteredVolunteerActivities.map((activity) => (
+                        <div
+                          key={activity.id}
+                          className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm"
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <p className="font-semibold text-zinc-900">
+                              {activity.eventName}
+                            </p>
+                            <Badge
+                              className={`rounded-full px-2.5 py-0.5 text-xs ${
+                                activity.status === 'completed'
+                                  ? 'border border-emerald-200 bg-emerald-50 text-emerald-700'
+                                  : activity.status === 'ongoing'
+                                    ? 'border border-blue-200 bg-blue-50 text-blue-700'
+                                    : 'border border-rose-200 bg-rose-50 text-rose-700'
+                              }`}
+                            >
+                              {activity.status === 'completed'
+                                ? 'Hoàn thành'
+                                : activity.status === 'ongoing'
+                                  ? 'Đang diễn ra'
+                                  : 'Đã hủy'}
+                            </Badge>
+                          </div>
+
+                          <div className="mt-2 space-y-1 text-sm text-zinc-600">
+                            <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                              <p className="inline-flex items-center gap-1.5">
+                                <CalendarDays className="h-4 w-4" />
+                                {activity.date}
+                              </p>
+                              <p className="inline-flex items-center gap-1.5">
+                                <MapPin className="h-4 w-4" />
+                                {activity.location}
+                              </p>
+                            </div>
+                            <p className="inline-flex items-center gap-1.5">
+                              <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                              Rating: {activity.rating}
+                              <ShieldCheck className="h-4 w-4 ml-3 text-blue-500" />
+                              +{activity.reputationGain} điểm uy tín
+                            </p>
+                          </div>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </div>
               </div>

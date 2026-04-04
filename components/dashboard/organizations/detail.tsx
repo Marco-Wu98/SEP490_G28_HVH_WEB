@@ -160,7 +160,12 @@ export default function OrganizationDetailPage({
             <ArrowLeft className="h-5 w-5" />
             <span>Chi tiết Tổ chức</span>
           </button>
-          <Button className="bg-blue-600 hover:bg-blue-700">
+          <Button
+            className="bg-blue-600 hover:bg-blue-700"
+            onClick={() =>
+              router.push(`/dashboard/organizations/${orgId}/edit`)
+            }
+          >
             <Edit className="mr-2 h-4 w-4" />
             Cập nhật
           </Button>

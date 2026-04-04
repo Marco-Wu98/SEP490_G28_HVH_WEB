@@ -5,13 +5,14 @@ import { Calendar, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Mail, Phone, BadgeCheck } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Mail, Phone, BadgeCheck, ShieldCheck, UserRound } from 'lucide-react';
 import DashboardLayout from '@/components/layout';
 import { organizerRoutes } from '@/components/routes';
 import { useViewHostInfo } from '@/hooks/features/uc066-view-host-details/useViewHostInfo';
 import { useViewHostActivities } from '@/hooks/features/uc066-view-host-details/useViewHostActivities';
 import { useState, useMemo } from 'react';
+import { Input } from '@/components/ui/input';
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080/api/v1';
@@ -103,6 +104,16 @@ export default function HostDetailPage() {
     avatar: hostInfo?.avatarUrl
   };
 
+  const hostInitials =
+    host.name && host.name.length > 0
+      ? host.name
+          .split(' ')
+          .map((w) => w[0])
+          .join('')
+          .slice(0, 2)
+          .toUpperCase()
+      : host.email.charAt(0).toUpperCase();
+
   // Filtering logic
   const filteredActivities = activities.filter((act) => {
     // Filter by keyword
@@ -138,7 +149,7 @@ export default function HostDetailPage() {
       colorVariant="organizer"
       signInPath="/signin/password_signin"
     >
-      <div className="w-full max-w-none">
+      <div className="mx-auto w-full max-w-6xl pb-16 pt-2">
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="mt-2 text-zinc-500">
@@ -168,82 +179,158 @@ export default function HostDetailPage() {
 
         {!isLoading && hostInfo && (
           <>
-            <div className="grid gap-6 md:grid-cols-2">
-              <Card className="border-zinc-200 bg-white p-6 shadow-sm flex flex-row items-center gap-6">
-                <Avatar className="h-24 w-24 text-3xl">
-                  <AvatarFallback>
-                    {host.name
-                      .split(' ')
-                      .map((w) => w[0])
-                      .join('')}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xl font-semibold">{host.name}</span>
-                    <Badge
-                      className={
-                        host.status === 'Hoạt động'
-                          ? 'border-emerald-200 bg-emerald-50 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-600'
-                          : 'border-rose-200 bg-rose-50 text-rose-500 hover:bg-rose-50 hover:text-rose-500'
-                      }
-                    >
-                      <span
-                        className={
-                          host.status === 'Hoạt động'
-                            ? 'mr-1.5 inline-block h-2 w-2 rounded-full bg-emerald-500'
-                            : 'mr-1.5 inline-block h-2 w-2 rounded-full bg-rose-400'
-                        }
-                      />
+            <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
+              <Card className="border-zinc-200 bg-white p-6 shadow-sm xl:col-span-1">
+                <div className="rounded-2xl border border-sky-100 bg-gradient-to-br from-sky-50 to-cyan-50 p-5">
+                  <div className="flex items-center gap-4">
+                    <Avatar className="h-16 w-16 border border-white shadow-sm">
+                      <AvatarImage src={host.avatar} />
+                      <AvatarFallback className="bg-sky-100 text-xl font-bold text-sky-700">
+                        {hostInitials || '?'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-xl font-extrabold text-zinc-900">
+                        {host.name}
+                      </p>
+                      <p className="mt-1 truncate text-sm text-zinc-600">
+                        {host.email}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <Badge className="bg-sky-600 text-white hover:bg-sky-600">
                       {host.status === 'Hoạt động'
                         ? 'Đang hoạt động'
                         : 'Đã khóa'}
                     </Badge>
+                    <Badge
+                      variant="outline"
+                      className="border-zinc-300 text-zinc-600"
+                    >
+                      Host
+                    </Badge>
                   </div>
-                  <div className="text-sm text-zinc-500 mb-2">
-                    <span>Địa chỉ:</span>{' '}
-                    <span className="text-zinc-900 font-medium">
+                </div>
+
+                <div className="mt-5 space-y-4">
+                  <div className="rounded-xl border border-zinc-200 bg-zinc-50/70 p-3">
+                    <p className="text-xs font-semibold uppercase tracking-[0.08em] text-zinc-500">
+                      Địa chỉ
+                    </p>
+                    <p className="mt-1 text-sm font-semibold text-zinc-900">
                       {host.address}
-                    </span>
+                    </p>
                   </div>
-                  <div className="flex flex-col gap-1 text-sm">
-                    <div>
-                      <span className="text-zinc-500">Ngày sinh:</span>{' '}
-                      <span className="text-zinc-900 font-medium">
-                        {host.dob}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-zinc-500">Ngày tham gia:</span>{' '}
-                      <span className="text-zinc-900 font-medium">
-                        {host.joined}
-                      </span>
-                    </div>
+                  <div className="rounded-xl border border-zinc-200 bg-zinc-50/70 p-3">
+                    <p className="text-xs font-semibold uppercase tracking-[0.08em] text-zinc-500">
+                      Ngày sinh
+                    </p>
+                    <p className="mt-1 text-sm font-medium text-zinc-900">
+                      {host.dob}
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-zinc-200 bg-zinc-50/70 p-3">
+                    <p className="text-xs font-semibold uppercase tracking-[0.08em] text-zinc-500">
+                      Ngày tham gia
+                    </p>
+                    <p className="mt-1 text-sm font-medium text-zinc-900">
+                      {host.joined}
+                    </p>
                   </div>
                 </div>
               </Card>
-              <Card className="border-zinc-200 bg-white p-6 shadow-sm flex flex-col justify-center">
-                <div className="flex flex-col gap-2 text-sm">
-                  <div className="flex items-center gap-2">
-                    <Mail className="w-4 h-4 text-zinc-400" />
-                    <span className="text-zinc-500">Email:</span>{' '}
-                    <span className="text-zinc-900 font-medium">
-                      {host.email}
-                    </span>
+
+              <Card className="border-zinc-200 bg-white p-6 shadow-sm xl:col-span-2">
+                <div className="mb-5">
+                  <h2 className="text-2xl font-extrabold text-zinc-900">
+                    Thông tin tài khoản
+                  </h2>
+                </div>
+
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                  <div className="rounded-xl border border-zinc-200 p-3">
+                    <p className="text-xs font-semibold uppercase tracking-[0.08em] text-zinc-500">
+                      Host ID
+                    </p>
+                    <p className="mt-1 break-all text-sm font-medium text-zinc-900">
+                      {host.id || 'Chưa có dữ liệu'}
+                    </p>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Phone className="w-4 h-4 text-zinc-400" />
-                    <span className="text-zinc-500">Số điện thoại:</span>{' '}
-                    <span className="text-zinc-900 font-medium">
-                      {host.phone}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <BadgeCheck className="w-4 h-4 text-zinc-400" />
-                    <span className="text-zinc-500">CCCD/CMND:</span>{' '}
-                    <span className="text-zinc-900 font-medium">
+                  <div className="rounded-xl border border-zinc-200 p-3">
+                    <p className="text-xs font-semibold uppercase tracking-[0.08em] text-zinc-500">
+                      CCCD/CMND
+                    </p>
+                    <p className="mt-1 text-sm font-medium text-zinc-900">
                       {host.cccd}
-                    </span>
+                    </p>
+                  </div>
+                </div>
+
+                <div className="my-6 h-px bg-zinc-200" />
+
+                <div className="space-y-5">
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-2 text-sm font-semibold text-zinc-900">
+                      <UserRound className="h-4 w-4 text-zinc-500" />
+                      Họ và tên
+                    </label>
+                    <Input
+                      type="text"
+                      value={host.name}
+                      disabled
+                      className="border-zinc-300 bg-white text-zinc-900 disabled:opacity-100"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-2 text-sm font-semibold text-zinc-900">
+                      <Mail className="h-4 w-4 text-zinc-500" />
+                      Email
+                    </label>
+                    <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2">
+                      <p className="text-sm font-medium text-zinc-900">
+                        {host.email}
+                      </p>
+                      <p className="mt-1 text-xs text-zinc-500">
+                        Email không cho phép cập nhật tại đây.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-2 text-sm font-semibold text-zinc-900">
+                      <Phone className="h-4 w-4 text-zinc-500" />
+                      Số điện thoại
+                    </label>
+                    <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2">
+                      <p className="text-sm font-medium text-zinc-900">
+                        {host.phone}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-6 grid grid-cols-1 gap-3 md:grid-cols-2">
+                  <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-3">
+                    <p className="flex items-center gap-2 text-sm font-semibold text-zinc-800">
+                      <ShieldCheck className="h-4 w-4 text-zinc-500" />
+                      Trạng thái tài khoản
+                    </p>
+                    <p className="mt-1 text-sm text-zinc-600">
+                      {host.status === 'Hoạt động'
+                        ? 'Tài khoản host đang hoạt động.'
+                        : 'Tài khoản host đã bị khóa.'}
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-3">
+                    <p className="flex items-center gap-2 text-sm font-semibold text-zinc-800">
+                      <BadgeCheck className="h-4 w-4 text-zinc-500" />
+                      Định danh
+                    </p>
+                    <p className="mt-1 text-sm text-zinc-600">
+                      Số CCCD/CMND: {host.cccd}
+                    </p>
                   </div>
                 </div>
               </Card>

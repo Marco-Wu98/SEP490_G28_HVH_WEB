@@ -33,6 +33,7 @@ import { User } from '@supabase/supabase-js';
 import {
   ArrowDown,
   ArrowUp,
+  Check,
   ChevronRight,
   Filter as Funnel,
   ListFilter,
@@ -202,12 +203,6 @@ export default function OrganizerHostManagement({
     confirmActionHost?.status === 'Hoạt động'
       ? 'Khóa tài khoản'
       : 'Mở khóa tài khoản';
-
-  const confirmActionDescription = confirmActionHost
-    ? confirmActionHost.status === 'Hoạt động'
-      ? `Bạn có chắc chắn muốn khóa tài khoản của ${confirmActionHost.name}? Host này sẽ bị chuyển sang trạng thái ngừng hoạt động.`
-      : `Bạn có chắc chắn muốn mở khóa tài khoản của ${confirmActionHost.name}? Host này sẽ được chuyển lại sang trạng thái hoạt động.`
-    : '';
 
   const ValueFilterDropdown = (props: {
     columnKey: ValueFilterKey;
@@ -805,9 +800,32 @@ export default function OrganizerHostManagement({
         >
           <DialogContent className="border-zinc-200 bg-white sm:max-w-md">
             <DialogHeader>
+              <div className="mx-auto mb-2 flex h-16 w-16 items-center justify-center rounded-full bg-zinc-100">
+                {confirmActionHost?.status === 'Hoạt động' ? (
+                  <X className="h-8 w-8 text-red-600" />
+                ) : (
+                  <Check className="h-8 w-8 text-emerald-600" />
+                )}
+              </div>
               <DialogTitle>{confirmActionText}</DialogTitle>
               <DialogDescription className="text-zinc-500">
-                {confirmActionDescription}
+                {confirmActionHost?.status === 'Hoạt động' ? (
+                  <>
+                    Bạn có chắc chắn muốn khóa tài khoản của{' '}
+                    <span className="font-semibold text-zinc-900">
+                      {confirmActionHost?.name}
+                    </span>
+                    ? Host này sẽ bị chuyển sang trạng thái ngừng hoạt động.
+                  </>
+                ) : (
+                  <>
+                    Bạn có chắc chắn muốn mở khóa tài khoản của{' '}
+                    <span className="font-semibold text-zinc-900">
+                      {confirmActionHost?.name}
+                    </span>
+                    ? Host này sẽ được chuyển lại sang trạng thái hoạt động.
+                  </>
+                )}
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
@@ -821,7 +839,7 @@ export default function OrganizerHostManagement({
               <Button
                 className={cn(
                   confirmActionHost?.status === 'Hoạt động'
-                    ? 'bg-rose-500 text-white hover:bg-rose-600'
+                    ? 'bg-red-600 text-white hover:bg-red-700'
                     : 'bg-emerald-500 text-white hover:bg-emerald-600'
                 )}
                 onClick={() => {
