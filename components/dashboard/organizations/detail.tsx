@@ -8,6 +8,7 @@ import DashboardLayout from '@/components/layout';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogClose } from '@/components/ui/dialog';
 import {
   Carousel,
@@ -17,7 +18,7 @@ import {
   CarouselPrevious
 } from '@/components/ui/carousel';
 import { User } from '@supabase/supabase-js';
-import { ArrowLeft, Edit, Star, X } from 'lucide-react';
+import { ArrowLeft, Check, Edit, Star, X } from 'lucide-react';
 import type { OrganizationDetail } from '@/hooks/entity';
 
 interface Props {
@@ -97,8 +98,50 @@ export default function OrganizationDetailPage({
 }: Props) {
   const router = useRouter();
   const org = mockOrgDetail;
+  const [orgStatus, setOrgStatus] = useState<OrganizationDetail['status']>(
+    org.status
+  );
+  const [statusModalOpen, setStatusModalOpen] = useState(false);
+  const [pendingStatusAction, setPendingStatusAction] = useState<
+    'deactivate' | 'reactivate' | null
+  >(null);
+  const [deactivateReason, setDeactivateReason] = useState('');
+  const [deactivateReasonError, setDeactivateReasonError] = useState('');
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
+
+  const openDeactivateModal = () => {
+    setPendingStatusAction('deactivate');
+    setDeactivateReason('');
+    setDeactivateReasonError('');
+    setStatusModalOpen(true);
+  };
+
+  const openReactivateModal = () => {
+    setPendingStatusAction('reactivate');
+    setDeactivateReason('');
+    setDeactivateReasonError('');
+    setStatusModalOpen(true);
+  };
+
+  const handleConfirmStatusAction = () => {
+    if (pendingStatusAction === 'deactivate') {
+      if (!deactivateReason.trim()) {
+        setDeactivateReasonError('Vui lòng nhập lý do ngừng hoạt động.');
+        return;
+      }
+      setOrgStatus('Ngừng hoạt động');
+    }
+
+    if (pendingStatusAction === 'reactivate') {
+      setOrgStatus('Hoạt động');
+    }
+
+    setStatusModalOpen(false);
+    setPendingStatusAction(null);
+    setDeactivateReason('');
+    setDeactivateReasonError('');
+  };
 
   return (
     <DashboardLayout
@@ -141,8 +184,8 @@ export default function OrganizationDetailPage({
                     {org.name}
                   </h1>
                   <div className="mt-3 flex flex-wrap items-center gap-2">
-                    <Badge className={statusBadgeClass(org.status)}>
-                      {org.status}
+                    <Badge className={statusBadgeClass(orgStatus)}>
+                      {orgStatus}
                     </Badge>
                     <Badge className="border-blue-200 bg-blue-50 text-blue-700">
                       {org.location}
@@ -359,6 +402,112 @@ export default function OrganizationDetailPage({
             </Carousel>
           </div>
         </Card>
+
+        <div className="mt-6 flex items-center justify-end gap-3">
+          {orgStatus === 'Hoạt động' ? (
+            <Button
+              type="button"
+              className="bg-red-600 text-white hover:bg-red-700"
+              onClick={openDeactivateModal}
+            >
+              Ngừng hoạt động
+            </Button>
+          ) : (
+            <Button
+              type="button"
+              className="bg-emerald-600 text-white hover:bg-emerald-700"
+              onClick={openReactivateModal}
+            >
+              Kích hoạt lại
+            </Button>
+          )}
+        </div>
+
+        <Dialog
+          open={statusModalOpen}
+          onOpenChange={(open) => {
+            setStatusModalOpen(open);
+            if (!open) {
+              setDeactivateReasonError('');
+            }
+          }}
+        >
+          <DialogContent className="max-w-md bg-white p-0 overflow-hidden">
+            <div className="p-6">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-zinc-100">
+                {pendingStatusAction === 'deactivate' ? (
+                  <X className="h-8 w-8 text-red-600" />
+                ) : (
+                  <Check className="h-8 w-8 text-emerald-600" />
+                )}
+              </div>
+
+              <h3 className="text-center text-2xl font-bold text-zinc-900">
+                {pendingStatusAction === 'deactivate'
+                  ? 'Xác nhận ngừng hoạt động'
+                  : 'Xác nhận hoạt động trở lại'}
+              </h3>
+
+              <p className="mt-3 text-center text-zinc-600">
+                {pendingStatusAction === 'deactivate'
+                  ? `Bạn có chắc chắn muốn ngừng hoạt động tổ chức ${org.name} không?`
+                  : `Bạn có chắc chắn muốn tổ chức ${org.name} hoạt động trở lại không?`}
+              </p>
+
+              {pendingStatusAction === 'deactivate' && (
+                <div className="mt-5">
+                  <label className="mb-2 block text-sm font-medium text-zinc-700">
+                    Lý do ngừng hoạt động
+                  </label>
+                  <Textarea
+                    value={deactivateReason}
+                    onChange={(e) => {
+                      setDeactivateReason(e.target.value);
+                      if (deactivateReasonError) {
+                        setDeactivateReasonError('');
+                      }
+                    }}
+                    placeholder="Nhập lý do ngừng hoạt động..."
+                    className="min-h-28 border-zinc-300 text-zinc-900 placeholder:text-zinc-400"
+                  />
+                  {deactivateReasonError && (
+                    <p className="mt-2 text-sm text-red-600">
+                      {deactivateReasonError}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              <div className="mt-6 flex items-center gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="flex-1 border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-50"
+                  onClick={() => setStatusModalOpen(false)}
+                >
+                  Hủy
+                </Button>
+                {pendingStatusAction === 'deactivate' ? (
+                  <Button
+                    type="button"
+                    className="flex-1 bg-red-600 text-white hover:bg-red-700"
+                    onClick={handleConfirmStatusAction}
+                  >
+                    Ngừng hoạt động
+                  </Button>
+                ) : (
+                  <Button
+                    type="button"
+                    className="flex-1 bg-emerald-600 text-white hover:bg-emerald-700"
+                    onClick={handleConfirmStatusAction}
+                  >
+                    Xác nhận mở
+                  </Button>
+                )}
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Image Zoom Dialog */}
         <Dialog

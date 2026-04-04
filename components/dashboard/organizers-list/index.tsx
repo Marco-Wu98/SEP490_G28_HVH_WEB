@@ -1372,6 +1372,9 @@ export default function OrganizersList(props: Props) {
                 <DialogTitle className="text-xl font-semibold text-slate-900">
                   Chi tiết thông tin người tổ chức
                 </DialogTitle>
+                <DialogDescription className="text-sm text-slate-500">
+                  Xem thông tin chi tiết của người tổ chức sự kiện
+                </DialogDescription>
               </div>
             </DialogHeader>
 
@@ -1821,24 +1824,6 @@ export default function OrganizersList(props: Props) {
                         setNewHost({
                           ...newHost,
                           email: e.target.value
-                        })
-                      }
-                      className="mt-1 bg-blue-50 border-blue-200 focus:border-blue-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                      Mật khẩu <span className="text-red-500">*</span>
-                    </label>
-                    <Input
-                      type="password"
-                      placeholder="Nhập mật khẩu"
-                      value={newHost.password}
-                      onChange={(e) =>
-                        setNewHost({
-                          ...newHost,
-                          password: e.target.value
                         })
                       }
                       className="mt-1 bg-blue-50 border-blue-200 focus:border-blue-500"
