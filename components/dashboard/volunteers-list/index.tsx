@@ -75,6 +75,13 @@ type VolunteerActivity = {
   status: VolunteerActivityStatus;
 };
 
+const mapAccountStatus = (
+  status: string | null | undefined
+): 'active' | 'inactive' | 'locked' => {
+  if (status === 'ACTIVE') return 'active';
+  return 'locked';
+};
+
 export default function VolunteersList(props: Props) {
   const router = useRouter();
 
@@ -169,13 +176,6 @@ export default function VolunteersList(props: Props) {
     baseUrl,
     enabled: openDetailModal && Boolean(selectedUser?.id)
   });
-
-  const mapAccountStatus = (
-    status: string | null | undefined
-  ): Volunteer['status'] => {
-    if (status === 'ACTIVE') return 'active';
-    return 'locked';
-  };
 
   const formatDateForDisplay = (value: string | null | undefined) => {
     if (!value) return 'Chưa cập nhật';

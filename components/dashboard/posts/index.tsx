@@ -1,5 +1,7 @@
 'use client';
 
+/* eslint-disable @next/next/no-img-element */
+
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -1057,7 +1059,7 @@ export default function PostsManagement({ posts }: PostsManagementProps) {
                   </div>
                 </div>
                 <p className="mt-3 text-xs text-zinc-500">
-                  Mẹo: chọn "Ưu tiên bài có ảnh" để rà soát nội dung nổi bật
+                  Mẹo: chọn &quot;Ưu tiên bài có ảnh&quot; để rà soát nội dung nổi bật
                   nhanh như luồng feed mạng xã hội.
                 </p>
               </div>

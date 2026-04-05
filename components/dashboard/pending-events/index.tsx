@@ -381,7 +381,7 @@ export default function PendingEvents({
         const nv = normalizeText(typeof v === 'string' ? v : '');
         return tokens.every((t) => nv.includes(t));
       });
-    }, [values, search]);
+    }, [values, search, columnKey]);
 
     const setApplied = (next: string[]) => {
       setColumnValueFilters((prev) => ({
@@ -820,8 +820,6 @@ export default function PendingEvents({
     submittedDateFrom,
     submittedDateTo,
     sortCriteria,
-    statusFilter,
-    statusFilters,
     getFilterValueForKey,
     pendingEvents
   ]);
