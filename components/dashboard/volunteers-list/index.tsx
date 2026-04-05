@@ -32,6 +32,7 @@ import {
   ArrowDown,
   ArrowUp,
   CalendarDays,
+  ChevronRight,
   Eye,
   Filter as Funnel,
   ListFilter,
@@ -45,6 +46,7 @@ import {
   X
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Dialog,
   DialogContent,
@@ -64,6 +66,7 @@ type VolunteerActivityStatus = 'completed' | 'ongoing' | 'cancelled';
 
 type VolunteerActivity = {
   id: string;
+  eventId: string;
   eventName: string;
   date: string;
   location: string;
@@ -73,6 +76,8 @@ type VolunteerActivity = {
 };
 
 export default function VolunteersList(props: Props) {
+  const router = useRouter();
+
   type Volunteer = {
     id: string;
     avatar: string;
@@ -900,6 +905,7 @@ export default function VolunteersList(props: Props) {
 
     return activities.map((activity, index) => ({
       id: activity.sessionId || `${activity.eventId}-${index}`,
+      eventId: activity.eventId || '',
       eventName: activity.eventName ?? 'Sự kiện chưa cập nhật',
       date: formatDateTimeForDisplay(activity.sessionStartTime),
       location:
@@ -914,6 +920,14 @@ export default function VolunteersList(props: Props) {
       )
     }));
   }, [volunteerActivitiesData]);
+
+  const handleOpenVolunteerActivityEvent = (eventId: string) => {
+    const trimmedId = eventId?.trim();
+    if (!trimmedId) return;
+
+    setOpenDetailModal(false);
+    router.push(`/dashboard/volunteers-list/events/${trimmedId}`);
+  };
 
   const filteredVolunteerActivities = useMemo(() => {
     const query = activityQuery.trim().toLowerCase();
@@ -1041,14 +1055,22 @@ export default function VolunteersList(props: Props) {
     switch (status) {
       case 'active':
         return (
-          <Badge className="bg-emerald-500 hover:bg-emerald-600">
+          <Badge className="bg-emerald-500 text-white hover:bg-emerald-500 hover:text-white">
             Kích hoạt
           </Badge>
         );
       case 'locked':
-        return <Badge className="bg-rose-500 hover:bg-rose-600">Khóa</Badge>;
+        return (
+          <Badge className="bg-rose-500 text-white hover:bg-rose-500 hover:text-white">
+            Khóa
+          </Badge>
+        );
       default:
-        return <Badge className="bg-rose-500 hover:bg-rose-600">Khóa</Badge>;
+        return (
+          <Badge className="bg-rose-500 text-white hover:bg-rose-500 hover:text-white">
+            Khóa
+          </Badge>
+        );
     }
   };
 
@@ -1345,8 +1367,8 @@ export default function VolunteersList(props: Props) {
                     <Badge
                       className={`mt-3 rounded-full px-3 py-1 ${
                         selectedUser.status === 'active'
-                          ? 'border border-emerald-200 bg-emerald-50 text-emerald-700'
-                          : 'border border-rose-200 bg-rose-50 text-rose-700'
+                          ? 'border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-700'
+                          : 'border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-50 hover:text-rose-700'
                       }`}
                     >
                       {selectedUser.status === 'active' ? 'Kích hoạt' : 'Khóa'}
@@ -1435,27 +1457,43 @@ export default function VolunteersList(props: Props) {
                       filteredVolunteerActivities.map((activity) => (
                         <div
                           key={activity.id}
-                          className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm"
+                          role="button"
+                          tabIndex={0}
+                          onClick={() =>
+                            handleOpenVolunteerActivityEvent(activity.eventId)
+                          }
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              handleOpenVolunteerActivityEvent(
+                                activity.eventId
+                              );
+                            }
+                          }}
+                          className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm transition-colors hover:border-blue-300 hover:bg-blue-50/30 cursor-pointer"
                         >
                           <div className="flex items-start justify-between gap-3">
                             <p className="font-semibold text-zinc-900">
                               {activity.eventName}
                             </p>
-                            <Badge
-                              className={`rounded-full px-2.5 py-0.5 text-xs ${
-                                activity.status === 'completed'
-                                  ? 'border border-emerald-200 bg-emerald-50 text-emerald-700'
+                            <div className="flex items-center gap-2">
+                              <Badge
+                                className={`rounded-full px-2.5 py-0.5 text-xs ${
+                                  activity.status === 'completed'
+                                    ? 'border border-emerald-200 bg-emerald-50 text-emerald-700'
+                                    : activity.status === 'ongoing'
+                                      ? 'border border-blue-200 bg-blue-50 text-blue-700'
+                                      : 'border border-rose-200 bg-rose-50 text-rose-700'
+                                }`}
+                              >
+                                {activity.status === 'completed'
+                                  ? 'Hoàn thành'
                                   : activity.status === 'ongoing'
-                                    ? 'border border-blue-200 bg-blue-50 text-blue-700'
-                                    : 'border border-rose-200 bg-rose-50 text-rose-700'
-                              }`}
-                            >
-                              {activity.status === 'completed'
-                                ? 'Hoàn thành'
-                                : activity.status === 'ongoing'
-                                  ? 'Đang diễn ra'
-                                  : 'Đã hủy'}
-                            </Badge>
+                                    ? 'Đang diễn ra'
+                                    : 'Đã hủy'}
+                              </Badge>
+                              <ChevronRight className="h-4 w-4 text-zinc-400" />
+                            </div>
                           </div>
 
                           <div className="mt-2 space-y-1 text-sm text-zinc-600">

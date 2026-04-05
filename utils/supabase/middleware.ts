@@ -61,9 +61,6 @@ export const updateSession = async (request: NextRequest) => {
       isLoggedIn &&
       userRole !== 'SYS_ADMIN'
     ) {
-      await supabase.auth.signOut();
-      response.cookies.delete('sb-access-token');
-      response.cookies.delete('sb-refresh-token');
       const url = new URL('/dashboard', request.url);
       url.searchParams.set('error', 'Tài khoản hoặc mật khẩu không hợp lệ');
       return NextResponse.redirect(url);

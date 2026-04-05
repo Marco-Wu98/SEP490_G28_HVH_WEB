@@ -22,6 +22,10 @@ export default function AdminNavbar(props: {
     colorVariant === 'organizer'
       ? 'backdrop-blur-2xl backdrop-saturate-150 supports-[backdrop-filter]:bg-white/18'
       : 'backdrop-blur-xl';
+  const navSizeClassName =
+    colorVariant === 'organizer'
+      ? 'xl:w-[calc(100vw_-_322px)] 2xl:w-[calc(100vw_-_337px)]'
+      : 'xl:w-[calc(100vw_-_322px)] 2xl:w-[calc(100vw_-_337px)]';
   const crumbBaseClassName =
     colorVariant === 'organizer'
       ? 'text-xs font-normal text-[#1E3A8A] hover:underline hover:text-[#1D4ED8]'
@@ -43,7 +47,7 @@ export default function AdminNavbar(props: {
 
   return (
     <nav
-      className={`fixed right-3 top-3 z-[40] flex w-[calc(100vw_-_6%)] flex-row items-center justify-between rounded-lg py-2 transition-all md:right-[30px] md:top-4 md:w-[calc(100vw_-_8%)] md:p-2 lg:w-[calc(100vw_-_6%)] xl:top-[20px] xl:w-[calc(100vw_-_365px)] 2xl:w-[calc(100vw_-_380px)] ${navClassName} ${navEffectClassName}`}
+      className={`fixed right-3 top-3 z-[40] flex w-[calc(100vw_-_6%)] flex-row items-center justify-between rounded-lg py-2 transition-all md:right-[30px] md:top-4 md:w-[calc(100vw_-_8%)] md:p-2 lg:w-[calc(100vw_-_6%)] xl:top-[20px] ${navSizeClassName} ${navClassName} ${navEffectClassName}`}
     >
       {colorVariant === 'organizer' && (
         <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.55)_0%,rgba(255,255,255,0.24)_38%,rgba(147,197,253,0.16)_100%)]" />

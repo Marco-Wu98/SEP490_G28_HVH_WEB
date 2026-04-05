@@ -106,8 +106,7 @@ export const organizerRoutes: IRoute[] = [
     name: 'Bảng điều khiển',
     path: '/organizer/main',
     icon: <HiOutlineHome className="-mt-[7px] h-4 w-4 stroke-2 text-inherit" />,
-    collapse: false,
-    invisible: true
+    collapse: false
   },
   {
     name: 'Sự kiện chờ phê duyệt',

@@ -233,7 +233,11 @@ export default function PendingEvents({
           row.date ?? row.eventDate ?? row.startDate ?? row.startedAt
         );
         const submittedDate = formatDisplayDate(
-          row.submittedDate ?? row.createdAt ?? row.created_at
+          row.submittedDate ??
+            row.updatedAt ??
+            row.updated_at ??
+            row.createdAt ??
+            row.created_at
         );
         const status =
           getString(row.status, row.statusName, row.eventStatus) ||

@@ -635,6 +635,18 @@ export default function PendingEventDetail({
     return value;
   };
 
+  const hasImportantNote = (() => {
+    const normalized = (event?.note ?? '').trim().toLowerCase();
+    return Boolean(
+      normalized &&
+      normalized !== '-' &&
+      normalized !== 'n/a' &&
+      normalized !== 'na' &&
+      normalized !== 'null' &&
+      normalized !== 'undefined'
+    );
+  })();
+
   const totalSessionCount = event?.sessions.length ?? 0;
   const totalSessionVolunteers =
     event?.sessions.reduce(
@@ -721,13 +733,9 @@ export default function PendingEventDetail({
                     </h2>
                     <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-5">
                       <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3">
-                        <p className="text-xs text-zinc-500">Trạng thái</p>
+                        <p className="text-xs text-zinc-500">Tên sự kiện</p>
                         <p className="mt-1 text-sm font-semibold text-zinc-800">
-                          {Object.values(EEventStatus).includes(
-                            event.status as EEventStatus
-                          )
-                            ? EVENT_STATUS_LABELS[event.status as EEventStatus]
-                            : event.status || 'Không xác định'}
+                          {displayValue(event.eventName)}
                         </p>
                       </div>
                       <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3">
@@ -1246,7 +1254,7 @@ export default function PendingEventDetail({
                     <p className="mt-3 text-sm text-zinc-700">
                       {displayValue(event.description)}
                     </p>
-                    {event.note !== '-' && (
+                    {hasImportantNote && (
                       <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-4 shadow-sm">
                         <div className="flex items-start gap-3">
                           <div className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-full bg-amber-100 text-amber-700">

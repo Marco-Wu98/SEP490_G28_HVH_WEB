@@ -85,6 +85,18 @@ const renderValue = (value?: string | number | boolean | null) => {
   return String(value);
 };
 
+const hasMeaningfulNote = (value?: string | null) => {
+  const normalized = (value ?? '').trim().toLowerCase();
+  return Boolean(
+    normalized &&
+    normalized !== '-' &&
+    normalized !== 'n/a' &&
+    normalized !== 'na' &&
+    normalized !== 'null' &&
+    normalized !== 'undefined'
+  );
+};
+
 import { EOrgType } from '@/constants/org-type';
 
 const renderOrgType = (orgType?: string | null) => {
@@ -527,12 +539,14 @@ export default function PendingOrgDetail({ user, userDetails, detail }: Props) {
                     )}
                   </p>
                 </div>
-                <div className="space-y-1">
-                  <p className="text-sm text-zinc-500">Ghi chú</p>
-                  <p className="text-sm text-zinc-700">
-                    {renderValue(detail.note)}
-                  </p>
-                </div>
+                {hasMeaningfulNote(detail.note) && (
+                  <div className="space-y-1">
+                    <p className="text-sm text-zinc-500">Ghi chú</p>
+                    <p className="text-sm text-zinc-700">
+                      {renderValue(detail.note)}
+                    </p>
+                  </div>
+                )}
               </div>
             </Card>
 
