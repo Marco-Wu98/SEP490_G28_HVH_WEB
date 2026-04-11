@@ -19,13 +19,33 @@ const TRIAL_PERIOD_DAYS = 0;
 
 // Note: supabaseAdmin uses the SERVICE_ROLE_KEY which you must only use in a secure server-side context
 // as it has admin privileges and overwrites RLS policies!
-const supabaseAdmin = createClient<Database, 'public', 'public'>(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || ''
-) as unknown as AdminSupabaseClient;
-const publicAdmin = supabaseAdmin.schema('public') as PublicPostgrestClient;
+let publicAdminClient: PublicPostgrestClient | null = null;
+
+const getPublicAdmin = (): PublicPostgrestClient => {
+  if (publicAdminClient) {
+    return publicAdminClient;
+  }
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !serviceRoleKey) {
+    throw new Error(
+      'Missing Supabase admin environment variables. Please set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.'
+    );
+  }
+
+  const supabaseAdmin = createClient<Database, 'public', 'public'>(
+    supabaseUrl,
+    serviceRoleKey
+  ) as unknown as AdminSupabaseClient;
+
+  publicAdminClient = supabaseAdmin.schema('public') as PublicPostgrestClient;
+  return publicAdminClient;
+};
 
 const upsertProductRecord = async (product: Stripe.Product) => {
+  const publicAdmin = getPublicAdmin();
   const productData: ProductInsert = {
     id: product.id,
     active: product.active,
@@ -47,6 +67,7 @@ const upsertPriceRecord = async (
   retryCount = 0,
   maxRetries = 3
 ) => {
+  const publicAdmin = getPublicAdmin();
   const priceData: PriceInsert = {
     id: price.id,
     description: '',
@@ -81,6 +102,7 @@ const upsertPriceRecord = async (
 };
 
 const deleteProductRecord = async (product: Stripe.Product) => {
+  const publicAdmin = getPublicAdmin();
   const { error: deletionError } = await publicAdmin
     .from('products')
     .delete()
@@ -90,6 +112,7 @@ const deleteProductRecord = async (product: Stripe.Product) => {
 };
 
 const deletePriceRecord = async (price: Stripe.Price) => {
+  const publicAdmin = getPublicAdmin();
   const { error: deletionError } = await publicAdmin
     .from('prices')
     .delete()
@@ -99,6 +122,7 @@ const deletePriceRecord = async (price: Stripe.Price) => {
 };
 
 const upsertCustomerToSupabase = async (uuid: string, customerId: string) => {
+  const publicAdmin = getPublicAdmin();
   const { error: upsertError } = await publicAdmin
     .from('customers')
     .upsert([{ id: uuid, stripe_customer_id: customerId }]);
@@ -126,6 +150,7 @@ const createOrRetrieveCustomer = async ({
   email: string;
   uuid: string;
 }) => {
+  const publicAdmin = getPublicAdmin();
   // Check if the customer already exists in Supabase
   const { data: existingSupabaseCustomer, error: queryError } =
     await publicAdmin
@@ -187,6 +212,7 @@ const copyBillingDetailsToCustomer = async (
   uuid: string,
   payment_method: Stripe.PaymentMethod
 ) => {
+  const publicAdmin = getPublicAdmin();
   const customer = payment_method.customer as string;
   const { name, phone, address } = payment_method.billing_details;
   if (!name || !phone || !address) return;
@@ -207,6 +233,7 @@ const manageSubscriptionStatusChange = async (
   customerId: string,
   createAction = false
 ) => {
+  const publicAdmin = getPublicAdmin();
   // Get customer's UUID from mapping table.
   const { data: customerData, error: noCustomerError } = await publicAdmin
     .from('customers')
