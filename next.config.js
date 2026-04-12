@@ -31,7 +31,7 @@ const nextConfig = {
             value: 'admin.hvh.homes'
           }
         ],
-        destination: '/dashboard',
+        destination: 'https://admin.hvh.homes/dashboard',
         permanent: true
       }
     ];
