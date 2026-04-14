@@ -27,6 +27,11 @@ export enum EOrgRegistrationStatus {
   CANCELLED = 'CANCELLED'
 }
 
+export enum EOrganizationStatus {
+  ACTIVE = 'ACTIVE',
+  INACTIVE = 'INACTIVE'
+}
+
 export interface OrganizationInfo {
   id: string;
   name: string | null;
@@ -54,8 +59,8 @@ export interface OrganizationDetailsResponseForSystemAdmin {
   dhaRegistered: boolean;
   orgType: EOrgType;
   orgIntroduction: string;
-  avatarImageUrl: string;
-  coverImageUrl: string;
+  avatarImageUrl: string | null;
+  coverImageUrl: string | null;
   legalDocumentUrls: string[];
   otherEvidencesUrls: string[];
   createdAt: string;
@@ -65,7 +70,11 @@ export interface OrganizationDetailsResponseForSystemAdmin {
   managerPhone: string;
   managerCID: string;
   totalHosts: number;
-  totalHonorHours: number;
+  hostedEventCount: number;
+  creditHour: number;
+  avgRating: number;
+  status: EOrganizationStatus;
+  activitySubDomains: string[];
   note: string;
 }
 
@@ -73,7 +82,11 @@ export interface OrganizationSimpleResponse {
   id: string;
   name: string;
   orgType: EOrgType | null;
-  numberOfHostedEvents: number;
+  hostedEventCount: number;
+  creditHour: number;
+  avgRating: number;
+  status: EOrganizationStatus;
+  activitySubDomains: string[];
 }
 
 export interface OrganizationListResponseForAdmin {

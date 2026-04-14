@@ -182,51 +182,105 @@ export default function OrganizationsPage({ user, userDetails }: Props) {
               organizations.map((org, index) => (
                 <Card
                   key={org.id}
-                  className="cursor-pointer border-zinc-200 bg-white p-5 text-zinc-900 shadow-sm transition-all hover:bg-zinc-50 hover:shadow-md"
+                  className="cursor-pointer border-zinc-200 bg-white p-6 text-zinc-900 shadow-sm transition-all hover:bg-zinc-50 hover:shadow-md"
                   onClick={() =>
                     router.push(`/dashboard/organizations/${org.id}`)
                   }
                 >
-                  <div className="flex flex-col gap-4 md:flex-row md:items-stretch md:justify-between">
-                    <div className="flex gap-4 md:items-center">
+                  <div className="flex gap-6">
+                    {/* Left and middle section - 3 parts */}
+                    <div className="flex gap-6 basis-3/4">
+                      {/* Avatar */}
                       <div
-                        className={`h-16 w-16 flex-shrink-0 rounded-lg ${getAvatarBgColor()} flex items-center justify-center md:h-24 md:w-24`}
+                        className={`h-28 w-28 flex-shrink-0 rounded-lg ${getAvatarBgColor()} flex items-center justify-center`}
                       >
-                        <p className="text-lg font-bold text-white md:text-2xl">
+                        <p className="text-3xl font-bold text-white">
                           {getInitials(org.name)}
                         </p>
                       </div>
 
+                      {/* Main content */}
                       <div className="min-w-0 flex-1">
-                        <p className="text-lg font-semibold text-zinc-900 md:text-xl">
+                        {/* Organization name */}
+                        <p className="text-xl font-bold text-zinc-900">
                           {org.name}
                         </p>
-                        <div className="mt-2 flex flex-wrap items-center gap-2">
-                          <Badge className="border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-50 hover:text-blue-700">
+
+                        {/* Badges row 1 */}
+                        <div className="mt-3 flex flex-wrap items-center gap-2">
+                          <Badge className="border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-50 hover:text-blue-700 text-xs">
                             {org.orgType
                               ? ORG_TYPE_LABELS[org.orgType]
                               : 'Chưa xác định'}
                           </Badge>
-                          <Badge className="border-zinc-200 bg-zinc-50 text-zinc-700 hover:bg-zinc-50 hover:text-zinc-700">
-                            ID: {org.id}
-                          </Badge>
+                          {org.status && (
+                            <Badge className="border-green-200 bg-green-50 text-green-700 hover:bg-green-50 hover:text-green-700 text-xs">
+                              {org.status === 'ACTIVE'
+                                ? 'Hoạt động'
+                                : org.status}
+                            </Badge>
+                          )}
                         </div>
+
+                        {/* ID */}
+                        <p className="mt-2 text-xs text-zinc-500">
+                          ID: {org.id}
+                        </p>
+
+                        {/* Rating */}
+                        <div className="mt-3 flex items-center gap-2">
+                          <div className="flex items-center gap-0.5">
+                            {Array.from({ length: 5 }).map((_, i) => (
+                              <span
+                                key={i}
+                                className={`text-sm ${
+                                  i < Math.round(org.avgRating ?? 0)
+                                    ? 'text-yellow-400'
+                                    : 'text-zinc-300'
+                                }`}
+                              >
+                                ★
+                              </span>
+                            ))}
+                          </div>
+                          <p className="text-sm font-medium text-zinc-900">
+                            {(org.avgRating ?? 0).toFixed(1)}
+                          </p>
+                        </div>
+
+                        {/* Activity subdomains */}
+                        {org.activitySubDomains &&
+                          org.activitySubDomains.length > 0 && (
+                            <div className="mt-3 flex flex-wrap gap-2">
+                              {org.activitySubDomains.map((subdomain, idx) => (
+                                <Badge
+                                  key={idx}
+                                  className="border-gray-300 bg-gray-100 text-gray-700 hover:bg-gray-100 hover:text-gray-700 text-xs"
+                                >
+                                  {subdomain}
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4 md:min-w-[260px] md:grid-cols-1 md:gap-3 md:border-l md:border-zinc-200 md:pl-6">
+                    {/* Right side stats - 1 part */}
+                    <div className="flex flex-col gap-6 border-l border-zinc-200 pl-6 text-left self-start basis-1/4">
                       <div>
-                        <p className="text-xs text-zinc-500">
-                          Số sự kiện đã tổ chức
+                        <p className="text-sm font-semibold text-zinc-600">
+                          Số thành viên
                         </p>
-                        <p className="mt-1 text-2xl font-bold leading-none text-zinc-900">
-                          {org.numberOfHostedEvents.toLocaleString('vi-VN')}
+                        <p className="mt-2 text-3xl font-bold text-zinc-900">
+                          {(org.hostedEventCount ?? 0).toLocaleString('vi-VN')}
                         </p>
                       </div>
                       <div>
-                        <p className="text-xs text-zinc-500">Loại tổ chức</p>
-                        <p className="mt-1 text-sm font-medium text-zinc-900">
-                          {org.orgType ? org.orgType : 'N/A'}
+                        <p className="text-sm font-semibold text-zinc-600">
+                          Số giờ uy tín
+                        </p>
+                        <p className="mt-2 text-3xl font-bold text-zinc-900">
+                          {(org.creditHour ?? 0).toLocaleString('vi-VN')}
                         </p>
                       </div>
                     </div>

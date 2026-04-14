@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import DashboardLayout from '@/components/layout';
 import { Card } from '@/components/ui/card';
@@ -36,6 +36,12 @@ const statusBadgeClass = (status: OrganizationDetail['status']) => {
   return 'border-red-200 bg-red-50 text-red-700';
 };
 
+const mapApiStatusToDisplay = (
+  status?: string
+): OrganizationDetail['status'] => {
+  return status === 'INACTIVE' ? 'Ngừng hoạt động' : 'Hoạt động';
+};
+
 const getInitials = (name: string) => {
   return name
     .split(' ')
@@ -58,6 +64,18 @@ const renderStars = (rating: number) => {
   ));
 };
 
+const formatNumberVi = (value: unknown) => {
+  const numberValue =
+    typeof value === 'number'
+      ? value
+      : typeof value === 'string'
+        ? Number(value)
+        : NaN;
+
+  const safeValue = Number.isFinite(numberValue) ? numberValue : 0;
+  return safeValue.toLocaleString('vi-VN');
+};
+
 export default function OrganizationDetailPage({
   orgId,
   user,
@@ -75,23 +93,31 @@ export default function OrganizationDetailPage({
   const org = useMemo(() => {
     if (!orgData) return null;
 
+    const legacyOrgData = orgData as {
+      totalHonorHours?: number;
+      creditHour?: number;
+      avgRating?: number;
+      hostedEventCount?: number;
+      status?: string;
+    };
+
     return {
       id: orgData.id,
       name: orgData.name,
       taxCode: orgData.managerCID || '',
       location: 'N/A',
       orgType: ORG_TYPE_LABELS[orgData.orgType] || orgData.orgType,
-      status: 'Hoạt động' as const,
-      rating: 4.5,
-      reviews: 0,
-      volunteers: orgData.totalHosts,
-      donations: orgData.totalHonorHours,
+      status: mapApiStatusToDisplay(legacyOrgData.status),
+      rating: legacyOrgData.avgRating ?? 0,
+      reviews: legacyOrgData.hostedEventCount ?? 0,
+      volunteers: orgData.totalHosts ?? 0,
+      donations: legacyOrgData.creditHour ?? legacyOrgData.totalHonorHours ?? 0,
       imageUrl:
         orgData.avatarImageUrl || 'https://picsum.photos/seed/org/200/200',
-      introduction: orgData.orgIntroduction,
+      introduction: orgData.orgIntroduction || 'Chưa có thông tin giới thiệu.',
       applicationReason: '',
       basicInfo: {
-        email: orgData.managerEmail,
+        email: orgData.managerEmail || 'N/A',
         address: 'Không có thông tin',
         founded: orgData.dhaRegistered
           ? 'Đã đăng ký Sở Nội Vụ'
@@ -100,11 +126,11 @@ export default function OrganizationDetailPage({
         yearRegistered: new Date(orgData.createdAt).getFullYear().toString()
       },
       adminInfo: {
-        name: orgData.managerName,
+        name: orgData.managerName || 'N/A',
         position: 'Quản lý tổ chức',
-        phone: orgData.managerPhone,
-        email: orgData.managerEmail,
-        cccd: orgData.managerCID
+        phone: orgData.managerPhone || 'N/A',
+        email: orgData.managerEmail || 'N/A',
+        cccd: orgData.managerCID || 'N/A'
       },
       registrationImages: orgData.legalDocumentUrls || [],
       supportingDocuments: orgData.otherEvidencesUrls || [],
@@ -121,6 +147,12 @@ export default function OrganizationDetailPage({
   const [deactivateReasonError, setDeactivateReasonError] = useState('');
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (org) {
+      setOrgStatus(org.status);
+    }
+  }, [org]);
 
   const openDeactivateModal = () => {
     setPendingStatusAction('deactivate');
@@ -244,7 +276,7 @@ export default function OrganizationDetailPage({
                       {org.rating}
                     </span>
                     <span className="text-sm text-zinc-400">
-                      ({org.reviews} đánh giá)
+                      ({formatNumberVi(org.reviews)} sự kiện đã tổ chức)
                     </span>
                   </div>
                 </div>
@@ -256,7 +288,7 @@ export default function OrganizationDetailPage({
                         Số host
                       </p>
                       <p className="mt-1 text-2xl font-bold leading-none text-zinc-900 md:text-3xl">
-                        {org.volunteers.toLocaleString('vi-VN')}
+                        {formatNumberVi(org.volunteers)}
                       </p>
                     </div>
                     <div className="text-center md:text-left">
@@ -264,7 +296,7 @@ export default function OrganizationDetailPage({
                         Số giờ uy tín
                       </p>
                       <p className="mt-1 text-2xl font-bold leading-none text-zinc-900 md:text-3xl">
-                        {org.donations.toLocaleString('vi-VN')}
+                        {formatNumberVi(org.donations)}
                       </p>
                     </div>
                   </div>
@@ -290,7 +322,7 @@ export default function OrganizationDetailPage({
                   </div>
                   <div className="flex items-start gap-3">
                     <span className="text-sm text-zinc-500">
-                      Loại hình tổ chức:
+                      Đăng ký Sở Nội Vụ:
                     </span>
                     <span className="text-sm text-zinc-700">
                       {org.basicInfo.founded}
