@@ -24,7 +24,7 @@ export const useHideUnhideActivitySubdomain = ({
     ChangeActivitySubDomainVisibilityRequest
   >(url, (url, { arg }) =>
     swrFetcher(url, {
-      method: 'POST',
+      method: 'PUT',
       body: JSON.stringify(arg),
       headers: {
         'Content-Type': 'application/json'

@@ -21,7 +21,7 @@ export const useUpdateActivityDomain = ({ id, baseUrl = '' }: Params) => {
     UpdateActivityDomainRequest
   >(url, (url, { arg }) =>
     swrFetcher(url, {
-      method: 'POST',
+      method: 'PUT',
       body: JSON.stringify(arg)
     })
   );

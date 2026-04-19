@@ -8,7 +8,6 @@ export default function ApprovedEventsClient({
   userDetails,
   ...props
 }: any) {
-  // State for pagination and search
   const [pageNumber, setPageNumber] = React.useState(0);
   const [search, setSearch] = React.useState('');
 

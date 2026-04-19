@@ -41,7 +41,6 @@ export async function requestPasswordUpdate(formData: FormData) {
     `/auth/reset_password?next=${encodeURIComponent(nextPath)}`
   );
 
-  // Get form data
   const email = String(formData.get('email')).trim();
   let redirectPath: string;
 
@@ -103,7 +102,6 @@ export async function signInWithPassword(formData: FormData) {
       error.message
     );
   } else if (data.user) {
-    // Check role for admin login
     const userRole = data.user.app_metadata?.role;
     if (isAdmin && userRole !== 'SYS_ADMIN') {
       redirectPath = getErrorRedirect(
@@ -142,7 +140,6 @@ export async function updatePassword(formData: FormData) {
     : '/signin/password_signin';
   let redirectPath: string;
 
-  // Check that the password and confirmation match
   if (password !== passwordConfirm) {
     redirectPath = getErrorRedirect(
       updatePasswordPath,
@@ -181,10 +178,8 @@ export async function updatePassword(formData: FormData) {
 }
 
 export async function updateEmail(formData: FormData) {
-  // Get form data
   const newEmail = String(formData.get('newEmail')).trim();
 
-  // Check that the email is valid
   if (!isValidEmail(newEmail)) {
     return getErrorRedirect(
       '/dashboard/settings',
@@ -226,7 +221,6 @@ export async function updateEmail(formData: FormData) {
 }
 
 export async function updateName(formData: FormData) {
-  // Get form data
   const fullName = String(formData.get('fullName')).trim();
 
   const supabase = await createClient();

@@ -80,7 +80,6 @@ export default function PendingAccountDetail({
   const [rejectReason, setRejectReason] = useState('');
   const [accountName, setAccountName] = useState(defaultFullName ?? '');
   const isApproveEnabled = accountName.trim().length > 0;
-  // State for image preview modal
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   useEffect(() => {

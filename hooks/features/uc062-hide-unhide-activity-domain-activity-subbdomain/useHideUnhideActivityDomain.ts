@@ -21,7 +21,7 @@ export const useHideUnhideActivityDomain = ({ id, baseUrl = '' }: Params) => {
     ChangeActivityDomainVisibilityRequest
   >(url, (url, { arg }) =>
     swrFetcher(url, {
-      method: 'POST',
+      method: 'PUT',
       body: JSON.stringify(arg),
       headers: {
         'Content-Type': 'application/json'

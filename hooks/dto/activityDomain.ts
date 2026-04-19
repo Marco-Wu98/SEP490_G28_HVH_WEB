@@ -37,7 +37,7 @@ export interface UpdateActivitySubDomainRequest {
 }
 
 export interface UpdateActivityDomainRequest {
-  name: string;
+  name: string | null;
   specialSessionMaxTime: number;
   activitySubDomainUpdateRequests: UpdateActivitySubDomainRequest[];
 }

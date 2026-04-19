@@ -1,6 +1,6 @@
 'use client';
 
-// if you use app dir, don't forget this line
+// Keep chart client-only to avoid SSR issues with ApexCharts.
 import dynamic from 'next/dynamic';
 
 const ApexChart = dynamic(() => import('react-apexcharts'), { ssr: false });

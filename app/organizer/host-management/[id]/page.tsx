@@ -14,8 +14,7 @@ import { useViewHostActivities } from '@/hooks/features/uc066-view-host-details/
 import { useState, useMemo } from 'react';
 import { Input } from '@/components/ui/input';
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080/api/v1';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL!;
 
 const formatDate = (dateString: string | null | undefined): string => {
   if (!dateString) return '-';

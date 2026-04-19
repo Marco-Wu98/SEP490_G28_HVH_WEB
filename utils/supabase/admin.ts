@@ -151,7 +151,6 @@ const createOrRetrieveCustomer = async ({
   uuid: string;
 }) => {
   const publicAdmin = getPublicAdmin();
-  // Check if the customer already exists in Supabase
   const { data: existingSupabaseCustomer, error: queryError } =
     await publicAdmin
       .from('customers')
@@ -234,7 +233,6 @@ const manageSubscriptionStatusChange = async (
   createAction = false
 ) => {
   const publicAdmin = getPublicAdmin();
-  // Get customer's UUID from mapping table.
   const { data: customerData, error: noCustomerError } = await publicAdmin
     .from('customers')
     .select('id')

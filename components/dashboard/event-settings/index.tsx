@@ -87,6 +87,9 @@ export default function EventSettings(props: Props) {
   const [draftSubDomains, setDraftSubDomains] = useState<
     (Omit<ActivitySubDomain, 'id'> & { id: string | number })[]
   >([]);
+  const [originalSubDomains, setOriginalSubDomains] = useState<
+    (Omit<ActivitySubDomain, 'id'> & { id: string | number })[]
+  >([]);
   const [editingSubDomainId, setEditingSubDomainId] = useState<
     string | number | null
   >(null);
@@ -99,7 +102,6 @@ export default function EventSettings(props: Props) {
 
   const [serviceTimeReason, setServiceTimeReason] = useState('');
   const [serviceTimeError, setServiceTimeError] = useState('');
-  const [createError, setCreateError] = useState<string | null>(null);
   const { trigger: updateActivityDomain, isMutating: isUpdating } =
     useUpdateActivityDomain({
       id: String(editingDomain?.id ?? ''),
@@ -117,7 +119,6 @@ export default function EventSettings(props: Props) {
   const [openConfirmDeleteSubDomain, setOpenConfirmDeleteSubDomain] =
     useState(false);
 
-  // Hooks for toggling, only called at top level
   const { trigger: triggerDomain, isMutating: isTogglingDomain } =
     useHideUnhideActivityDomain(
       confirmingDomain
@@ -145,7 +146,6 @@ export default function EventSettings(props: Props) {
     if (!formData.name.trim()) return;
 
     try {
-      setCreateError(null);
       const payload = {
         name: formData.name,
         specialSessionMaxTime: Number(formData.max_service_time),
@@ -162,7 +162,7 @@ export default function EventSettings(props: Props) {
         error instanceof Error
           ? error.message
           : 'Lỗi khi tạo lĩnh vực, vui lòng thử lại';
-      setCreateError(errorMessage);
+      toast.error(errorMessage);
     }
   };
 
@@ -170,56 +170,86 @@ export default function EventSettings(props: Props) {
     if (!editingDomain || !formData.name.trim()) return;
 
     try {
-      setCreateError(null);
-      const originalSubDomains = editingDomain.activitySubDomains ?? [];
-      const currentSubDomains = draftSubDomains;
+      // Capture pending inline rename before building update payload.
+      const currentSubDomains =
+        editingSubDomainId !== null
+          ? draftSubDomains.map((subDomain) =>
+              String(subDomain.id) === String(editingSubDomainId)
+                ? {
+                    ...subDomain,
+                    name: editingSubDomainName.trim() || subDomain.name
+                  }
+                : subDomain
+            )
+          : draftSubDomains;
 
-      // Normalize all IDs to strings for comparison
-      const currentById = new Map<
-        string,
-        Omit<ActivitySubDomain, 'id'> & { id: string | number }
-      >();
+      const normalizedDomainName = formData.name.trim();
+      const originalDomainName = editingDomain.name.trim();
+      const hasDomainNameChanged = normalizedDomainName !== originalDomainName;
+      const currentMaxServiceTime = Number(
+        formData.max_service_time || editingDomain.specialSessionMaxTime || 4
+      );
+      const originalMaxServiceTime = Number(
+        editingDomain.specialSessionMaxTime || 4
+      );
+      const hasDomainMaxServiceTimeChanged =
+        currentMaxServiceTime !== originalMaxServiceTime;
+      const hasDomainChanged =
+        hasDomainNameChanged || hasDomainMaxServiceTimeChanged;
 
-      currentSubDomains.forEach((subDomain) => {
-        currentById.set(String(subDomain.id), subDomain);
-      });
+      const originalSubDomainNameMap = new Map(
+        originalSubDomains.map((sd) => [String(sd.id), sd.name.trim()])
+      );
+
+      const deletedSubDomains = originalSubDomains.filter(
+        (original) =>
+          !currentSubDomains.some(
+            (current) => String(current.id) === String(original.id)
+          )
+      );
 
       const activitySubDomainUpdateRequests: UpdateActivitySubDomainRequest[] =
         [
-          ...originalSubDomains.flatMap(
-            (subDomain): UpdateActivitySubDomainRequest[] => {
-              const current = currentById.get(String(subDomain.id));
-              if (!current) {
-                return [{ id: subDomain.id, action: 'DELETE' as const }];
-              }
-              if (current.name.trim() !== subDomain.name.trim()) {
-                return [
-                  {
-                    id: subDomain.id,
-                    name: current.name.trim(),
-                    action: 'EDIT' as const
-                  }
-                ];
-              }
-              return [];
-            }
-          ),
-          ...currentSubDomains.flatMap(
-            (subDomain): UpdateActivitySubDomainRequest[] => {
+          ...deletedSubDomains
+            .filter((sd) => !String(sd.id).startsWith('draft-'))
+            .map((subDomain) => ({
+              id: Number(subDomain.id),
+              action: 'DELETE' as const
+            })),
+          ...(currentSubDomains
+            .map((subDomain) => {
               const idStr = String(subDomain.id);
+              const name = subDomain.name.trim();
+
+              if (!name) return null;
+
               if (idStr.startsWith('draft-')) {
-                const name = subDomain.name.trim();
-                if (!name) return [];
-                return [{ name, action: 'ADD' as const }];
+                return { name, action: 'ADD' as const };
+              } else {
+                const originalName = originalSubDomainNameMap.get(idStr);
+                if (originalName !== undefined && originalName === name) {
+                  return null;
+                }
+                return {
+                  id: Number(subDomain.id),
+                  name,
+                  action: 'EDIT' as const
+                };
               }
-              return [];
-            }
-          )
+            })
+            .filter(
+              (item) => item !== null
+            ) as UpdateActivitySubDomainRequest[])
         ];
 
+      if (!hasDomainChanged && activitySubDomainUpdateRequests.length === 0) {
+        toast.info('Không có thay đổi để cập nhật.');
+        return;
+      }
+
       const payload: UpdateActivityDomainRequest = {
-        name: formData.name,
-        specialSessionMaxTime: Number(formData.max_service_time),
+        name: hasDomainNameChanged ? normalizedDomainName : null,
+        specialSessionMaxTime: currentMaxServiceTime,
         activitySubDomainUpdateRequests: activitySubDomainUpdateRequests
       };
 
@@ -233,7 +263,7 @@ export default function EventSettings(props: Props) {
         error instanceof Error
           ? error.message
           : 'Lỗi khi cập nhật lĩnh vực, vui lòng thử lại';
-      setCreateError(errorMessage);
+      toast.error(errorMessage);
     }
   };
 
@@ -245,10 +275,10 @@ export default function EventSettings(props: Props) {
     });
     setServiceTimeReason('');
     setServiceTimeError('');
-    setCreateError(null);
     setEditingDomain(null);
     setDraftSubDomainName('');
     setDraftSubDomains([]);
+    setOriginalSubDomains([]);
     setEditingSubDomainId(null);
     setEditingSubDomainName('');
   };
@@ -278,12 +308,13 @@ export default function EventSettings(props: Props) {
     });
     setServiceTimeReason('');
     setDraftSubDomainName('');
-    setDraftSubDomains(
+    const subDomains =
       domain.activitySubDomains?.map((sd) => ({
         ...sd,
         id: String(sd.id)
-      })) ?? []
-    );
+      })) ?? [];
+    setOriginalSubDomains(subDomains);
+    setDraftSubDomains(subDomains);
     setOpenDetailDomainModal(true);
   };
 
@@ -322,7 +353,9 @@ export default function EventSettings(props: Props) {
     }
     setDraftSubDomains((prev) =>
       prev.map((d) =>
-        d.id === editingSubDomainId ? { ...d, name: nextName } : d
+        String(d.id) === String(editingSubDomainId)
+          ? { ...d, name: nextName }
+          : d
       )
     );
     setEditingSubDomainId(null);
@@ -458,12 +491,10 @@ export default function EventSettings(props: Props) {
     );
   };
 
-  // State to keep original sub domain order for each domain
   const [subDomainOrderMap, setSubDomainOrderMap] = useState<
     Record<string, string[]>
   >({});
 
-  // Update subDomainOrderMap when fetchedActivityDomains changes
   useEffect(() => {
     if (fetchedActivityDomains.length) {
       const orderMap: Record<string, string[]> = {};
@@ -629,7 +660,6 @@ export default function EventSettings(props: Props) {
                           <Switch
                             checked={subDomain.active}
                             onCheckedChange={() => {
-                              // Only allow switching for subdomains with numeric id (persisted)
                               if (typeof subDomain.id === 'number') {
                                 handleSwitchSubDomain(
                                   subDomain as ActivitySubDomain
@@ -723,12 +753,6 @@ export default function EventSettings(props: Props) {
             </DialogDescription>
           </DialogHeader>
 
-          {createError && (
-            <div className="rounded-lg bg-red-50 border border-red-200 p-3 mb-4">
-              <p className="text-sm text-red-700">{createError}</p>
-            </div>
-          )}
-
           <div className="space-y-7">
             {/* Basic Information */}
             <div>
@@ -821,22 +845,78 @@ export default function EventSettings(props: Props) {
                         key={subDomain.id}
                         className="flex items-center justify-between gap-2 bg-white rounded p-3 border border-zinc-200"
                       >
-                        <span className="text-sm text-zinc-700">
-                          {subDomain.name}
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <Switch
-                            checked={subDomain.active}
-                            onCheckedChange={() => {
-                              // Only allow switching for subdomains with numeric id (persisted)
-                              if (typeof subDomain.id === 'number') {
-                                handleSwitchSubDomain(
-                                  subDomain as ActivitySubDomain
-                                );
+                        {editingSubDomainId === subDomain.id ? (
+                          <div className="flex items-center gap-2 flex-1">
+                            <Input
+                              value={editingSubDomainName}
+                              onChange={(e) =>
+                                setEditingSubDomainName(e.target.value)
                               }
-                            }}
-                          />
-                        </div>
+                              onBlur={applyEditSubDomain}
+                              onKeyPress={(e) => {
+                                if (e.key === 'Enter') applyEditSubDomain();
+                              }}
+                              className="flex-1 text-sm bg-white border-zinc-300 focus:border-blue-500"
+                              autoFocus
+                            />
+                            <Button
+                              size="icon"
+                              className="h-6 w-6 bg-blue-600 hover:bg-blue-700"
+                              onClick={applyEditSubDomain}
+                            >
+                              <span className="text-xs">✓</span>
+                            </Button>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-6 w-6"
+                              onClick={() => {
+                                setEditingSubDomainId(null);
+                                setEditingSubDomainName('');
+                              }}
+                            >
+                              <span className="text-xs">✕</span>
+                            </Button>
+                          </div>
+                        ) : (
+                          <>
+                            <span className="text-sm text-zinc-700">
+                              {subDomain.name}
+                            </span>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-6 w-6"
+                                onClick={() => startEditSubDomain(subDomain)}
+                                aria-label="Chỉnh sửa lĩnh vực con"
+                              >
+                                <Pencil className="h-3 w-3 text-zinc-500" />
+                              </Button>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-6 w-6"
+                                onClick={() =>
+                                  removeDraftSubDomain(subDomain.id)
+                                }
+                                aria-label="Xóa lĩnh vực con"
+                              >
+                                <Trash2 className="h-3 w-3 text-zinc-500" />
+                              </Button>
+                              <Switch
+                                checked={subDomain.active}
+                                onCheckedChange={() => {
+                                  if (typeof subDomain.id === 'number') {
+                                    handleSwitchSubDomain(
+                                      subDomain as ActivitySubDomain
+                                    );
+                                  }
+                                }}
+                              />
+                            </div>
+                          </>
+                        )}
                       </div>
                     ))
                   ) : (

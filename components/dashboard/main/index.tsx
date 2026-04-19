@@ -9,7 +9,6 @@ import { Badge } from '@/components/ui/badge';
 import dynamic from 'next/dynamic';
 import {
   Activity,
-  Building,
   CalendarCheck,
   Clock3,
   ShieldAlert,
@@ -99,28 +98,22 @@ const domainOptions: any = {
 
 const kpis = [
   {
-    label: 'Tổng TNV đã xác thực',
-    value: '12,584',
-    trend: '+8.3% so với tháng trước',
+    label: 'Số tính nguyên viên mới trong tháng',
+    value: '1,245',
+    trend: '+12.5% so với tháng trước',
     icon: Users
   },
   {
-    label: 'Tổng tổ chức hoạt động',
-    value: '486',
-    trend: '+3.1% so với tháng trước',
-    icon: Building
-  },
-  {
-    label: 'Tổng giờ uy tín tích lũy',
-    value: '1,204,672h',
-    trend: '+11.2% so với tháng trước',
-    icon: Clock3
-  },
-  {
-    label: 'Tổng sự kiện đã tổ chức',
-    value: '3,972',
-    trend: '+5.6% so với tháng trước',
+    label: 'Số sự kiện đã kết thúc trong tháng',
+    value: '324',
+    trend: '+8.1% so với tháng trước',
     icon: CalendarCheck
+  },
+  {
+    label: 'Số credit hour tích lũy trong tháng',
+    value: '45,892h',
+    trend: '+15.3% so với tháng trước',
+    icon: Clock3
   }
 ];
 
@@ -152,10 +145,7 @@ const integrityAlerts = [
   }
 ];
 
-const quickHealthMetrics = [
-  { label: 'Tỷ lệ check-in trung bình', value: '86.2%' },
-  { label: 'Khiếu nại tồn đọng', value: '17' }
-];
+const quickHealthMetrics = [];
 
 export default function Main(props: Props) {
   return (
@@ -169,7 +159,7 @@ export default function Main(props: Props) {
       signInPath={props.signInPath}
     >
       <div className="mx-auto w-full max-w-7xl pb-10">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
           {kpis.map((kpi) => {
             const Icon = kpi.icon;
             return (
