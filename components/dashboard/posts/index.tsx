@@ -24,7 +24,7 @@ import {
   Image as ImageIcon
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { useGetEventMomentsFeed } from '@/hooks/features/uc086-view-moments-feed/useGetEventMomentsFeed';
+import { useGetEventMomentsFeed } from '@/hooks/features/sys-admin/uc086-view-moments-feed/useGetEventMomentsFeed';
 
 interface Post {
   id: string;

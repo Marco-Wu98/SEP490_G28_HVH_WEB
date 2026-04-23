@@ -2,7 +2,7 @@
 
 import DashboardLayout from '@/components/layout';
 import PendingEventDetail from '@/components/dashboard/pending-events/detail';
-import { useViewApprovedEventDetailsByOrgManager } from "@/hooks/features/uc082-view-organization's-approval-events/useViewApprovedEventDetailsByOrgManager";
+import { useViewApprovedEventDetailsByOrgManager } from "@/hooks/features/org-manager/uc082-view-organization's-approval-events/useViewApprovedEventDetailsByOrgManager";
 import { Card } from '@/components/ui/card';
 import { User } from '@supabase/supabase-js';
 

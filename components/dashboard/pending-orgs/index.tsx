@@ -29,7 +29,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useOrgRegistrationsList } from '@/hooks/features/uc040-approve-reject-organization/useOrgRegistrationsList';
+import { useOrgRegistrationsList } from '@/hooks/features/sys-admin/uc040-approve-reject-organization/useOrgRegistrationsList';
 import type { OrgRegistrationItem } from '@/hooks/entity';
 import { cn } from '@/utils/cn';
 import { ORG_TYPE_LABELS, EOrgType } from '@/constants/org-type';

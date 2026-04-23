@@ -21,7 +21,7 @@ import {
   ORG_TYPE_LABELS,
   ORG_TYPE_OPTIONS
 } from '@/constants/org-type';
-import { useSearchAndViewOrgs } from '@/hooks/features/uc039+uc041-search-org-and-view-org-list-by-admin/useSearchAndViewOrgs';
+import { useSearchAndViewOrgs } from '@/hooks/features/sys-admin/uc039+uc041-search-org-and-view-org-list-by-admin/useSearchAndViewOrgs';
 
 interface Props {
   user: User | null | undefined;

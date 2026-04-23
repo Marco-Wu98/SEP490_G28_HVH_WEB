@@ -2,7 +2,7 @@
 
 import PendingEvents from './index';
 import { routes } from '@/components/routes';
-import { useRunningEvents } from '@/hooks/features/list-event-for-admin/useRunningEvents';
+import { useRunningEvents } from '@/hooks/features/sys-admin/list-event-for-admin/useRunningEvents';
 import type { User } from '@supabase/supabase-js';
 
 interface Props {

@@ -16,7 +16,7 @@ import {
   DialogHeader,
   DialogTitle
 } from '@/components/ui/dialog';
-import { useVerifyOrgRegistration } from '@/hooks/features/uc040-approve-reject-organization/useVerifyOrgRegistration';
+import { useVerifyOrgRegistration } from '@/hooks/features/sys-admin/uc040-approve-reject-organization/useVerifyOrgRegistration';
 import { User } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';

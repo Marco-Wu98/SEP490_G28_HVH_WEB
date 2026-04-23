@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/carousel';
 import { User } from '@supabase/supabase-js';
 import { ArrowLeft, Check, Edit, Star, X } from 'lucide-react';
-import { useViewOrgDetails } from '@/hooks/features/uc076-view-org-details-by-admin/useViewOrgDetails';
+import { useViewOrgDetails } from '@/hooks/features/sys-admin/uc076-view-org-details-by-admin/useViewOrgDetails';
 import { ORG_TYPE_LABELS } from '@/constants/org-type-labels';
 import type { OrganizationDetail } from '@/hooks/entity';
 

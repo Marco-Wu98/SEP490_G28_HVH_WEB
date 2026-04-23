@@ -4,7 +4,7 @@
 import DashboardLayout from '@/components/layout';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
-import { useGetStatistic } from '@/hooks/features/uc064-view-dashboard-by-admin/useGetStatistic';
+import { useGetStatistic } from '@/hooks/features/sys-admin/uc064-view-dashboard-by-admin/useGetStatistic';
 import type { IRoute } from '@/types/types';
 import { User } from '@supabase/supabase-js';
 import dynamic from 'next/dynamic';

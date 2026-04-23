@@ -15,7 +15,7 @@ import {
   DialogHeader,
   DialogTitle
 } from '@/components/ui/dialog';
-import { useVerifyIdentity } from '@/hooks/features/uc044-identity-verification/useVerifyIdentity';
+import { useVerifyIdentity } from '@/hooks/features/sys-admin/uc044-identity-verification/useVerifyIdentity';
 import type { PendingAccountVerification } from '@/hooks/entity';
 import { User } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';

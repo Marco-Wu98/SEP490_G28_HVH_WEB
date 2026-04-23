@@ -9,8 +9,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Mail, Phone, BadgeCheck, ShieldCheck, UserRound } from 'lucide-react';
 import DashboardLayout from '@/components/layout';
 import { organizerRoutes } from '@/components/routes';
-import { useViewHostInfo } from '@/hooks/features/uc066-view-host-details/useViewHostInfo';
-import { useViewHostActivities } from '@/hooks/features/uc066-view-host-details/useViewHostActivities';
+import { useViewHostInfo } from '@/hooks/features/sys-admin/uc066-view-host-details/useViewHostInfo';
+import { useViewHostActivities } from '@/hooks/features/sys-admin/uc066-view-host-details/useViewHostActivities';
 import { useState, useMemo } from 'react';
 import { Input } from '@/components/ui/input';
 

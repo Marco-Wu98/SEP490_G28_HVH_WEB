@@ -54,8 +54,8 @@ import {
   DialogHeader,
   DialogTitle
 } from '@/components/ui/dialog';
-import { useViewVolunteerList } from '@/hooks/features/uc029-view-volunteer-account-list/useViewVolunteerList';
-import { useGetVolunteerActivities } from '@/hooks/features/uc030-get-volunteer-details/useGetVolunteerActivities';
+import { useViewVolunteerList } from '@/hooks/features/sys-admin/uc029-view-volunteer-account-list/useViewVolunteerList';
+import { useGetVolunteerActivities } from '@/hooks/features/sys-admin/uc030-get-volunteer-details/useGetVolunteerActivities';
 
 interface Props {
   user: User | null | undefined;

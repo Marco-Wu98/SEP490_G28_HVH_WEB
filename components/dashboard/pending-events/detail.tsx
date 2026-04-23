@@ -45,16 +45,16 @@ import type {
   EventDetailsResponseForManager,
   EventDetailsResponseForSystemAdmin
 } from '@/hooks/dto';
-import { useViewHostList } from '@/hooks/features/uc065-view-host-list/useViewHostList';
-import { useAssignHost } from '@/hooks/features/uc081-assign-host-to-event/useAssignHost';
-import { useRejectEventByOrgManager } from '@/hooks/features/uc080-approve-reject-event-by-org-manager/useReject';
+import { useViewHostList } from '@/hooks/features/sys-admin/uc065-view-host-list/useViewHostList';
+import { useAssignHost } from '@/hooks/features/org-manager/uc081-assign-host-to-event/useAssignHost';
+import { useRejectEventByOrgManager } from '@/hooks/features/sys-admin/uc080-approve-reject-event-by-org-manager/useReject';
 import type { IRoute } from '@/types/types';
 import { User } from '@supabase/supabase-js';
 import { AlertCircle, Mail, Phone, UserRound } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { useApproveEventByOrgManager } from '@/hooks/features/uc080-approve-reject-event-by-org-manager/useApprove';
+import { useApproveEventByOrgManager } from '@/hooks/features/sys-admin/uc080-approve-reject-event-by-org-manager/useApprove';
 // No data fetching here; handled by container
 
 const isHeicImageUrl = (src: string) => /\.(heic|heif)(\?|$)/i.test(src);
@@ -222,6 +222,29 @@ type HostDisplayInfo = {
   phone: string;
 };
 
+type EditableSessionData = {
+  id?: string;
+  startDateTime?: string;
+  endDateTime?: string;
+  expectedVolAmount?: number;
+  expectedSerAmount?: number;
+};
+
+type UpdateEventPayloadData = {
+  description?: string | null;
+  autoApprove?: boolean | null;
+  servingPlaceType?: string | null;
+  address?: string | null;
+  detailAddress?: string | null;
+  recruitmentEndDate?: string | null;
+  startDate?: string | null;
+  endDate?: string | null;
+  checkInLocationLat?: number | null;
+  checkInLocationLng?: number | null;
+  checkInLocationAccuracyMeters?: number | null;
+  eventSessions?: EditableSessionData[] | null;
+};
+
 export default function PendingEventDetail({
   user,
   userDetails,
@@ -322,10 +345,10 @@ export default function PendingEventDetail({
   const isOrganizer = effectiveVariant === 'organizer';
   const {
     useApproveEventByAdmin
-  } = require('@/hooks/features/uc038-approve-reject-event-by-admin/useApprove');
+  } = require('@/hooks/features/org-manager/uc038-approve-reject-event-by-admin/useApprove');
   const {
     useRejectEventByAdmin
-  } = require('@/hooks/features/uc038-approve-reject-event-by-admin/useReject');
+  } = require('@/hooks/features/org-manager/uc038-approve-reject-event-by-admin/useReject');
   const { trigger: rejectEventByOrg, isMutating: isRejectingOrg } =
     useRejectEventByOrgManager({ id: eventId, baseUrl });
   const { trigger: approveEventByOrg, isMutating: isApprovingOrg } =
@@ -418,6 +441,7 @@ export default function PendingEventDetail({
     approvalMode: string;
     status: string;
     location: string;
+    detailAddress: string;
     region: string;
     date: string;
     endDate: string;
@@ -440,6 +464,7 @@ export default function PendingEventDetail({
     images: string[];
     servingPlaceType: string;
     note: string;
+    updateEventPayload?: UpdateEventPayloadData | null;
     sessions: Array<{
       id: string;
       startDateTime: string;
@@ -474,6 +499,76 @@ export default function PendingEventDetail({
     return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
   };
 
+  const normalizeUpdateEventPayload = (
+    value: unknown
+  ): UpdateEventPayloadData | null => {
+    if (!value || typeof value !== 'object') {
+      return null;
+    }
+
+    const payload = value as Record<string, unknown>;
+    const sessions = Array.isArray(payload.eventSessions)
+      ? payload.eventSessions.map((session) => {
+          const item = session as Record<string, unknown>;
+          return {
+            id: typeof item.id === 'string' ? item.id : undefined,
+            startDateTime:
+              typeof item.startDateTime === 'string'
+                ? item.startDateTime
+                : undefined,
+            endDateTime:
+              typeof item.endDateTime === 'string'
+                ? item.endDateTime
+                : undefined,
+            expectedVolAmount:
+              typeof item.expectedVolAmount === 'number'
+                ? item.expectedVolAmount
+                : undefined,
+            expectedSerAmount:
+              typeof item.expectedSerAmount === 'number'
+                ? item.expectedSerAmount
+                : undefined
+          };
+        })
+      : null;
+
+    return {
+      description:
+        typeof payload.description === 'string' ? payload.description : null,
+      autoApprove:
+        typeof payload.autoApprove === 'boolean' ? payload.autoApprove : null,
+      servingPlaceType:
+        typeof payload.servingPlaceType === 'string'
+          ? payload.servingPlaceType
+          : null,
+      address: typeof payload.address === 'string' ? payload.address : null,
+      detailAddress:
+        typeof payload.detailAddress === 'string'
+          ? payload.detailAddress
+          : null,
+      recruitmentEndDate:
+        typeof payload.recruitmentEndDate === 'string'
+          ? payload.recruitmentEndDate
+          : null,
+      startDate:
+        typeof payload.startDate === 'string' ? payload.startDate : null,
+      endDate: typeof payload.endDate === 'string' ? payload.endDate : null,
+      checkInLocationLat:
+        typeof payload.checkInLocationLat === 'number'
+          ? payload.checkInLocationLat
+          : null,
+      checkInLocationLng:
+        typeof payload.checkInLocationLng === 'number'
+          ? payload.checkInLocationLng
+          : null,
+      checkInLocationAccuracyMeters:
+        typeof payload.checkInLocationAccuracyMeters === 'number'
+          ? payload.checkInLocationAccuracyMeters
+          : null,
+      eventSessions: sessions
+    };
+  };
+
   function normalizeEvent(
     raw: EventDetailsResponseForManager | EventDetailsResponseForSystemAdmin
   ): EventData {
@@ -500,6 +595,7 @@ export default function PendingEventDetail({
         approvalMode: '',
         status: raw.status,
         location: raw.address,
+        detailAddress: (raw as any).detailAddress || '',
         region: '',
         date: fmtDate(raw.startDate ?? firstSession?.startDateTime),
         endDate: fmtDate(lastSession?.endDateTime),
@@ -529,6 +625,9 @@ export default function PendingEventDetail({
           (raw as any).servingPlaceType ||
           '-',
         note: (raw as any).note || '',
+        updateEventPayload: normalizeUpdateEventPayload(
+          (raw as any).updateEventPayload
+        ),
         sessions
       };
     } else {
@@ -559,6 +658,7 @@ export default function PendingEventDetail({
         approvalMode: getStr(r.approvalMode, r.registrationMethod),
         status: getStr(r.status, r.eventStatus),
         location: getStr(r.location, r.address),
+        detailAddress: getStr(r.detailAddress),
         region: getStr(r.region, r.ward, r.district),
         date: fmtDate(
           r.startDate ?? firstSession?.startDateTime ?? r.startedAt
@@ -619,6 +719,7 @@ export default function PendingEventDetail({
           );
         })(),
         note: getStr(r.note),
+        updateEventPayload: normalizeUpdateEventPayload(r.updateEventPayload),
         sessions
       };
     }
@@ -695,18 +796,6 @@ export default function PendingEventDetail({
     );
   })();
 
-  const totalSessionCount = event?.sessions.length ?? 0;
-  const totalSessionVolunteers =
-    event?.sessions.reduce(
-      (sum, session) => sum + session.expectedVolAmount,
-      0
-    ) ?? 0;
-  const totalSessionServedTargets =
-    event?.sessions.reduce(
-      (sum, session) => sum + session.expectedSerAmount,
-      0
-    ) ?? 0;
-
   const canEditApprovedEvent = event
     ? ['Đang tuyển quân', 'Đã đóng đơn', 'RECRUITING', 'CLOSED'].includes(
         event.status
@@ -734,6 +823,112 @@ export default function PendingEventDetail({
         'Đang diễn ra'
       ].includes(event?.status as EEventStatus | string)
     : false;
+
+  const updatePayload = event?.updateEventPayload;
+
+  const beforeHint = (label: string, value: string) => (
+    <p className="mt-1 text-xs text-amber-700">
+      {label} cũ: {value}
+    </p>
+  );
+
+  const hasTextValue = (value: string | null | undefined) =>
+    typeof value === 'string' && value.trim() !== '';
+
+  const hasUpdatedAddress = hasTextValue(updatePayload?.address);
+  const displayedAddress = hasUpdatedAddress
+    ? displayValue(updatePayload?.address?.trim() || '')
+    : displayValue(event?.location || '');
+
+  const hasUpdatedDetailAddress = hasTextValue(updatePayload?.detailAddress);
+  const displayedDetailAddress = hasUpdatedDetailAddress
+    ? displayValue(updatePayload?.detailAddress?.trim() || '')
+    : displayValue(event?.detailAddress || '');
+
+  const hasUpdatedServingPlaceType = hasTextValue(
+    updatePayload?.servingPlaceType
+  );
+  const displayedServingPlaceType = hasUpdatedServingPlaceType
+    ? SERVING_PLACE_TYPE_LABELS[
+        updatePayload?.servingPlaceType as EServingPlaceType
+      ] || displayValue(updatePayload?.servingPlaceType || '')
+    : displayValue(event?.servingPlaceType || '');
+
+  const updatedSessions = Array.isArray(updatePayload?.eventSessions)
+    ? updatePayload.eventSessions.map((session, index) => ({
+        id: session.id || `${event?.id || 'event'}-updated-session-${index}`,
+        startDateTime: session.startDateTime || '',
+        endDateTime: session.endDateTime || '',
+        expectedVolAmount: session.expectedVolAmount ?? 0,
+        expectedSerAmount: session.expectedSerAmount ?? 0
+      }))
+    : null;
+
+  const hasUpdatedSessions = Boolean(
+    updatedSessions && updatedSessions.length > 0
+  );
+  const displayedSessions = hasUpdatedSessions
+    ? (updatedSessions as EventData['sessions'])
+    : (event?.sessions ?? []);
+
+  const displayedDate = hasTextValue(updatePayload?.startDate)
+    ? fmtDate(updatePayload?.startDate)
+    : hasUpdatedSessions
+      ? fmtDate(displayedSessions[0]?.startDateTime)
+      : event?.date || '-';
+
+  const displayedEndDate = hasTextValue(updatePayload?.endDate)
+    ? fmtDate(updatePayload?.endDate)
+    : hasUpdatedSessions
+      ? fmtDate(displayedSessions[displayedSessions.length - 1]?.endDateTime)
+      : event?.endDate || '-';
+
+  const displayedStartTime = hasUpdatedSessions
+    ? fmtTime(displayedSessions[0]?.startDateTime)
+    : event?.startTime || '-';
+  const displayedEndTime = hasUpdatedSessions
+    ? fmtTime(displayedSessions[displayedSessions.length - 1]?.endDateTime)
+    : event?.endTime || '-';
+
+  const hasUpdatedRecruitmentDeadline = hasTextValue(
+    updatePayload?.recruitmentEndDate
+  );
+  const displayedRecruitmentDeadline = hasUpdatedRecruitmentDeadline
+    ? fmtDate(updatePayload?.recruitmentEndDate)
+    : displayValue(event?.registrationDeadline || '');
+
+  const hasUpdatedDescription = hasTextValue(updatePayload?.description);
+  const displayedDescription = hasUpdatedDescription
+    ? displayValue(updatePayload?.description?.trim() || '')
+    : displayValue(event?.description || '');
+
+  const displayedLat =
+    typeof updatePayload?.checkInLocationLat === 'number'
+      ? updatePayload.checkInLocationLat
+      : (event?.latCheckInLocation ?? null);
+  const displayedLng =
+    typeof updatePayload?.checkInLocationLng === 'number'
+      ? updatePayload.checkInLocationLng
+      : (event?.lngCheckInLocation ?? null);
+  const hasUpdatedCheckInLocation =
+    typeof updatePayload?.checkInLocationLat === 'number' ||
+    typeof updatePayload?.checkInLocationLng === 'number';
+
+  const hasUpdatedCheckInAccuracy =
+    typeof updatePayload?.checkInLocationAccuracyMeters === 'number';
+  const displayedCheckInAccuracy = hasUpdatedCheckInAccuracy
+    ? String(updatePayload?.checkInLocationAccuracyMeters)
+    : event?.geofencingRadius || '';
+
+  const totalSessionCount = displayedSessions.length;
+  const totalSessionVolunteers = displayedSessions.reduce(
+    (sum, session) => sum + session.expectedVolAmount,
+    0
+  );
+  const totalSessionServedTargets = displayedSessions.reduce(
+    (sum, session) => sum + session.expectedSerAmount,
+    0
+  );
 
   return (
     <>
@@ -802,8 +997,8 @@ export default function PendingEventDetail({
                           Thời gian diễn ra
                         </p>
                         <p className="mt-1 text-sm font-semibold text-zinc-800">
-                          {displayValue(event.date)} -{' '}
-                          {displayValue(event.endDate)}
+                          {displayValue(displayedDate)} -{' '}
+                          {displayValue(displayedEndDate)}
                         </p>
                       </div>
                       <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3">
@@ -898,14 +1093,34 @@ export default function PendingEventDetail({
                         <div className="space-y-1">
                           <p className="text-sm text-zinc-500">Khu vực</p>
                           <p className="text-sm text-zinc-700">
-                            {displayValue(event.location)}
+                            {displayedAddress}
                           </p>
+                          {hasUpdatedAddress &&
+                            beforeHint('Khu vực', displayValue(event.location))}
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-sm text-zinc-500">
+                            Địa chỉ chi tiết
+                          </p>
+                          <p className="text-sm text-zinc-700">
+                            {displayedDetailAddress}
+                          </p>
+                          {hasUpdatedDetailAddress &&
+                            beforeHint(
+                              'Địa chỉ chi tiết',
+                              displayValue(event.detailAddress)
+                            )}
                         </div>
                         <div className="space-y-1">
                           <p className="text-sm text-zinc-500">Nơi phục vụ</p>
                           <p className="text-sm text-zinc-700">
-                            {displayValue(event.servingPlaceType)}
+                            {displayedServingPlaceType}
                           </p>
+                          {hasUpdatedServingPlaceType &&
+                            beforeHint(
+                              'Nơi phục vụ',
+                              displayValue(event.servingPlaceType)
+                            )}
                         </div>
                       </div>
                     </Card>
@@ -917,31 +1132,60 @@ export default function PendingEventDetail({
                       <div className="mt-4 grid gap-4 md:grid-cols-2">
                         <div className="space-y-1">
                           <p className="text-sm text-zinc-500">Ngày diễn ra</p>
-                          <p className="text-sm text-zinc-700">{event.date}</p>
+                          <p className="text-sm text-zinc-700">
+                            {displayedDate}
+                          </p>
+                          {(hasTextValue(updatePayload?.startDate) ||
+                            hasUpdatedSessions) &&
+                            beforeHint(
+                              'Ngày diễn ra',
+                              displayValue(event.date)
+                            )}
                         </div>
                         <div className="space-y-1">
                           <p className="text-sm text-zinc-500">Ngày kết thúc</p>
                           <p className="text-sm text-zinc-700">
-                            {event.endDate}
+                            {displayedEndDate}
                           </p>
+                          {(hasTextValue(updatePayload?.endDate) ||
+                            hasUpdatedSessions) &&
+                            beforeHint(
+                              'Ngày kết thúc',
+                              displayValue(event.endDate)
+                            )}
                         </div>
                         <div className="space-y-1">
                           <p className="text-sm text-zinc-500">Giờ bắt đầu</p>
                           <p className="text-sm text-zinc-700">
-                            {event.startTime}
+                            {displayedStartTime}
                           </p>
+                          {hasUpdatedSessions &&
+                            beforeHint(
+                              'Giờ bắt đầu',
+                              displayValue(event.startTime)
+                            )}
                         </div>
                         <div className="space-y-1">
                           <p className="text-sm text-zinc-500">Giờ kết thúc</p>
                           <p className="text-sm text-zinc-700">
-                            {event.endTime}
+                            {displayedEndTime}
                           </p>
+                          {hasUpdatedSessions &&
+                            beforeHint(
+                              'Giờ kết thúc',
+                              displayValue(event.endTime)
+                            )}
                         </div>
                         <div className="space-y-1">
                           <p className="text-sm text-zinc-500">Hạn đăng ký</p>
                           <p className="text-sm text-zinc-700">
-                            {displayValue(event.registrationDeadline)}
+                            {displayedRecruitmentDeadline}
                           </p>
+                          {hasUpdatedRecruitmentDeadline &&
+                            beforeHint(
+                              'Hạn đăng ký',
+                              displayValue(event.registrationDeadline)
+                            )}
                         </div>
                         <div className="space-y-1">
                           <p className="text-sm text-zinc-500">Ngày nộp</p>
@@ -1002,11 +1246,11 @@ export default function PendingEventDetail({
                         <div className="space-y-1">
                           <p className="text-sm text-zinc-500">Điểm check-in</p>
                           {/* Địa chỉ từ reverse geocode */}
-                          {typeof event.latCheckInLocation === 'number' &&
-                          typeof event.lngCheckInLocation === 'number' ? (
+                          {typeof displayedLat === 'number' &&
+                          typeof displayedLng === 'number' ? (
                             <ReverseGeocode
-                              lat={event.latCheckInLocation}
-                              lng={event.lngCheckInLocation}
+                              lat={displayedLat as number}
+                              lng={displayedLng as number}
                             >
                               {(address) => (
                                 <p className="text-sm text-zinc-700">
@@ -1019,25 +1263,47 @@ export default function PendingEventDetail({
                               Chưa cập nhật
                             </p>
                           )}
+                          {hasUpdatedCheckInLocation &&
+                            typeof event.latCheckInLocation === 'number' &&
+                            typeof event.lngCheckInLocation === 'number' && (
+                              <ReverseGeocode
+                                lat={event.latCheckInLocation}
+                                lng={event.lngCheckInLocation}
+                              >
+                                {(oldAddress) => (
+                                  <p className="mt-1 text-xs text-amber-700">
+                                    Điểm check-in cũ:{' '}
+                                    {oldAddress
+                                      ? oldAddress
+                                      : `Lat: ${event.latCheckInLocation}, Lng: ${event.lngCheckInLocation}`}
+                                  </p>
+                                )}
+                              </ReverseGeocode>
+                            )}
                         </div>
                         <div className="space-y-1">
                           <p className="text-sm text-zinc-500">Bán kính</p>
                           <p className="text-sm text-zinc-700">
-                            {displayValue(event.geofencingRadius)} m
+                            {displayValue(displayedCheckInAccuracy)} m
                           </p>
+                          {hasUpdatedCheckInAccuracy &&
+                            beforeHint(
+                              'Bán kính',
+                              `${displayValue(event.geofencingRadius)} m`
+                            )}
                         </div>
                       </div>
                       {/* Map hiển thị vị trí check-in */}
-                      {typeof event.latCheckInLocation === 'number' &&
-                        typeof event.lngCheckInLocation === 'number' && (
+                      {typeof displayedLat === 'number' &&
+                        typeof displayedLng === 'number' && (
                           <div
                             className="mt-6 h-[300px] w-full rounded-lg overflow-hidden border border-zinc-200"
                             style={{ position: 'relative', zIndex: 0 }}
                           >
                             <MapSection
-                              lat={event.latCheckInLocation}
-                              lng={event.lngCheckInLocation}
-                              popupText={event.location || ''}
+                              lat={displayedLat}
+                              lng={displayedLng}
+                              popupText={displayedAddress}
                             />
                           </div>
                         )}
@@ -1048,12 +1314,15 @@ export default function PendingEventDetail({
                     <h2 className="text-xl font-semibold leading-snug tracking-tight text-zinc-900 md:text-2xl">
                       Lịch phiên hoạt động
                     </h2>
-                    {event.sessions.length === 0 ? (
-                      <p className="mt-3 text-sm text-zinc-600">
+                    <p className="mt-3 text-sm font-medium text-zinc-700">
+                      Lịch phiên mới
+                    </p>
+                    {displayedSessions.length === 0 ? (
+                      <p className="mt-2 text-sm text-zinc-600">
                         Chưa có thông tin phiên hoạt động.
                       </p>
                     ) : (
-                      <div className="mt-4 overflow-x-auto rounded-lg border border-zinc-200">
+                      <div className="mt-3 overflow-x-auto rounded-lg border border-zinc-200">
                         <table className="min-w-full divide-y divide-zinc-200">
                           <thead className="bg-zinc-50">
                             <tr>
@@ -1078,7 +1347,7 @@ export default function PendingEventDetail({
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-zinc-100 bg-white">
-                            {event.sessions.map((session, index) => (
+                            {displayedSessions.map((session, index) => (
                               <tr
                                 key={
                                   session.id || `${event.id}-session-${index}`
@@ -1123,6 +1392,99 @@ export default function PendingEventDetail({
                           </tfoot>
                         </table>
                       </div>
+                    )}
+
+                    {hasUpdatedSessions && (
+                      <>
+                        <p className="mt-5 text-sm font-medium text-amber-700">
+                          Lịch phiên cũ
+                        </p>
+                        {event.sessions.length === 0 ? (
+                          <p className="mt-2 text-sm text-zinc-600">
+                            Chưa có thông tin phiên hoạt động cũ.
+                          </p>
+                        ) : (
+                          <div className="mt-3 overflow-x-auto rounded-lg border border-amber-200">
+                            <table className="min-w-full divide-y divide-amber-200">
+                              <thead className="bg-amber-50">
+                                <tr>
+                                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-amber-700">
+                                    Phiên
+                                  </th>
+                                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-amber-700">
+                                    Ngày tổ chức
+                                  </th>
+                                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-amber-700">
+                                    Giờ bắt đầu
+                                  </th>
+                                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-amber-700">
+                                    Giờ kết thúc
+                                  </th>
+                                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-amber-700">
+                                    Tình nguyện viên dự kiến
+                                  </th>
+                                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-amber-700">
+                                    Đối tượng phục vụ dự kiến
+                                  </th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-amber-100 bg-white">
+                                {event.sessions.map((session, index) => (
+                                  <tr
+                                    key={
+                                      session.id ||
+                                      `${event.id}-old-session-${index}`
+                                    }
+                                  >
+                                    <td className="px-4 py-3 text-sm font-medium text-zinc-800">
+                                      Phiên {index + 1}
+                                    </td>
+                                    <td className="px-4 py-3 text-sm text-zinc-700">
+                                      {fmtDate(session.startDateTime)}
+                                    </td>
+                                    <td className="px-4 py-3 text-sm text-zinc-700">
+                                      {fmtTime(session.startDateTime)}
+                                    </td>
+                                    <td className="px-4 py-3 text-sm text-zinc-700">
+                                      {fmtTime(session.endDateTime)}
+                                    </td>
+                                    <td className="px-4 py-3 text-sm text-zinc-700">
+                                      {session.expectedVolAmount}
+                                    </td>
+                                    <td className="px-4 py-3 text-sm text-zinc-700">
+                                      {session.expectedSerAmount}
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                              <tfoot className="bg-amber-50">
+                                <tr>
+                                  <td
+                                    colSpan={4}
+                                    className="px-4 py-3 text-sm font-semibold text-zinc-800"
+                                  >
+                                    Tổng
+                                  </td>
+                                  <td className="px-4 py-3 text-sm font-semibold text-zinc-800">
+                                    {event.sessions.reduce(
+                                      (sum, session) =>
+                                        sum + session.expectedVolAmount,
+                                      0
+                                    )}
+                                  </td>
+                                  <td className="px-4 py-3 text-sm font-semibold text-zinc-800">
+                                    {event.sessions.reduce(
+                                      (sum, session) =>
+                                        sum + session.expectedSerAmount,
+                                      0
+                                    )}
+                                  </td>
+                                </tr>
+                              </tfoot>
+                            </table>
+                          </div>
+                        )}
+                      </>
                     )}
                   </Card>
 
@@ -1311,8 +1673,10 @@ export default function PendingEventDetail({
                       Mô tả chi tiết
                     </h2>
                     <p className="mt-3 text-sm text-zinc-700">
-                      {displayValue(event.description)}
+                      {displayedDescription}
                     </p>
+                    {hasUpdatedDescription &&
+                      beforeHint('Mô tả', displayValue(event.description))}
                     {hasImportantNote && (
                       <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-4 shadow-sm">
                         <div className="flex items-start gap-3">

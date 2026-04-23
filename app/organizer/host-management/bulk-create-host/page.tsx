@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation';
 import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 import type { CreateHostAccountRequest } from '@/hooks/dto/host';
-import { useCreateHostAccount } from '@/hooks/features/uc067-create-host-account/useCreateHostAccount';
+import { useCreateHostAccount } from '@/hooks/features/org-manager/uc067-create-host-account/useCreateHostAccount';
 
 const NEXT_PUBLIC_API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL!;
 

@@ -2,7 +2,7 @@
 
 import DashboardLayout from '@/components/layout';
 import PendingAccountDetail from '@/components/dashboard/pending-accounts/detail';
-import { usePendingAccountDetail } from '@/hooks/features/uc044-identity-verification/usePendingAccountDetail';
+import { usePendingAccountDetail } from '@/hooks/features/sys-admin/uc044-identity-verification/usePendingAccountDetail';
 import { Card } from '@/components/ui/card';
 import { User } from '@supabase/supabase-js';
 

@@ -13,11 +13,11 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
-import { useCreateActivityDomain } from '@/hooks/features/uc060-create-activity-domain-activity-sub-domain/useCreateActivityDomain';
-import { useUpdateActivityDomain } from '@/hooks/features/uc061-update-activity-domain-activity-sub-domain/useUpdateActivityDomain';
-import { useGetListActivityDomain } from '@/hooks/features/uc063-view-activity-domain-activity-sub-domain/useGetListActivityDomain';
-import { useHideUnhideActivityDomain } from '@/hooks/features/uc062-hide-unhide-activity-domain-activity-subbdomain/useHideUnhideActivityDomain';
-import { useHideUnhideActivitySubdomain } from '@/hooks/features/uc062-hide-unhide-activity-domain-activity-subbdomain/useHideUnhideActivitySubdomain';
+import { useCreateActivityDomain } from '@/hooks/features/sys-admin/uc060-create-activity-domain-activity-sub-domain/useCreateActivityDomain';
+import { useUpdateActivityDomain } from '@/hooks/features/sys-admin/uc061-update-activity-domain-activity-sub-domain/useUpdateActivityDomain';
+import { useGetListActivityDomain } from '@/hooks/features/sys-admin/uc063-view-activity-domain-activity-sub-domain/useGetListActivityDomain';
+import { useHideUnhideActivityDomain } from '@/hooks/features/sys-admin/uc062-hide-unhide-activity-domain-activity-subbdomain/useHideUnhideActivityDomain';
+import { useHideUnhideActivitySubdomain } from '@/hooks/features/sys-admin/uc062-hide-unhide-activity-domain-activity-subbdomain/useHideUnhideActivitySubdomain';
 import type {
   UpdateActivityDomainRequest,
   UpdateActivitySubDomainRequest

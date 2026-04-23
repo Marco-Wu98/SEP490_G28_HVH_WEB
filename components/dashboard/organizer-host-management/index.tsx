@@ -44,7 +44,7 @@ import {
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { IRoute } from '@/types/types';
-import { useViewHostList } from '@/hooks/features/uc065-view-host-list/useViewHostList';
+import { useViewHostList } from '@/hooks/features/sys-admin/uc065-view-host-list/useViewHostList';
 
 interface Props {
   user: User | null | undefined;

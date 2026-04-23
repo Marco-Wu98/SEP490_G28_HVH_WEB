@@ -36,7 +36,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { usePendingAccounts } from '@/hooks/features/uc044-identity-verification/usePendingAccountsList';
+import { usePendingAccounts } from '@/hooks/features/sys-admin/uc044-identity-verification/usePendingAccountsList';
 import { EAccountStatus } from '@/constants/account-status';
 import type { PendingAccountItem } from '@/hooks/entity';
 import { cn } from '@/utils/cn';

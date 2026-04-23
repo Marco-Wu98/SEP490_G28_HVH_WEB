@@ -1,7 +1,7 @@
 'use client';
 import React from 'react';
 import PendingEvents from '@/components/dashboard/pending-events';
-import { useApprovalEventsList } from "@/hooks/features/uc082-view-organization's-approval-events/useApprovalEventsList";
+import { useApprovalEventsList } from "@/hooks/features/org-manager/uc082-view-organization's-approval-events/useApprovalEventsList";
 
 export default function ApprovedEventsClient({
   user,

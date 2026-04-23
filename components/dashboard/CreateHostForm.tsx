@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useState } from 'react';
-import { useCreateHostAccount } from '@/hooks/features/uc067-create-host-account/useCreateHostAccount';
+import { useCreateHostAccount } from '@/hooks/features/org-manager/uc067-create-host-account/useCreateHostAccount';
 import { Upload } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';

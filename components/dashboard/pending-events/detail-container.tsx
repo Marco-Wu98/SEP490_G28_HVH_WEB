@@ -1,11 +1,11 @@
 'use client';
 
 import PendingEventDetail from '@/components/dashboard/pending-events/detail';
-import { useViewEventDetailsBySysAdmin } from '@/hooks/features/view-event-details-by-system-admin/useViewEventDetailsBySysAdmin';
+import { useViewEventDetailsBySysAdmin } from '@/hooks/features/sys-admin/view-event-details-by-system-admin/useViewEventDetailsBySysAdmin';
 import DashboardLayout from '@/components/layout';
 import { Card } from '@/components/ui/card';
 import { User } from '@supabase/supabase-js';
-import { useCancelEventByAdmin } from '@/hooks/features/cancel-event-by-admin/useAdminCancelEvent';
+import { useCancelEventByAdmin } from '@/hooks/features/sys-admin/cancel-event-by-admin/useAdminCancelEvent';
 
 interface Props {
   user: User | null | undefined;
