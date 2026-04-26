@@ -13,14 +13,13 @@ import {
   UserDetailsContext
 } from '@/contexts/layout';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import React, { useContext, useEffect, useState } from 'react';
 import { FiAlignJustify } from 'react-icons/fi';
 import {
   HiOutlineInformationCircle,
   HiOutlineArrowRightOnRectangle
 } from 'react-icons/hi2';
-import { createClient } from '@/utils/supabase/client';
+import { useSupabase } from '@/app/supabase-provider';
 import { useUnregisterToken } from '@/hooks/features/commons/notification/use-unregister-token';
 import { useGetSysAdmAccountInfo } from '@/hooks/features/sys-admin/uc088-view-profile-by-admin/useGetSysAdmAccountInfo';
 import { useGetOrgManagerAccInfo } from '@/hooks/features/org-manager/uc087-view-profile-by-org-manager/useGetOrgManagerAccInfo';
@@ -30,7 +29,6 @@ import {
 } from '@/hooks/use-notification-permission';
 import { getFullSupabaseImageUrl } from '@/utils/helpers';
 
-const supabase = createClient();
 export default function HeaderLinks(props: {
   colorVariant?: 'admin' | 'organizer';
   signInPath?: string;
@@ -41,7 +39,7 @@ export default function HeaderLinks(props: {
   const user = useContext(UserContext);
   const userDetails = useContext(UserDetailsContext);
   const [mounted, setMounted] = useState(false);
-  const router = useRouter();
+  const { supabase } = useSupabase();
   const { trigger: unregisterToken } = useUnregisterToken();
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL!;
   const colorVariant = props.colorVariant ?? 'admin';
@@ -105,21 +103,24 @@ export default function HeaderLinks(props: {
 
     const token = getStoredNotificationToken();
     if (token) {
-      try {
-        await unregisterToken(token);
-        clearStoredNotificationToken();
-      } catch (error) {
-        console.error('Failed to unregister notification token:', error);
-      }
+      unregisterToken(token)
+        .then(() => {
+          clearStoredNotificationToken();
+        })
+        .catch((error) => {
+          console.error('Failed to unregister notification token:', error);
+        });
     }
 
     try {
-      await supabase.auth.signOut();
+      const { error } = await supabase.auth.signOut({ scope: 'local' });
+      if (error) {
+        console.error('[HeaderLinks] Supabase sign out failed:', error);
+      }
     } catch (error) {
       console.error('Sign out failed:', error);
     } finally {
-      router.replace(signInPath);
-      router.refresh();
+      window.location.assign(signInPath);
     }
   };
   if (!mounted) return null;

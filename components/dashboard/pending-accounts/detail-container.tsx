@@ -25,13 +25,14 @@ export default function PendingAccountDetailContainer({
 
   const volunteer = (data as any)?.volunteer;
   const defaultFullName =
-    volunteer && typeof volunteer === 'object'
+    data?.fullName ??
+    (volunteer && typeof volunteer === 'object'
       ? ((volunteer as any).fullName ??
         (volunteer as any).full_name ??
         (volunteer as any).name ??
         (volunteer as any).full_name_vi ??
         null)
-      : null;
+      : null);
 
   if (isLoading) {
     return (

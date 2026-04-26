@@ -46,7 +46,6 @@ export default function SupabaseProvider({
           : '/signin/password_signin';
 
         router.replace(signInPath);
-        router.refresh();
       }
     });
 

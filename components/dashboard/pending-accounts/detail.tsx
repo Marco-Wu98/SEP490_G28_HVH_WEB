@@ -79,7 +79,8 @@ export default function PendingAccountDetail({
   const [openApproveModal, setOpenApproveModal] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
   const [accountName, setAccountName] = useState(defaultFullName ?? '');
-  const isApproveEnabled = accountName.trim().length > 0;
+  const normalizedAccountName = accountName.trim();
+  const isApproveEnabled = normalizedAccountName.length > 0;
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -97,7 +98,7 @@ export default function PendingAccountDetail({
         {
           approve: true,
           rejectionReason: null,
-          fullName: accountName
+          fullName: normalizedAccountName
         },
         { throwOnError: true }
       );
@@ -116,13 +117,11 @@ export default function PendingAccountDetail({
 
   const handleReject = async () => {
     try {
-      const rejectPayload: any = {
+      const rejectPayload = {
         approve: false,
-        rejectionReason: rejectReason
+        rejectionReason: rejectReason,
+        fullName: normalizedAccountName
       };
-      if (accountName.trim()) {
-        rejectPayload.fullName = accountName;
-      }
       const response = await verify(rejectPayload, { throwOnError: true });
       setOpenRejectModal(false);
       setRejectReason('');
@@ -329,7 +328,9 @@ export default function PendingAccountDetail({
             <Button
               className="bg-blue-600 hover:bg-blue-700 text-white"
               onClick={handleReject}
-              disabled={isVerifying || !rejectReason.trim()}
+              disabled={
+                isVerifying || !rejectReason.trim() || !isApproveEnabled
+              }
             >
               {isVerifying ? 'Đang xử lý...' : 'Xác nhận từ chối'}
             </Button>

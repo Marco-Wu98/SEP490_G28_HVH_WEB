@@ -6,6 +6,7 @@ export interface PendingAccountDetailResponse {
   cid: string | null;
   email: string | null;
   phone: string | null;
+  fullName: string | null;
   cidFrontUrl: string | null;
   cidBackUrl: string | null;
   cidHoldingUrl: string | null;

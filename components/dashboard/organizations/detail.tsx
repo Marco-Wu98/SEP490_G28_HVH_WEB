@@ -22,7 +22,6 @@ import { ArrowLeft, Check, Edit, Star, X } from 'lucide-react';
 import { useViewOrgDetails } from '@/hooks/features/sys-admin/uc076-view-org-details-by-admin/useViewOrgDetails';
 import { ORG_TYPE_LABELS } from '@/constants/org-type-labels';
 import type { OrganizationDetail } from '@/hooks/entity';
-import { getFullSupabaseImageUrl } from '@/utils/helpers';
 
 interface Props {
   orgId: string;
@@ -114,8 +113,7 @@ export default function OrganizationDetailPage({
       volunteers: orgData.totalHosts ?? 0,
       donations: legacyOrgData.creditHour ?? legacyOrgData.totalHonorHours ?? 0,
       imageUrl:
-        getFullSupabaseImageUrl(orgData.avatarImageUrl) ||
-        'https://picsum.photos/seed/org/200/200',
+        orgData.avatarImageUrl || 'https://picsum.photos/seed/org/200/200',
       introduction: orgData.orgIntroduction || 'Chưa có thông tin giới thiệu.',
       applicationReason: '',
       basicInfo: {
@@ -134,12 +132,8 @@ export default function OrganizationDetailPage({
         email: orgData.managerEmail || 'N/A',
         cccd: orgData.managerCID || 'N/A'
       },
-      registrationImages: (orgData.legalDocumentUrls || []).map((url) =>
-        getFullSupabaseImageUrl(url)
-      ),
-      supportingDocuments: (orgData.otherEvidencesUrls || []).map((url) =>
-        getFullSupabaseImageUrl(url)
-      ),
+      registrationImages: orgData.legalDocumentUrls || [],
+      supportingDocuments: orgData.otherEvidencesUrls || [],
       note: orgData.note || ''
     };
   }, [orgData]);

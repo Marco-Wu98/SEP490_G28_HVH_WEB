@@ -11,23 +11,19 @@ import Links from '@/components/sidebar/components/Links';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card } from '@/components/ui/card';
 import { IRoute } from '@/types/types';
-import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import React, { PropsWithChildren, useContext } from 'react';
 import { Scrollbars } from 'react-custom-scrollbars-2';
 import { HiX } from 'react-icons/hi';
 import { HiBolt } from 'react-icons/hi2';
 import { HiOutlineArrowRightOnRectangle } from 'react-icons/hi2';
-import { getRedirectMethod } from '@/utils/auth-helpers/settings';
 import { UserContext, UserDetailsContext } from '@/contexts/layout';
-import { createClient } from '@/utils/supabase/client';
+import { useSupabase } from '@/app/supabase-provider';
 import { useUnregisterToken } from '@/hooks/features/commons/notification/use-unregister-token';
 import {
   clearStoredNotificationToken,
   getStoredNotificationToken
 } from '@/hooks/use-notification-permission';
-
-const supabase = createClient();
 
 export interface SidebarProps extends PropsWithChildren {
   routes: IRoute[];
@@ -37,8 +33,7 @@ export interface SidebarProps extends PropsWithChildren {
 }
 
 function Sidebar(props: SidebarProps) {
-  const router = useRouter();
-  const redirectMethod = getRedirectMethod();
+  const { supabase } = useSupabase();
   const { routes } = props;
   const colorVariant = props.colorVariant ?? 'admin';
   const signInPath =
@@ -92,25 +87,24 @@ function Sidebar(props: SidebarProps) {
 
     const token = getStoredNotificationToken();
     if (token) {
-      try {
-        await unregisterToken(token);
-        clearStoredNotificationToken();
-      } catch (error) {
-        console.error('Failed to unregister notification token:', error);
-      }
+      unregisterToken(token)
+        .then(() => {
+          clearStoredNotificationToken();
+        })
+        .catch((error) => {
+          console.error('Failed to unregister notification token:', error);
+        });
     }
 
     try {
-      await supabase.auth.signOut();
+      const { error } = await supabase.auth.signOut({ scope: 'local' });
+      if (error) {
+        console.error('Sign out failed:', error);
+      }
     } catch (error) {
       console.error('Sign out failed:', error);
     } finally {
-      if (redirectMethod === 'client') {
-        router.replace(signInPath);
-        router.refresh();
-      } else {
-        window.location.href = signInPath;
-      }
+      window.location.assign(signInPath);
     }
   };
   // SIDEBAR
