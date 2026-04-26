@@ -27,5 +27,12 @@ export default function SettingsPage() {
     fetchUserData();
   }, [supabase, router]);
 
-  return <Settings userDetails={null} user={user} />;
+  return (
+    <Settings
+      userDetails={null}
+      user={user}
+      colorVariant="admin"
+      signInPath="/dashboard/signin/password_signin"
+    />
+  );
 }

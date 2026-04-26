@@ -18,5 +18,9 @@ export const useGetStatistic = ({
     return baseUrl ? `${baseUrl}${path}` : path;
   }, [baseUrl, enabled]);
 
-  return useSWR<OrganizationStatsResponseForManager>(url);
+  return useSWR<OrganizationStatsResponseForManager>(url, {
+    revalidateOnMount: true,
+    revalidateIfStale: true,
+    dedupingInterval: 0
+  });
 };

@@ -18,5 +18,9 @@ export const useCountHostAndEvents = ({
     return baseUrl ? `${baseUrl}${path}` : path;
   }, [baseUrl, enabled]);
 
-  return useSWR<OrganizationCountHostsAndEventsResponse>(url);
+  return useSWR<OrganizationCountHostsAndEventsResponse>(url, {
+    revalidateOnMount: true,
+    revalidateIfStale: true,
+    dedupingInterval: 0
+  });
 };

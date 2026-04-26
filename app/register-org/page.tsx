@@ -705,13 +705,13 @@ export default function RegisterOrgPage() {
               }
             />
           </div>
-          {/* Số CMND/CCCD quản trị viên */}
+          {/* Số CCCD quản trị viên */}
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">
-              Số CMND/CCCD quản trị viên <span className="text-red-500">*</span>
+              Số CCCD quản trị viên <span className="text-red-500">*</span>
             </label>
             <Input
-              placeholder="Nhập số CMND/CCCD quản trị viên"
+              placeholder="Nhập số CCCD quản trị viên"
               required
               value={form.managerCid}
               onChange={(e) =>
@@ -790,10 +790,10 @@ export default function RegisterOrgPage() {
               onChange={(e) => setForm((f) => ({ ...f, otp: e.target.value }))}
             />
           </div>
-          {/* Section upload ảnh CMND/CCCD */}
+          {/* Section upload ảnh CCCD */}
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">
-              Ảnh CMND/CCCD <span className="text-red-500">*</span>
+              Ảnh CCCD <span className="text-red-500">*</span>
             </label>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Mặt trước */}

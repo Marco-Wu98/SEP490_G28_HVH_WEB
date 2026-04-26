@@ -1276,7 +1276,7 @@ export default function VolunteersList(props: Props) {
       return;
     }
     if (!newVolunteer.cid?.trim()) {
-      toast.error('Vui lòng nhập số CMND/CCCD');
+      toast.error('Vui lòng nhập số CCCD');
       return;
     }
     if (!newVolunteer.phone?.trim()) {
@@ -1295,7 +1295,7 @@ export default function VolunteersList(props: Props) {
         phone: newVolunteer.phone,
         email: newVolunteer.email
       });
-      
+
       toast.success('Tạo tài khoản tình nguyện viên thành công');
       setNewVolunteer({
         fullName: '',
@@ -2357,10 +2357,10 @@ export default function VolunteersList(props: Props) {
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                        Số CMND/CCCD <span className="text-red-500">*</span>
+                        Số CCCD <span className="text-red-500">*</span>
                       </label>
                       <Input
-                        placeholder="Nhập 12 số CMND/CCCD"
+                        placeholder="Nhập 12 số CCCD"
                         value={newVolunteer.cid}
                         onChange={(e) =>
                           setNewVolunteer({

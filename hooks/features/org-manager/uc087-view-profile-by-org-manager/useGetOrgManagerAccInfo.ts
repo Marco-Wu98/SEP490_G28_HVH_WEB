@@ -20,5 +20,10 @@ export const useGetOrgManagerAccInfo = ({
     return baseUrl ? `${baseUrl}${path}` : path;
   }, [baseUrl, enabled]);
 
-  return useSWR<OrgManagerAccountInformationResponse>(url);
+  return useSWR<OrgManagerAccountInformationResponse>(url, {
+    // Always revalidate when the settings view mounts to avoid stale profile data.
+    revalidateOnMount: true,
+    revalidateIfStale: true,
+    dedupingInterval: 0
+  });
 };

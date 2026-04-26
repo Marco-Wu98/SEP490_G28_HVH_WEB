@@ -13,15 +13,22 @@ export default function OrganizerMain() {
   const [user, setUser] = useState(null);
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '';
 
-  const { data: orgStats } = useGetStatistic({
+  const { data: orgStats, mutate: refreshOrgStats } = useGetStatistic({
     baseUrl: apiBaseUrl,
     enabled: Boolean(user)
   });
 
-  const { data: orgCounts } = useCountHostAndEvents({
+  const { data: orgCounts, mutate: refreshOrgCounts } = useCountHostAndEvents({
     baseUrl: apiBaseUrl,
     enabled: Boolean(user)
   });
+
+  useEffect(() => {
+    if (!user) return;
+
+    refreshOrgStats();
+    refreshOrgCounts();
+  }, [user, refreshOrgStats, refreshOrgCounts]);
 
   const mergedUserDetails = useMemo(() => {
     const statsList = Array.isArray(orgStats) ? orgStats : [];

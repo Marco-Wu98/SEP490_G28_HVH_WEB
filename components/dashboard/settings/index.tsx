@@ -116,6 +116,14 @@ export default function Settings(props: Props) {
     : isUpdatingOrgManagerProfile;
   const hasProfileApiData = Boolean(accountInfo);
 
+  React.useEffect(() => {
+    if (!isAdminView && !isOrgManagerView) {
+      return;
+    }
+
+    refreshAccountInfo();
+  }, [isAdminView, isOrgManagerView, refreshAccountInfo]);
+
   const displayName = useMemo(() => {
     return hasProfileApiData
       ? formatTextValue(accountInfo?.fullName)
