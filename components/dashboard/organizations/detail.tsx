@@ -22,6 +22,7 @@ import { ArrowLeft, Check, Edit, Star, X } from 'lucide-react';
 import { useViewOrgDetails } from '@/hooks/features/sys-admin/uc076-view-org-details-by-admin/useViewOrgDetails';
 import { ORG_TYPE_LABELS } from '@/constants/org-type-labels';
 import type { OrganizationDetail } from '@/hooks/entity';
+import { getFullSupabaseImageUrl } from '@/utils/helpers';
 
 interface Props {
   orgId: string;
@@ -132,8 +133,12 @@ export default function OrganizationDetailPage({
         email: orgData.managerEmail || 'N/A',
         cccd: orgData.managerCID || 'N/A'
       },
-      registrationImages: orgData.legalDocumentUrls || [],
-      supportingDocuments: orgData.otherEvidencesUrls || [],
+      registrationImages: (orgData.legalDocumentUrls || []).map((url) =>
+        getFullSupabaseImageUrl(url)
+      ),
+      supportingDocuments: (orgData.otherEvidencesUrls || []).map((url) =>
+        getFullSupabaseImageUrl(url)
+      ),
       note: orgData.note || ''
     };
   }, [orgData]);

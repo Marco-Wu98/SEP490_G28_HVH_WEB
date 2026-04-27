@@ -45,7 +45,7 @@ import {
   Users,
   X
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -53,230 +53,80 @@ import {
   DialogHeader,
   DialogTitle
 } from '@/components/ui/dialog';
+import type { HostSimpleResponseForSystemAdmin } from '@/hooks/dto';
+import { useGetHostsofOrgsbySysAdmin } from '@/hooks/features/sys-admin/uc033-view-org-member-accounts-list/useGetHostsofOrgsbySysAdmin';
+import { useGetHostInfobySysAdmin } from '@/hooks/features/sys-admin/uc034-view-organization-member-account-profile/useGetHostInfobySysAdmin';
 
 interface Props {
   user: User | null | undefined;
   userDetails: { [x: string]: any } | null;
 }
 
-const mockRegisteredOrganizations = [
-  { id: 1, name: 'Tổ chức A' },
-  { id: 2, name: 'Tổ chức B' },
-  { id: 3, name: 'Tổ chức C' },
-  { id: 4, name: 'Tổ chức D' },
-  { id: 5, name: 'Tổ chức E' },
-  { id: 6, name: 'Tổ chức F' },
-  { id: 7, name: 'Tổ chức G' },
-  { id: 8, name: 'Tổ chức H' },
-  { id: 9, name: 'Tổ chức I' },
-  { id: 10, name: 'Tổ chức J' },
-  { id: 11, name: 'Tổ chức K' },
-  { id: 12, name: 'Tổ chức L' },
-  { id: 13, name: 'Tổ chức M' },
-  { id: 14, name: 'Tổ chức N' },
-  { id: 15, name: 'Tổ chức O' }
-];
+type OrganizerStatus = 'active' | 'inactive' | 'locked';
 
-const mockOrganizers = [
-  {
-    id: 1,
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=21',
-    orgName: 'Tổ chức A',
-    fullName: 'Nguyễn Văn An',
-    cccd: '011234567890',
-    phone: '0912345678',
-    email: 'organizer1@example.com',
-    dob: '15/05/1985',
-    events: 25,
-    role: 'Manager',
-    status: 'active'
-  },
-  {
-    id: 2,
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=22',
-    orgName: 'Tổ chức B',
-    fullName: 'Trần Thị Bình',
-    cccd: '011234567891',
-    phone: '0987654321',
-    email: 'organizer2@example.com',
-    dob: '20/08/1987',
-    events: 18,
+type Organizer = Omit<
+  HostSimpleResponseForSystemAdmin,
+  'id' | 'fullName' | 'address' | 'email' | 'phone' | 'status'
+> & {
+  id: number;
+  avatar: string;
+  orgName: string;
+  fullName: string;
+  cccd: string;
+  phone: string;
+  email: string;
+  dob: string;
+  events: number;
+  role: string;
+  status: OrganizerStatus;
+};
+
+type RegisteredOrganization = {
+  id: number;
+  name: string;
+};
+
+const pageSize = 10;
+
+const mapApiStatusToOrganizerStatus = (
+  status: HostSimpleResponseForSystemAdmin['status']
+): OrganizerStatus => {
+  const normalized = String(status ?? '')
+    .trim()
+    .toUpperCase();
+  if (normalized === 'ACTIVE' || normalized === 'APPROVED') return 'active';
+  if (normalized === 'LOCKED' || normalized === 'REJECTED') return 'locked';
+  return 'inactive';
+};
+
+const mapHostToOrganizer = (
+  item: HostSimpleResponseForSystemAdmin,
+  index: number
+): Organizer => {
+  const numericId = Number(item.id);
+  const resolvedId = Number.isFinite(numericId) ? numericId : index + 1;
+  const status = mapApiStatusToOrganizerStatus(item.status);
+
+  return {
+    id: resolvedId,
+    avatarUrl: item.avatarUrl,
+    avatar:
+      item.avatarUrl?.trim() ||
+      `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(item.id || String(resolvedId))}`,
+    orgName: item.address?.trim() || 'Chưa cập nhật',
+    fullName: item.fullName?.trim() || 'Chưa cập nhật',
+    cccd: item.id,
+    phone: item.phone?.trim() || '-',
+    email: item.email?.trim() || '-',
+    dob: '-',
+    hostedEventCount: item.hostedEventCount,
+    events: item.hostedEventCount ?? 0,
     role: 'Host',
-    status: 'active'
-  },
-  {
-    id: 3,
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=23',
-    orgName: 'Tổ chức C',
-    fullName: 'Lê Hoàng Cường',
-    cccd: '011234567892',
-    phone: '0901234567',
-    email: 'organizer3@example.com',
-    dob: '10/12/1984',
-    events: 12,
-    role: 'Manager',
-    status: 'inactive'
-  },
-  {
-    id: 4,
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=24',
-    orgName: 'Tổ chức D',
-    fullName: 'Phạm Thị Dung',
-    cccd: '011234567893',
-    phone: '0923456789',
-    email: 'organizer4@example.com',
-    dob: '25/03/1989',
-    events: 30,
-    role: 'Host',
-    status: 'active'
-  },
-  {
-    id: 5,
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=25',
-    orgName: 'Tổ chức E',
-    fullName: 'Hoàng Văn Em',
-    cccd: '011234567894',
-    phone: '0934567890',
-    email: 'organizer5@example.com',
-    dob: '05/07/1986',
-    events: 8,
-    role: 'Manager',
-    status: 'locked'
-  },
-  {
-    id: 6,
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=26',
-    orgName: 'Tổ chức F',
-    fullName: 'Vũ Minh Phúc',
-    cccd: '011234567895',
-    phone: '0945678901',
-    email: 'organizer6@example.com',
-    dob: '12/11/1988',
-    events: 22,
-    role: 'Host',
-    status: 'active'
-  },
-  {
-    id: 7,
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=27',
-    orgName: 'Tổ chức G',
-    fullName: 'Đặng Thị Hạnh',
-    cccd: '011234567896',
-    phone: '0956789012',
-    email: 'organizer7@example.com',
-    dob: '09/02/1991',
-    events: 15,
-    role: 'Manager',
-    status: 'active'
-  },
-  {
-    id: 8,
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=28',
-    orgName: 'Tổ chức H',
-    fullName: 'Bùi Quốc Huy',
-    cccd: '011234567897',
-    phone: '0967890123',
-    email: 'organizer8@example.com',
-    dob: '22/09/1983',
-    events: 10,
-    role: 'Host',
-    status: 'inactive'
-  },
-  {
-    id: 9,
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=29',
-    orgName: 'Tổ chức I',
-    fullName: 'Phan Thị Lan',
-    cccd: '011234567898',
-    phone: '0978901234',
-    email: 'organizer9@example.com',
-    dob: '18/01/1990',
-    events: 28,
-    role: 'Manager',
-    status: 'active'
-  },
-  {
-    id: 10,
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=30',
-    orgName: 'Tổ chức J',
-    fullName: 'Đỗ Đức Long',
-    cccd: '011234567899',
-    phone: '0989012345',
-    email: 'organizer10@example.com',
-    dob: '03/06/1985',
-    events: 20,
-    role: 'Host',
-    status: 'active'
-  },
-  {
-    id: 11,
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=31',
-    orgName: 'Tổ chức K',
-    fullName: 'Lý Thị Mai',
-    cccd: '011234567900',
-    phone: '0911122233',
-    email: 'organizer11@example.com',
-    dob: '30/10/1992',
-    events: 6,
-    role: 'Manager',
-    status: 'inactive'
-  },
-  {
-    id: 12,
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=32',
-    orgName: 'Tổ chức L',
-    fullName: 'Ngô Quang Nam',
-    cccd: '011234567901',
-    phone: '0922233344',
-    email: 'organizer12@example.com',
-    dob: '14/04/1984',
-    events: 35,
-    role: 'Host',
-    status: 'active'
-  },
-  {
-    id: 13,
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=33',
-    orgName: 'Tổ chức M',
-    fullName: 'Tạ Thị Quyên',
-    cccd: '011234567902',
-    phone: '0933344455',
-    email: 'organizer13@example.com',
-    dob: '27/08/1988',
-    events: 16,
-    role: 'Manager',
-    status: 'active'
-  },
-  {
-    id: 14,
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=34',
-    orgName: 'Tổ chức N',
-    fullName: 'Trương Minh Khoa',
-    cccd: '011234567903',
-    phone: '0944455566',
-    email: 'organizer14@example.com',
-    dob: '16/12/1989',
-    events: 9,
-    role: 'Host',
-    status: 'locked'
-  },
-  {
-    id: 15,
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=35',
-    orgName: 'Tổ chức O',
-    fullName: 'Nguyễn Thị Oanh',
-    cccd: '011234567904',
-    phone: '0955566677',
-    email: 'organizer15@example.com',
-    dob: '08/03/1987',
-    events: 26,
-    role: 'Manager',
-    status: 'active'
-  }
-];
+    status
+  };
+};
 
 export default function OrganizersList(props: Props) {
-  type Organizer = (typeof mockOrganizers)[0];
   type SortKey =
     | 'none'
     | 'id'
@@ -285,9 +135,7 @@ export default function OrganizersList(props: Props) {
     | 'cccd'
     | 'phone'
     | 'email'
-    | 'dob'
     | 'events'
-    | 'role'
     | 'status';
   type ValueFilterKey =
     | 'orgName'
@@ -295,12 +143,13 @@ export default function OrganizersList(props: Props) {
     | 'cccd'
     | 'phone'
     | 'email'
-    | 'role'
     | 'status';
 
-  const [organizers, setOrganizers] = useState(mockOrganizers);
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? '';
+  const [organizers, setOrganizers] = useState<Organizer[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedUser, setSelectedUser] = useState<Organizer | null>(null);
+  const [selectedHostId, setSelectedHostId] = useState<string | undefined>();
   const [openDetailModal, setOpenDetailModal] = useState(false);
   const [selectedLockUser, setSelectedLockUser] = useState<Organizer | null>(
     null
@@ -320,8 +169,6 @@ export default function OrganizersList(props: Props) {
   });
   const [searchField, setSearchField] = useState('name');
   const [searchQuery, setSearchQuery] = useState('');
-  const [dobFrom, setDobFrom] = useState('');
-  const [dobTo, setDobTo] = useState('');
   const [sortField, setSortField] = useState<SortKey>('none');
   const [sortOrder, setSortOrder] = useState('desc');
   const [columnValueFilters, setColumnValueFilters] = useState<
@@ -330,7 +177,7 @@ export default function OrganizersList(props: Props) {
   const [openAddHostModal, setOpenAddHostModal] = useState(false);
   const [orgSearchQuery, setOrgSearchQuery] = useState('');
   const [filteredOrganizations, setFilteredOrganizations] = useState<
-    typeof mockRegisteredOrganizations
+    RegisteredOrganization[]
   >([]);
   const [showOrgDropdown, setShowOrgDropdown] = useState(false);
   const [newHost, setNewHost] = useState({
@@ -342,7 +189,43 @@ export default function OrganizersList(props: Props) {
     password: '',
     dob: ''
   });
-  const pageSize = 10;
+
+  const { data: hostListData } = useGetHostsofOrgsbySysAdmin({
+    pageNumber: Math.max(0, currentPage - 1),
+    pageSize,
+    baseUrl,
+    enabled: true
+  });
+
+  const { data: hostDetailData, isLoading: isHostDetailLoading } =
+    useGetHostInfobySysAdmin({
+      id: selectedHostId,
+      baseUrl,
+      enabled: openDetailModal && Boolean(selectedHostId)
+    });
+
+  useEffect(() => {
+    const content = hostListData?.content ?? [];
+    setOrganizers(
+      content.map((item, index) => mapHostToOrganizer(item, index))
+    );
+  }, [hostListData?.content]);
+
+  const availableOrganizations = useMemo<RegisteredOrganization[]>(() => {
+    const uniqueNames = Array.from(
+      new Set(
+        organizers
+          .map((organizer) => organizer.orgName.trim())
+          .filter((name) => name !== '' && name !== 'Chưa cập nhật')
+      )
+    );
+
+    return uniqueNames.map((name, index) => ({
+      id: index + 1,
+      name
+    }));
+  }, [organizers]);
+
   const formatDobForInput = (dob: string) => {
     if (!dob) return '';
     if (dob.includes('/')) {
@@ -372,11 +255,7 @@ export default function OrganizersList(props: Props) {
       .trim();
 
   const getOrgNameForFilter = (org: Organizer) => {
-    if (org.orgName) return normalizeForFilter(org.orgName);
-    if (org.fullName.includes(' - ')) {
-      return normalizeForFilter(org.fullName.split(' - ')[0].trim());
-    }
-    return normalizeForFilter(org.fullName);
+    return normalizeForFilter(org.orgName);
   };
 
   const getPersonNameForFilter = (org: Organizer) => {
@@ -400,8 +279,6 @@ export default function OrganizersList(props: Props) {
         return normalizeForFilter(org.phone);
       case 'email':
         return normalizeForFilter(org.email).toLowerCase();
-      case 'role':
-        return normalizeForFilter(org.role);
       case 'status':
         return normalizeForFilter(org.status);
       default:
@@ -431,7 +308,7 @@ export default function OrganizersList(props: Props) {
     const isSearchFilteringThisColumn =
       Boolean(searchQuery.trim()) &&
       ((searchField === 'name' && columnKey === 'fullName') ||
-        (searchField === 'cccd' && columnKey === 'cccd') ||
+        (searchField === 'id' && columnKey === 'cccd') ||
         (searchField === 'phone' && columnKey === 'phone') ||
         (searchField === 'email' && columnKey === 'email'));
     const isSortActive = sortField === columnKey;
@@ -632,143 +509,10 @@ export default function OrganizersList(props: Props) {
     );
   };
 
-  const DobFilterDropdown = () => {
-    const [open, setOpen] = useState(false);
-    const [localFrom, setLocalFrom] = useState(dobFrom);
-    const [localTo, setLocalTo] = useState(dobTo);
-    const hasActive = Boolean(dobFrom || dobTo);
-    const isApplied = hasActive || sortField === 'dob';
-
-    return (
-      <DropdownMenu
-        open={open}
-        onOpenChange={(nextOpen) => {
-          setOpen(nextOpen);
-          if (nextOpen) {
-            setLocalFrom(dobFrom);
-            setLocalTo(dobTo);
-          }
-        }}
-      >
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            className={`h-7 w-7 p-0 ${isApplied ? 'text-primary' : 'text-zinc-500'}`}
-            aria-label="Bộ lọc cột Ngày sinh"
-          >
-            {isApplied ? (
-              <Funnel className="h-4 w-4" />
-            ) : (
-              <ListFilter className="h-4 w-4" />
-            )}
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent
-          align="start"
-          className="w-[320px] p-2 bg-white text-zinc-900 border border-zinc-200 shadow-lg"
-        >
-          <DropdownMenuItem
-            onSelect={(e) => {
-              e.preventDefault();
-              setSortField('dob');
-              setSortOrder('asc');
-              setCurrentPage(1);
-            }}
-            className="gap-2"
-          >
-            <ArrowUp className="h-4 w-4" />
-            Sắp xếp tăng dần
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onSelect={(e) => {
-              e.preventDefault();
-              setSortField('dob');
-              setSortOrder('desc');
-              setCurrentPage(1);
-            }}
-            className="gap-2"
-          >
-            <ArrowDown className="h-4 w-4" />
-            Sắp xếp giảm dần
-          </DropdownMenuItem>
-
-          <DropdownMenuSeparator />
-
-          <div className="px-1 pb-2">
-            <p className="text-sm font-medium text-zinc-900">
-              Lọc theo khoảng ngày
-            </p>
-            <div className="mt-2 grid grid-cols-2 gap-2">
-              <Input
-                type="date"
-                value={localFrom}
-                onChange={(e) => setLocalFrom(e.target.value)}
-                className="bg-white border-zinc-200 text-zinc-900 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
-              />
-              <Input
-                type="date"
-                value={localTo}
-                onChange={(e) => setLocalTo(e.target.value)}
-                className="bg-white border-zinc-200 text-zinc-900 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
-              />
-            </div>
-            <div className="mt-2 flex items-center justify-end gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                className="h-9 bg-white border-zinc-300 text-zinc-900 hover:bg-zinc-50"
-                onClick={() => {
-                  setOpen(false);
-                  setLocalFrom(dobFrom);
-                  setLocalTo(dobTo);
-                }}
-              >
-                Hủy
-              </Button>
-              <Button
-                type="button"
-                className="h-9"
-                onClick={() => {
-                  setDobFrom(localFrom);
-                  setDobTo(localTo);
-                  setCurrentPage(1);
-                  setOpen(false);
-                }}
-              >
-                OK
-              </Button>
-            </div>
-
-            {hasActive && (
-              <div className="mt-2">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="h-8 w-full justify-start gap-2 text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900"
-                  onClick={() => {
-                    setDobFrom('');
-                    setDobTo('');
-                    setCurrentPage(1);
-                    setOpen(false);
-                  }}
-                >
-                  <X className="h-4 w-4" />
-                  Xóa bộ lọc cột
-                </Button>
-              </div>
-            )}
-          </div>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    );
-  };
-
   const SortOnlyDropdown = (props: { sortKey: SortKey; label: string }) => {
     const { sortKey, label } = props;
     const isActive = sortField === sortKey;
-    const isSearchFilteringThisColumn =
-      Boolean(searchQuery.trim()) && sortKey === 'id' && searchField === 'id';
+    const isSearchFilteringThisColumn = false;
     const isApplied = isActive || isSearchFilteringThisColumn;
 
     return (
@@ -837,35 +581,15 @@ export default function OrganizersList(props: Props) {
   };
 
   const filteredOrganizers = useMemo(() => {
-    const parseDob = (dob: string) => {
-      const [day, month, year] = dob.split('/').map(Number);
-      return new Date(year, month - 1, day);
-    };
-
-    const parseYmdStartOfDay = (ymd: string) => {
-      const [year, month, day] = ymd.split('-').map(Number);
-      return new Date(year, month - 1, day, 0, 0, 0, 0);
-    };
-
-    const parseYmdEndOfDay = (ymd: string) => {
-      const [year, month, day] = ymd.split('-').map(Number);
-      return new Date(year, month - 1, day, 23, 59, 59, 999);
-    };
-
-    const fromDate = dobFrom ? parseYmdStartOfDay(dobFrom) : null;
-    const toDate = dobTo ? parseYmdEndOfDay(dobTo) : null;
-
     let result = organizers.filter((org) => {
       const query = searchQuery.trim().toLowerCase();
       if (!query) return true;
 
       switch (searchField) {
         case 'id':
-          return String(org.id).includes(query);
+          return org.cccd.toLowerCase().includes(query);
         case 'name':
           return org.fullName.toLowerCase().includes(query);
-        case 'cccd':
-          return org.cccd.includes(query);
         case 'phone':
           return org.phone.includes(query);
         case 'email':
@@ -884,24 +608,11 @@ export default function OrganizersList(props: Props) {
       });
     });
 
-    if (fromDate || toDate) {
-      result = result.filter((org) => {
-        const orgDate = parseDob(org.dob);
-        if (fromDate && orgDate < fromDate) return false;
-        if (toDate && orgDate > toDate) return false;
-        return true;
-      });
-    }
-
     if (sortField !== 'none') {
       result = [...result].sort((a, b) => {
         const order = sortOrder === 'asc' ? 1 : -1;
-        if (sortField === 'id') return (a.id - b.id) * order;
+        if (sortField === 'id') return a.cccd.localeCompare(b.cccd) * order;
         if (sortField === 'events') return (a.events - b.events) * order;
-        if (sortField === 'dob')
-          return (
-            (parseDob(a.dob).getTime() - parseDob(b.dob).getTime()) * order
-          );
 
         if (sortField === 'orgName')
           return (
@@ -917,7 +628,6 @@ export default function OrganizersList(props: Props) {
         if (sortField === 'phone')
           return a.phone.localeCompare(b.phone) * order;
         if (sortField === 'cccd') return a.cccd.localeCompare(b.cccd) * order;
-        if (sortField === 'role') return a.role.localeCompare(b.role) * order;
         if (sortField === 'status')
           return a.status.localeCompare(b.status) * order;
 
@@ -932,25 +642,15 @@ export default function OrganizersList(props: Props) {
     searchField,
     searchQuery,
     columnValueFilters,
-    dobFrom,
-    dobTo,
     sortField,
     sortOrder
   ]);
-
-  const totalPages = Math.max(
-    1,
-    Math.ceil(filteredOrganizers.length / pageSize)
-  );
-  const paginatedOrganizers = filteredOrganizers.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
 
   const handleView = (orgId: number) => {
     const org = organizers.find((o) => o.id === orgId);
     if (org) {
       setSelectedUser(org);
+      setSelectedHostId(org.cccd);
       setOpenDetailModal(true);
     }
   };
@@ -973,7 +673,7 @@ export default function OrganizersList(props: Props) {
       cccd: org.cccd,
       phone: org.phone,
       email: org.email,
-      dob: formatDobForInput(org.dob)
+      dob: ''
     });
     setOpenEditModal(true);
   };
@@ -1021,7 +721,7 @@ export default function OrganizersList(props: Props) {
       setFilteredOrganizations([]);
       setShowOrgDropdown(false);
     } else {
-      const filtered = mockRegisteredOrganizations.filter((org) =>
+      const filtered = availableOrganizations.filter((org) =>
         org.name.toLowerCase().includes(query.toLowerCase())
       );
       setFilteredOrganizations(filtered);
@@ -1051,8 +751,9 @@ export default function OrganizersList(props: Props) {
       return;
     }
 
-    const newOrganizerData = {
-      id: Math.max(...organizers.map((o) => o.id)) + 1,
+    const newOrganizerData: Organizer = {
+      id: Math.max(...organizers.map((o) => o.id), 0) + 1,
+      avatarUrl: null,
       avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${Math.random() * 100}`,
       orgName: newHost.orgName,
       fullName: newHost.fullName,
@@ -1060,6 +761,7 @@ export default function OrganizersList(props: Props) {
       phone: newHost.phone,
       email: newHost.email,
       dob: newHost.dob || '01/01/2000',
+      hostedEventCount: 0,
       events: 0,
       role: 'Host',
       status: 'active'
@@ -1080,6 +782,9 @@ export default function OrganizersList(props: Props) {
     setShowOrgDropdown(false);
     setOpenAddHostModal(false);
   };
+
+  const totalPages = Math.max(1, hostListData?.page.totalPages ?? 1);
+  const paginatedOrganizers = filteredOrganizers;
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -1111,7 +816,7 @@ export default function OrganizersList(props: Props) {
     }
   };
 
-  const getOrgDisplayName = (org: (typeof mockOrganizers)[0]) => {
+  const getOrgDisplayName = (org: Organizer) => {
     if (org.orgName) return org.orgName;
     if (org.fullName.includes(' - ')) {
       return org.fullName.split(' - ')[0].trim();
@@ -1119,12 +824,47 @@ export default function OrganizersList(props: Props) {
     return org.fullName;
   };
 
-  const getPersonDisplayName = (org: (typeof mockOrganizers)[0]) => {
+  const getPersonDisplayName = (org: Organizer) => {
     if (org.fullName.includes(' - ')) {
       return org.fullName.split(' - ').slice(1).join(' - ').trim();
     }
     return org.fullName;
   };
+
+  const getCompactId = (id: string) => {
+    const value = (id || '').trim();
+    if (!value) return '-';
+    if (value.length <= 13) return value;
+    return `${value.slice(0, 8)}...${value.slice(-4)}`;
+  };
+
+  const detailFullName =
+    hostDetailData?.fullName?.trim() ||
+    selectedUser?.fullName ||
+    'Chua cap nhat';
+  const detailAvatar =
+    hostDetailData?.avatarUrl?.trim() || selectedUser?.avatar || '';
+  const detailId = hostDetailData?.id || selectedUser?.cccd || '-';
+  const detailCid = hostDetailData?.cid?.trim() || '-';
+  const detailAddress =
+    hostDetailData?.address?.trim() || selectedUser?.orgName || '-';
+  const detailDetailAddress = hostDetailData?.detailAddress?.trim() || '-';
+  const detailEmail =
+    hostDetailData?.email?.trim() || selectedUser?.email || '-';
+  const detailPhone =
+    hostDetailData?.phone?.trim() || selectedUser?.phone || '-';
+  const detailGender =
+    hostDetailData?.gender === null || hostDetailData?.gender === undefined
+      ? 'Chua cap nhat'
+      : hostDetailData.gender
+        ? 'Nam'
+        : 'Nu';
+  const detailDob = hostDetailData?.dob
+    ? formatDobForDisplay(hostDetailData.dob)
+    : 'Chua cap nhat';
+  const detailCreatedAt = hostDetailData?.createdAt
+    ? new Date(hostDetailData.createdAt).toLocaleString('vi-VN')
+    : 'Chua cap nhat';
 
   return (
     <DashboardLayout
@@ -1148,9 +888,8 @@ export default function OrganizersList(props: Props) {
                   <SelectValue placeholder="Chọn tiêu chí" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="id">ID</SelectItem>
                   <SelectItem value="name">Tên</SelectItem>
-                  <SelectItem value="cccd">CCCD</SelectItem>
+                  <SelectItem value="id">ID</SelectItem>
                   <SelectItem value="phone">Số điện thoại</SelectItem>
                   <SelectItem value="email">Email</SelectItem>
                 </SelectContent>
@@ -1179,7 +918,7 @@ export default function OrganizersList(props: Props) {
             <Table className="min-w-[1200px] bg-white">
               <TableHeader className="bg-white">
                 <TableRow className="bg-white">
-                  <TableHead className="w-[60px]">
+                  <TableHead className="min-w-[170px]">
                     <div className="flex items-center justify-between gap-2">
                       <span>ID</span>
                       <SortOnlyDropdown sortKey="id" label="ID" />
@@ -1188,15 +927,6 @@ export default function OrganizersList(props: Props) {
                   <TableHead className="w-[80px]">
                     <div className="flex items-center justify-between gap-2">
                       <span>Avatar</span>
-                    </div>
-                  </TableHead>
-                  <TableHead className="min-w-[160px]">
-                    <div className="flex items-center justify-between gap-2">
-                      <span>Tên tổ chức</span>
-                      <ValueFilterDropdown
-                        columnKey="orgName"
-                        label="Tên tổ chức"
-                      />
                     </div>
                   </TableHead>
                   <TableHead className="min-w-[150px]">
@@ -1208,10 +938,13 @@ export default function OrganizersList(props: Props) {
                       />
                     </div>
                   </TableHead>
-                  <TableHead className="min-w-[130px]">
+                  <TableHead className="min-w-[160px]">
                     <div className="flex items-center justify-between gap-2">
-                      <span>CCCD</span>
-                      <ValueFilterDropdown columnKey="cccd" label="CCCD" />
+                      <span>Địa chỉ</span>
+                      <ValueFilterDropdown
+                        columnKey="orgName"
+                        label="Địa chỉ"
+                      />
                     </div>
                   </TableHead>
                   <TableHead className="min-w-[120px]">
@@ -1229,22 +962,10 @@ export default function OrganizersList(props: Props) {
                       <ValueFilterDropdown columnKey="email" label="Email" />
                     </div>
                   </TableHead>
-                  <TableHead className="w-[140px]">
-                    <div className="flex items-center justify-between gap-2">
-                      <span>Ngày sinh</span>
-                      <DobFilterDropdown />
-                    </div>
-                  </TableHead>
                   <TableHead className="w-[120px] text-center whitespace-nowrap">
                     <div className="flex items-center justify-between gap-2">
                       <span className="w-full text-center">Số sự kiện</span>
                       <SortOnlyDropdown sortKey="events" label="Số sự kiện" />
-                    </div>
-                  </TableHead>
-                  <TableHead className="w-[120px]">
-                    <div className="flex items-center justify-between gap-2">
-                      <span>Vai trò</span>
-                      <ValueFilterDropdown columnKey="role" label="Vai trò" />
                     </div>
                   </TableHead>
                   <TableHead className="w-[110px]">
@@ -1264,7 +985,9 @@ export default function OrganizersList(props: Props) {
               <TableBody>
                 {paginatedOrganizers.map((org) => (
                   <TableRow key={org.id} className="hover:bg-zinc-50">
-                    <TableCell className="font-medium">{org.id}</TableCell>
+                    <TableCell className="font-medium" title={org.cccd}>
+                      {getCompactId(org.cccd)}
+                    </TableCell>
                     <TableCell>
                       <Avatar className="h-10 w-10">
                         <AvatarImage
@@ -1277,17 +1000,14 @@ export default function OrganizersList(props: Props) {
                       </Avatar>
                     </TableCell>
                     <TableCell className="font-medium">
-                      {getOrgDisplayName(org)}
-                    </TableCell>
-                    <TableCell className="font-medium">
                       {getPersonDisplayName(org)}
                     </TableCell>
-                    <TableCell>{org.cccd}</TableCell>
+                    <TableCell className="font-medium">
+                      {getOrgDisplayName(org)}
+                    </TableCell>
                     <TableCell>{org.phone}</TableCell>
                     <TableCell>{org.email}</TableCell>
-                    <TableCell>{org.dob}</TableCell>
                     <TableCell className="text-center">{org.events}</TableCell>
-                    <TableCell>{getRoleBadge(org.role)}</TableCell>
                     <TableCell>{getStatusBadge(org.status)}</TableCell>
                     <TableCell>
                       <div className="flex items-center justify-center gap-2">
@@ -1363,7 +1083,15 @@ export default function OrganizersList(props: Props) {
           </div>
         </div>
         {/* Detail Modal */}
-        <Dialog open={openDetailModal} onOpenChange={setOpenDetailModal}>
+        <Dialog
+          open={openDetailModal}
+          onOpenChange={(open) => {
+            setOpenDetailModal(open);
+            if (!open) {
+              setSelectedHostId(undefined);
+            }
+          }}
+        >
           <DialogContent className="max-w-5xl overflow-hidden border border-blue-100 bg-gradient-to-br from-white via-white to-blue-50 p-0 shadow-2xl shadow-blue-100/50">
             <DialogHeader>
               <div className="border-b border-blue-100/80 bg-white/70 px-6 pt-6 pb-4 backdrop-blur-sm">
@@ -1377,16 +1105,13 @@ export default function OrganizersList(props: Props) {
             </DialogHeader>
 
             {selectedUser && (
-              <div className="space-y-6 px-6 pb-6 pt-6">
-                <div className="rounded-[24px] border border-blue-100 bg-gradient-to-br from-white via-white to-sky-50 p-6 shadow-lg shadow-sky-100/40">
-                  <div className="flex items-start gap-6">
-                    <Avatar className="h-28 w-28 border border-white shadow-lg shadow-blue-100/50 ring-4 ring-blue-50">
-                      <AvatarImage
-                        src={selectedUser.avatar}
-                        alt={getPersonDisplayName(selectedUser)}
-                      />
-                      <AvatarFallback className="bg-gradient-to-br from-blue-600 via-sky-500 to-cyan-500 text-4xl font-semibold text-white">
-                        {getPersonDisplayName(selectedUser)
+              <div className="grid gap-5 px-6 pb-6 pt-6 lg:grid-cols-[320px_minmax(0,1fr)]">
+                <div className="rounded-2xl border border-blue-100 bg-white p-5 shadow-md shadow-blue-100/35">
+                  <div className="flex flex-col items-center text-center">
+                    <Avatar className="h-24 w-24 border border-white shadow-lg shadow-blue-100/50 ring-4 ring-blue-50">
+                      <AvatarImage src={detailAvatar} alt={detailFullName} />
+                      <AvatarFallback className="bg-gradient-to-br from-blue-600 via-sky-500 to-cyan-500 text-2xl font-semibold text-white">
+                        {detailFullName
                           .split(' ')
                           .map((part) => part[0])
                           .join('')
@@ -1394,136 +1119,102 @@ export default function OrganizersList(props: Props) {
                       </AvatarFallback>
                     </Avatar>
 
-                    <div className="min-w-0 flex-1 pt-1">
-                      <h2 className="text-3xl font-bold leading-tight text-slate-900">
-                        {getPersonDisplayName(selectedUser)}
-                      </h2>
-                      <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-slate-500">
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1 text-blue-700">
-                          <Building2 className="h-4 w-4 text-blue-500" />
-                          {selectedUser.role === 'Manager'
-                            ? 'Organization Manager'
-                            : 'Organization Host'}
-                        </span>
-                      </div>
-                      <div className="mt-3">
-                        <Badge
-                          className={
-                            selectedUser.status === 'active'
-                              ? 'rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-700'
-                              : selectedUser.status === 'locked'
-                                ? 'rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-rose-700 hover:bg-rose-50 hover:text-rose-700'
-                                : 'rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-amber-700 hover:bg-amber-50 hover:text-amber-700'
-                          }
-                        >
-                          {selectedUser.status === 'active'
-                            ? 'Đang hoạt động'
-                            : selectedUser.status === 'locked'
-                              ? 'Bị khóa'
-                              : 'Không hoạt động'}
-                        </Badge>
-                      </div>
+                    <h3 className="mt-3 text-xl font-bold text-slate-900">
+                      {detailFullName}
+                    </h3>
 
-                      <div className="mt-6 grid gap-5 md:grid-cols-2">
-                        <div className="space-y-4">
-                          <div className="flex items-start gap-3">
-                            <Mail className="mt-0.5 h-5 w-5 text-sky-500" />
-                            <div>
-                              <p className="text-sm text-slate-500">Email</p>
-                              <p className="text-sm font-medium text-slate-900">
-                                {selectedUser.email}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="flex items-start gap-3">
-                            <CalendarDays className="mt-0.5 h-5 w-5 text-amber-500" />
-                            <div>
-                              <p className="text-sm text-slate-500">
-                                Ngày sinh
-                              </p>
-                              <p className="text-sm font-medium text-slate-900">
-                                {selectedUser.dob}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="flex items-start gap-3">
-                            <Phone className="mt-0.5 h-5 w-5 text-emerald-500" />
-                            <div>
-                              <p className="text-sm text-slate-500">
-                                Số điện thoại
-                              </p>
-                              <p className="text-sm font-medium text-slate-900">
-                                {selectedUser.phone}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
+                    <p className="mt-1 text-sm text-slate-500">Host</p>
+                  </div>
 
-                        <div className="space-y-4">
-                          <div className="flex items-start gap-3">
-                            <Building2 className="mt-0.5 h-5 w-5 text-violet-500" />
-                            <div>
-                              <p className="text-sm text-slate-500">CCCD</p>
-                              <p className="text-sm font-medium text-slate-900">
-                                {selectedUser.cccd}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="flex items-start gap-3">
-                            <Users className="mt-0.5 h-5 w-5 text-cyan-500" />
-                            <div>
-                              <p className="text-sm text-slate-500">Vai trò</p>
-                              <div className="mt-1">
-                                {getRoleBadge(selectedUser.role)}
-                              </div>
-                            </div>
-                          </div>
-                          <div className="flex items-start gap-3">
-                            <Building2 className="mt-0.5 h-5 w-5 text-orange-500" />
-                            <div>
-                              <p className="text-sm text-slate-500">
-                                Sự kiện đã host
-                              </p>
-                              <p className="text-sm font-medium text-slate-900">
-                                {selectedUser.events}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                  <div className="mt-5 space-y-3 border-t border-zinc-200 pt-4 text-sm">
+                    <p className="text-zinc-700 break-all">
+                      <span className="font-semibold text-zinc-500">ID:</span>{' '}
+                      {detailId}
+                    </p>
+                    <p className="text-zinc-700">
+                      <span className="font-semibold text-zinc-500">CID:</span>{' '}
+                      {detailCid}
+                    </p>
+                    <p className="text-zinc-700">
+                      <span className="font-semibold text-zinc-500">
+                        Số điện thoại:
+                      </span>{' '}
+                      {detailPhone}
+                    </p>
+                    <p className="text-zinc-700">
+                      <span className="font-semibold text-zinc-500">
+                        Email:
+                      </span>{' '}
+                      {detailEmail}
+                    </p>
+                    <p className="text-zinc-700">
+                      <span className="font-semibold text-zinc-500">
+                        Ngày sinh:
+                      </span>{' '}
+                      {detailDob}
+                    </p>
+                    <p className="text-zinc-700">
+                      <span className="font-semibold text-zinc-500">
+                        Giới tính:
+                      </span>{' '}
+                      {detailGender}
+                    </p>
+                    <p className="text-zinc-700">
+                      <span className="font-semibold text-zinc-500">
+                        Địa chỉ:
+                      </span>{' '}
+                      {detailAddress}
+                    </p>
+                    <p className="text-zinc-700">
+                      <span className="font-semibold text-zinc-500">
+                        Địa chỉ chi tiết:
+                      </span>{' '}
+                      {detailDetailAddress}
+                    </p>
+                    <p className="text-zinc-700">
+                      <span className="font-semibold text-zinc-500">
+                        Ngày tạo:
+                      </span>{' '}
+                      {detailCreatedAt}
+                    </p>
                   </div>
                 </div>
 
-                <div className="relative overflow-hidden rounded-[24px] border border-sky-100 bg-gradient-to-br from-sky-50 via-white to-indigo-50 p-6 shadow-lg shadow-sky-100/40">
-                  <div className="mb-4">
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-600">
-                      Tổ chức đang quản lý
-                    </p>
+                <div className="rounded-2xl border border-blue-100 bg-white p-5 shadow-md shadow-blue-100/35">
+                  <h3 className="text-3xl font-bold text-slate-900">
+                    Lịch sử sự kiện đã tham gia
+                  </h3>
+                  <p className="mt-1 text-sm text-slate-500">
+                    Danh sách sự kiện host đã tham gia sẽ được tích hợp bằng
+                    hook.
+                  </p>
+
+                  <div className="mt-4 grid gap-3 md:grid-cols-[minmax(0,1fr)_220px]">
+                    <Input
+                      placeholder="Tìm kiếm theo tên sự kiện..."
+                      className="bg-white border-zinc-200"
+                    />
+                    <Select defaultValue="all">
+                      <SelectTrigger className="bg-white border-zinc-200">
+                        <SelectValue placeholder="Tất cả trạng thái" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Tất cả trạng thái</SelectItem>
+                        <SelectItem value="completed">Hoàn thành</SelectItem>
+                        <SelectItem value="ongoing">Đang diễn ra</SelectItem>
+                        <SelectItem value="upcoming">Sắp diễn ra</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
 
-                  <div className="rounded-2xl border border-sky-200 bg-white/90 p-4 shadow-[0_14px_32px_rgba(59,130,246,0.08)] backdrop-blur-sm">
-                    <div className="flex items-center gap-4">
-                      <div className="flex h-16 w-16 items-center justify-center rounded-full border border-sky-100 bg-gradient-to-br from-blue-600 via-sky-500 to-cyan-400 text-xl font-semibold text-white shadow-md shadow-sky-200/50">
-                        {(selectedUser.orgName || 'OT').slice(0, 2)}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-lg font-bold text-slate-900">
-                          {selectedUser.orgName}
-                        </p>
-                        <div className="mt-1 flex flex-wrap items-center gap-4 text-sm text-slate-700">
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 font-medium text-emerald-700">
-                            <Users className="h-4 w-4 text-emerald-500" />
-                            150 thành viên
-                          </span>
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 font-medium text-amber-700">
-                            <Building2 className="h-4 w-4 text-amber-500" />
-                            {selectedUser.events} sự kiện
-                          </span>
-                        </div>
-                      </div>
-                      <ChevronRight className="h-5 w-5 text-sky-500" />
-                    </div>
+                  <div className="mt-4 rounded-xl border border-dashed border-zinc-300 bg-zinc-50 p-6 text-center">
+                    <p className="text-sm font-medium text-zinc-700">
+                      Chưa có dữ liệu lịch sử sự kiện
+                    </p>
+                    <p className="mt-1 text-xs text-zinc-500">
+                      Bước tiếp theo: tích hợp hook lấy danh sách sự kiện đã
+                      tham gia.
+                    </p>
                   </div>
                 </div>
               </div>

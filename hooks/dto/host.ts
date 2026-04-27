@@ -35,6 +35,20 @@ export interface HostInfoResponseForManager {
   createdAt: string | null;
 }
 
+export interface HostInfoResponseForSystemAdmin {
+  id: string;
+  cid: string | null;
+  email: string | null;
+  phone: string | null;
+  fullName: string | null;
+  gender: boolean | null;
+  dob: string | null;
+  avatarUrl: string | null;
+  address: string | null;
+  detailAddress: string | null;
+  createdAt: string | null;
+}
+
 export interface HostSimpleResponseForManager {
   id: string;
   fullName: string | null;
@@ -45,8 +59,29 @@ export interface HostSimpleResponseForManager {
   hostedEventCount: number;
 }
 
+export interface HostSimpleResponseForSystemAdmin {
+  id: string;
+  fullName: string | null;
+  address: string | null;
+  email: string | null;
+  phone: string | null;
+  status: string | null;
+  hostedEventCount: number;
+  avatarUrl: string | null;
+}
+
 export interface HostListResponse {
   content: HostSimpleResponseForManager[];
+  page: {
+    size: number;
+    number: number;
+    totalElements: number;
+    totalPages: number;
+  };
+}
+
+export interface HostListResponseForSystemAdmin {
+  content: HostSimpleResponseForSystemAdmin[];
   page: {
     size: number;
     number: number;
@@ -66,6 +101,7 @@ export interface HostActivitiesListResponse {
 }
 
 export type HostListItem = HostSimpleResponseForManager;
+export type HostListItemForSystemAdmin = HostSimpleResponseForSystemAdmin;
 
 export const CID_REGEX = /^\d{12}$/;
 export const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
