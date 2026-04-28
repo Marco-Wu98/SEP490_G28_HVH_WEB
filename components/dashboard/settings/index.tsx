@@ -361,6 +361,9 @@ export default function Settings(props: Props) {
         console.log('Uploading avatar to:', uploadUrl);
 
         await uploadFileToSignedUrl(avatarFile, uploadUrl);
+        if (response?.avatarUrl) {
+          setAvatarPreview(getFullSupabaseImageUrl(response.avatarUrl));
+        }
         console.log('Avatar uploaded successfully');
       } else {
         console.log(

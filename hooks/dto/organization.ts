@@ -60,6 +60,7 @@ export interface OrganizationDetailsResponseForSystemAdmin {
   orgType: EOrgType;
   orgIntroduction: string;
   avatarImageUrl: string | null;
+  avatarUrl?: string | null;
   coverImageUrl: string | null;
   legalDocumentUrls: string[];
   otherEvidencesUrls: string[];
@@ -199,4 +200,13 @@ export interface OrganizationCountHostsAndEventsResponse {
   recruitingEventsCount: number;
   upcomingEventsCount: number;
   ongoingEventsCount: number;
+}
+
+export interface UpdateOrganizationBySystemAdminRequest {
+  name: string;
+  dhaRegistered: boolean;
+  orgType: EOrgType;
+  orgIntroduction: string;
+  avatarImageExtension: string | null;
+  coverImageExtension: string | null;
 }

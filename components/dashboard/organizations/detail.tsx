@@ -114,7 +114,8 @@ export default function OrganizationDetailPage({
       volunteers: orgData.totalHosts ?? 0,
       donations: legacyOrgData.creditHour ?? legacyOrgData.totalHonorHours ?? 0,
       imageUrl:
-        orgData.avatarImageUrl || 'https://picsum.photos/seed/org/200/200',
+        getFullSupabaseImageUrl(orgData.avatarImageUrl) ||
+        'https://picsum.photos/seed/org/200/200',
       introduction: orgData.orgIntroduction || 'Chưa có thông tin giới thiệu.',
       applicationReason: '',
       basicInfo: {
@@ -142,55 +143,8 @@ export default function OrganizationDetailPage({
       note: orgData.note || ''
     };
   }, [orgData]);
-  const [orgStatus, setOrgStatus] =
-    useState<OrganizationDetail['status']>('Hoạt động');
-  const [statusModalOpen, setStatusModalOpen] = useState(false);
-  const [pendingStatusAction, setPendingStatusAction] = useState<
-    'deactivate' | 'reactivate' | null
-  >(null);
-  const [deactivateReason, setDeactivateReason] = useState('');
-  const [deactivateReasonError, setDeactivateReasonError] = useState('');
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
-
-  useEffect(() => {
-    if (org) {
-      setOrgStatus(org.status);
-    }
-  }, [org]);
-
-  const openDeactivateModal = () => {
-    setPendingStatusAction('deactivate');
-    setDeactivateReason('');
-    setDeactivateReasonError('');
-    setStatusModalOpen(true);
-  };
-
-  const openReactivateModal = () => {
-    setPendingStatusAction('reactivate');
-    setDeactivateReason('');
-    setDeactivateReasonError('');
-    setStatusModalOpen(true);
-  };
-
-  const handleConfirmStatusAction = () => {
-    if (pendingStatusAction === 'deactivate') {
-      if (!deactivateReason.trim()) {
-        setDeactivateReasonError('Vui lòng nhập lý do ngừng hoạt động.');
-        return;
-      }
-      setOrgStatus('Ngừng hoạt động');
-    }
-
-    if (pendingStatusAction === 'reactivate') {
-      setOrgStatus('Hoạt động');
-    }
-
-    setStatusModalOpen(false);
-    setPendingStatusAction(null);
-    setDeactivateReason('');
-    setDeactivateReasonError('');
-  };
 
   return (
     <DashboardLayout
@@ -248,61 +202,96 @@ export default function OrganizationDetailPage({
             </div>
 
             {/* Organization Header Card */}
-            <Card className="mb-6 border-zinc-200 bg-white p-6 text-zinc-900 shadow-sm">
-              <div className="flex flex-col gap-4 md:flex-row md:items-stretch md:gap-6">
-                <div className="w-24 md:w-48 md:shrink-0 md:self-stretch">
-                  <div className="h-24 w-24 rounded-xl object-cover md:h-full md:w-full bg-blue-400 flex items-center justify-center">
-                    <p className="text-2xl font-bold text-white md:text-4xl">
-                      {getInitials(org.name)}
-                    </p>
-                  </div>
-                </div>
+            <Card className="mb-6 overflow-hidden border-zinc-200 bg-white p-0 text-zinc-900 shadow-sm">
+              {/* Cover Image */}
+              <div className="relative min-h-64 bg-gradient-to-r from-blue-500 via-sky-500 to-cyan-500 md:min-h-80">
+                {orgData.coverImageUrl ? (
+                  <img
+                    src={getFullSupabaseImageUrl(orgData.coverImageUrl)}
+                    alt="Cover"
+                    className="absolute inset-0 h-full w-full object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = 'none';
+                    }}
+                  />
+                ) : null}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-transparent" />
+              </div>
 
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <h1 className="text-2xl font-bold leading-snug tracking-tight text-zinc-900 md:text-3xl">
-                        {org.name}
-                      </h1>
-                      <div className="mt-3 flex flex-wrap items-center gap-2">
-                        <Badge className={statusBadgeClass(orgStatus)}>
-                          {orgStatus}
-                        </Badge>
-                        <Badge className="border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100">
-                          {org.location}
-                        </Badge>
+              {/* Avatar and Info */}
+              <div className="px-6 py-6 md:px-8">
+                <div className="flex flex-col gap-5 md:flex-row md:items-start md:gap-6">
+                  <div className="relative -mt-16 md:-mt-24 md:shrink-0">
+                    <div className="flex h-32 w-32 items-center justify-center overflow-hidden rounded-2xl border-4 border-white bg-zinc-200 shadow-lg md:h-40 md:w-40">
+                      {org.imageUrl ? (
+                        <img
+                          src={org.imageUrl}
+                          alt="Avatar"
+                          className="h-full w-full object-cover"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).style.display =
+                              'none';
+                            const fallback = (
+                              e.target as HTMLImageElement
+                            ).parentElement?.querySelector('.avatar-fallback');
+                            if (fallback) fallback.classList.remove('hidden');
+                          }}
+                        />
+                      ) : null}
+                      <p
+                        className={`text-3xl font-bold text-zinc-500 avatar-fallback ${org.imageUrl ? 'hidden' : ''}`}
+                      >
+                        {getInitials(org.name)}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <h1 className="text-2xl font-bold leading-snug tracking-tight text-zinc-900 md:text-3xl">
+                          {org.name}
+                        </h1>
+                        <div className="mt-3 flex flex-wrap items-center gap-2">
+                          <Badge className={statusBadgeClass(org?.status)}>
+                            {org?.status}
+                          </Badge>
+                          <Badge className="border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100">
+                            {org.location}
+                          </Badge>
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="mt-4 flex items-center gap-2">
-                    {renderStars(org.rating)}
-                    <span className="ml-2 text-sm font-medium text-zinc-600">
-                      {org.rating}
-                    </span>
-                    <span className="text-sm text-zinc-400">
-                      ({formatNumberVi(org.reviews)} sự kiện đã tổ chức)
-                    </span>
-                  </div>
-                </div>
-
-                <div className="w-full md:w-[260px] md:shrink-0 md:border-l md:border-zinc-200 md:pl-6 md:flex md:flex-col md:justify-center">
-                  <div className="grid grid-cols-2 gap-4 md:grid-cols-1 md:gap-6">
-                    <div className="text-center md:text-left">
-                      <p className="text-xs text-zinc-500 md:text-sm">
-                        Số host
-                      </p>
-                      <p className="mt-1 text-2xl font-bold leading-none text-zinc-900 md:text-3xl">
-                        {formatNumberVi(org.volunteers)}
-                      </p>
+                    <div className="mt-4 flex flex-wrap items-center gap-2">
+                      {renderStars(org.rating)}
+                      <span className="ml-1 text-sm font-medium text-zinc-600">
+                        {org.rating}
+                      </span>
+                      <span className="text-sm text-zinc-400">
+                        ({formatNumberVi(org.reviews)} sự kiện đã tổ chức)
+                      </span>
                     </div>
-                    <div className="text-center md:text-left">
-                      <p className="text-xs text-zinc-500 md:text-sm">
-                        Số giờ uy tín
-                      </p>
-                      <p className="mt-1 text-2xl font-bold leading-none text-zinc-900 md:text-3xl">
-                        {formatNumberVi(org.donations)}
-                      </p>
+                  </div>
+
+                  <div className="w-full rounded-2xl border border-zinc-200 bg-zinc-50/70 p-4 md:w-[260px] md:shrink-0 md:border-l md:border-zinc-200 md:bg-transparent md:px-6 md:py-2 md:pl-6 md:pr-0 md:flex md:flex-col md:justify-center">
+                    <div className="grid grid-cols-2 gap-4 md:grid-cols-1 md:gap-6">
+                      <div className="text-center md:text-left">
+                        <p className="text-xs text-zinc-500 md:text-sm">
+                          Số host
+                        </p>
+                        <p className="mt-1 text-2xl font-bold leading-none text-zinc-900 md:text-3xl">
+                          {formatNumberVi(org.volunteers)}
+                        </p>
+                      </div>
+                      <div className="text-center md:text-left">
+                        <p className="text-xs text-zinc-500 md:text-sm">
+                          Số giờ uy tín
+                        </p>
+                        <p className="mt-1 text-2xl font-bold leading-none text-zinc-900 md:text-3xl">
+                          {formatNumberVi(org.donations)}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -311,12 +300,17 @@ export default function OrganizationDetailPage({
 
             {/* Basic Info and Admin Info */}
             <div className="mb-6 grid gap-6 md:grid-cols-2">
-              {/* Basic Info */}
               <Card className="border-zinc-200 bg-white p-6 shadow-sm">
                 <h2 className="text-xl font-semibold leading-snug tracking-tight text-zinc-900 md:text-2xl">
                   Thông tin cơ bản
                 </h2>
                 <div className="mt-4 space-y-4">
+                  <div className="flex items-start gap-3">
+                    <span className="text-sm text-zinc-500">
+                      Loại hình tổ chức:
+                    </span>
+                    <span className="text-sm text-zinc-700">{org.orgType}</span>
+                  </div>
                   <div className="flex items-start gap-3">
                     <span className="text-sm text-zinc-500">
                       Email tổ chức:
@@ -342,7 +336,6 @@ export default function OrganizationDetailPage({
                 </div>
               </Card>
 
-              {/* Admin Info */}
               <Card className="border-zinc-200 bg-white p-6 shadow-sm">
                 <h2 className="text-xl font-semibold leading-snug tracking-tight text-zinc-900 md:text-2xl">
                   Thông tin quản trị viên
@@ -384,7 +377,6 @@ export default function OrganizationDetailPage({
               </Card>
             </div>
 
-            {/* Organization Introduction */}
             <Card className="mb-6 border-zinc-200 bg-white p-6 shadow-sm">
               <h2 className="text-xl font-semibold leading-snug tracking-tight text-zinc-900 md:text-2xl">
                 Giới thiệu tổ chức
@@ -394,7 +386,6 @@ export default function OrganizationDetailPage({
               </p>
             </Card>
 
-            {/* Registration Images */}
             <Card className="mb-6 border-zinc-200 bg-white p-6 shadow-sm">
               <h2 className="text-xl font-semibold leading-snug tracking-tight text-zinc-900 md:text-2xl">
                 Giấy tờ pháp lý
@@ -473,112 +464,6 @@ export default function OrganizationDetailPage({
                 {org.note?.trim() ? org.note : '_'}
               </p>
             </Card>
-
-            <div className="mt-6 flex items-center justify-end gap-3">
-              {orgStatus === 'Hoạt động' ? (
-                <Button
-                  type="button"
-                  className="bg-red-600 text-white hover:bg-red-700"
-                  onClick={openDeactivateModal}
-                >
-                  Ngừng hoạt động
-                </Button>
-              ) : (
-                <Button
-                  type="button"
-                  className="bg-emerald-600 text-white hover:bg-emerald-700"
-                  onClick={openReactivateModal}
-                >
-                  Kích hoạt lại
-                </Button>
-              )}
-            </div>
-
-            <Dialog
-              open={statusModalOpen}
-              onOpenChange={(open) => {
-                setStatusModalOpen(open);
-                if (!open) {
-                  setDeactivateReasonError('');
-                }
-              }}
-            >
-              <DialogContent className="max-w-md bg-white p-0 overflow-hidden">
-                <div className="p-6">
-                  <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-zinc-100">
-                    {pendingStatusAction === 'deactivate' ? (
-                      <X className="h-8 w-8 text-red-600" />
-                    ) : (
-                      <Check className="h-8 w-8 text-emerald-600" />
-                    )}
-                  </div>
-
-                  <h3 className="text-center text-2xl font-bold text-zinc-900">
-                    {pendingStatusAction === 'deactivate'
-                      ? 'Xác nhận ngừng hoạt động'
-                      : 'Xác nhận hoạt động trở lại'}
-                  </h3>
-
-                  <p className="mt-3 text-center text-zinc-600">
-                    {pendingStatusAction === 'deactivate'
-                      ? `Bạn có chắc chắn muốn ngừng hoạt động tổ chức ${org.name} không?`
-                      : `Bạn có chắc chắn muốn tổ chức ${org.name} hoạt động trở lại không?`}
-                  </p>
-
-                  {pendingStatusAction === 'deactivate' && (
-                    <div className="mt-5">
-                      <label className="mb-2 block text-sm font-medium text-zinc-700">
-                        Lý do ngừng hoạt động
-                      </label>
-                      <Textarea
-                        value={deactivateReason}
-                        onChange={(e) => {
-                          setDeactivateReason(e.target.value);
-                          if (deactivateReasonError) {
-                            setDeactivateReasonError('');
-                          }
-                        }}
-                        placeholder="Nhập lý do ngừng hoạt động..."
-                        className="min-h-28 border-zinc-300 text-zinc-900 placeholder:text-zinc-400"
-                      />
-                      {deactivateReasonError && (
-                        <p className="mt-2 text-sm text-red-600">
-                          {deactivateReasonError}
-                        </p>
-                      )}
-                    </div>
-                  )}
-
-                  <div className="mt-6 flex items-center gap-3">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="flex-1 border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-50"
-                      onClick={() => setStatusModalOpen(false)}
-                    >
-                      Hủy
-                    </Button>
-                    {pendingStatusAction === 'deactivate' ? (
-                      <Button
-                        type="button"
-                        className="flex-1 bg-red-600 text-white hover:bg-red-700"
-                        onClick={handleConfirmStatusAction}
-                      >
-                        Ngừng hoạt động
-                      </Button>
-                    ) : (
-                      <Button
-                        type="button"
-                        className="flex-1 bg-emerald-600 text-white hover:bg-emerald-700"
-                        onClick={handleConfirmStatusAction}
-                      >
-                        Xác nhận mở
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
 
             {/* Image Zoom Dialog */}
             <Dialog
