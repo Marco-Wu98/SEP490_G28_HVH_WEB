@@ -34,7 +34,6 @@ import type { IRoute } from '@/types/types';
 import type { PendingEventsResponse } from '@/hooks/dto';
 import { EEventStatus, EVENT_STATUS_LABELS } from '@/constants/event-status';
 import { getBadgeClassNameByStatus } from '@/constants/event-badge-status';
-// Data fetching is now handled outside this component. Only presentational logic remains.
 
 interface Props {
   user: User | null | undefined;

@@ -14,7 +14,6 @@ const markerIcon = new L.Icon({
   shadowSize: [41, 41]
 });
 
-// Props for MapSection: all required to match usage in detail.tsx
 interface MapSectionProps {
   lat: number;
   lng: number;
@@ -35,7 +34,6 @@ export default function MapSection({ lat, lng, popupText }: MapSectionProps) {
       <Marker position={[lat, lng]} icon={markerIcon}>
         {popupText && <Popup>{popupText}</Popup>}
       </Marker>
-      {/* Example: Circle around marker */}
       <Circle center={[lat, lng]} radius={200} color="blue" />
     </MapContainer>
   );

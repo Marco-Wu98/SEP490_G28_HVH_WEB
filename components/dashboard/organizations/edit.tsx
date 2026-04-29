@@ -229,7 +229,6 @@ export default function OrganizationEditPage({
         description: 'Thông tin tổ chức đã được cập nhật.'
       });
 
-      // Redirect immediately - detail page will fetch fresh data
       router.push(`/dashboard/organizations/${orgId}`);
     } catch (error: any) {
       console.error('❌ [organizations/edit] Error:', error);

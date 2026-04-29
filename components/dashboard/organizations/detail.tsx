@@ -52,6 +52,21 @@ const getInitials = (name: string) => {
     .slice(0, 2);
 };
 
+const GMAIL_AVATAR_BG = [
+  'bg-[#1a73e8]',
+  'bg-[#0b8043]',
+  'bg-[#d93025]',
+  'bg-[#f29900]',
+  'bg-[#7b1fa2]',
+  'bg-[#00897b]'
+];
+
+const getAvatarBgClass = (name: string) => {
+  const value = (name || 'ORG').trim();
+  const index = value.charCodeAt(0) % GMAIL_AVATAR_BG.length;
+  return GMAIL_AVATAR_BG[index];
+};
+
 const renderStars = (rating: number) => {
   const fullStars = Math.round(rating);
   return Array.from({ length: 5 }).map((_, index) => (
@@ -113,9 +128,7 @@ export default function OrganizationDetailPage({
       reviews: legacyOrgData.hostedEventCount ?? 0,
       volunteers: orgData.totalHosts ?? 0,
       donations: legacyOrgData.creditHour ?? legacyOrgData.totalHonorHours ?? 0,
-      imageUrl:
-        getFullSupabaseImageUrl(orgData.avatarImageUrl) ||
-        'https://picsum.photos/seed/org/200/200',
+      imageUrl: getFullSupabaseImageUrl(orgData.avatarImageUrl),
       introduction: orgData.orgIntroduction || 'Chưa có thông tin giới thiệu.',
       applicationReason: '',
       basicInfo: {
@@ -222,7 +235,7 @@ export default function OrganizationDetailPage({
               <div className="px-6 py-6 md:px-8">
                 <div className="flex flex-col gap-5 md:flex-row md:items-start md:gap-6">
                   <div className="relative -mt-16 md:-mt-24 md:shrink-0">
-                    <div className="flex h-32 w-32 items-center justify-center overflow-hidden rounded-2xl border-4 border-white bg-zinc-200 shadow-lg md:h-40 md:w-40">
+                    <div className="relative flex h-32 w-32 items-center justify-center overflow-hidden rounded-2xl border-4 border-white bg-zinc-200 shadow-lg md:h-40 md:w-40">
                       {org.imageUrl ? (
                         <img
                           src={org.imageUrl}
@@ -239,7 +252,7 @@ export default function OrganizationDetailPage({
                         />
                       ) : null}
                       <p
-                        className={`text-3xl font-bold text-zinc-500 avatar-fallback ${org.imageUrl ? 'hidden' : ''}`}
+                        className={`avatar-fallback absolute inset-0 flex items-center justify-center text-3xl font-semibold text-white ${getAvatarBgClass(org.name)} ${org.imageUrl ? 'hidden' : ''}`}
                       >
                         {getInitials(org.name)}
                       </p>

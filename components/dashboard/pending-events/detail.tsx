@@ -55,7 +55,6 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { useApproveEventByOrgManager } from '@/hooks/features/sys-admin/uc080-approve-reject-event-by-org-manager/useApprove';
-// No data fetching here; handled by container
 
 const isHeicImageUrl = (src: string) => /\.(heic|heif)(\?|$)/i.test(src);
 const isHeicMimeType = (value: string | null | undefined) =>

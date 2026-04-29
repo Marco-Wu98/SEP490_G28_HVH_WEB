@@ -22,6 +22,7 @@ import {
   ORG_TYPE_OPTIONS
 } from '@/constants/org-type';
 import { useSearchAndViewOrgs } from '@/hooks/features/sys-admin/uc039+uc041-search-org-and-view-org-list-by-admin/useSearchAndViewOrgs';
+import { getFullSupabaseImageUrl } from '@/utils/helpers';
 
 interface Props {
   user: User | null | undefined;
@@ -29,18 +30,41 @@ interface Props {
 }
 
 const PAGE_SIZE = 20;
+const GMAIL_AVATAR_BG = [
+  'bg-[#1a73e8]',
+  'bg-[#0b8043]',
+  'bg-[#d93025]',
+  'bg-[#f29900]',
+  'bg-[#7b1fa2]',
+  'bg-[#00897b]'
+];
 
-const getAvatarBgColor = () => {
-  return 'bg-blue-400';
+const getOrgAvatarSrc = (org: {
+  avatarImageUrl?: string | null;
+  avatarUrl?: string | null;
+}) => {
+  const avatarPath = org.avatarImageUrl ?? org.avatarUrl;
+  return avatarPath ? getFullSupabaseImageUrl(avatarPath) : null;
 };
 
 const getInitials = (name: string) => {
-  return name
+  const parts = name
     .split(' ')
-    .map((word) => word[0])
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+  if (parts.length === 0) return 'O';
+
+  return parts
+    .slice(0, 2)
+    .map((item) => item[0])
     .join('')
-    .toUpperCase()
-    .slice(0, 2);
+    .toUpperCase();
+};
+
+const getAvatarBgClass = (name: string) => {
+  const charCode = (name || 'ORG').charCodeAt(0);
+  return GMAIL_AVATAR_BG[charCode % GMAIL_AVATAR_BG.length];
 };
 
 export default function OrganizationsPage({ user, userDetails }: Props) {
@@ -50,6 +74,9 @@ export default function OrganizationsPage({ user, userDetails }: Props) {
     'all'
   );
   const [currentPage, setCurrentPage] = useState(0);
+  const [failedAvatarIds, setFailedAvatarIds] = useState<
+    Record<string, boolean>
+  >({});
 
   const selectedOrgTypes = useMemo(
     () => (selectedOrgType === 'all' ? [] : [selectedOrgType]),
@@ -191,12 +218,26 @@ export default function OrganizationsPage({ user, userDetails }: Props) {
                     {/* Left and middle section - 3 parts */}
                     <div className="flex gap-6 basis-3/4">
                       {/* Avatar */}
-                      <div
-                        className={`h-28 w-28 flex-shrink-0 rounded-lg ${getAvatarBgColor()} flex items-center justify-center`}
-                      >
-                        <p className="text-3xl font-bold text-white">
-                          {getInitials(org.name)}
-                        </p>
+                      <div className="h-28 w-28 flex-shrink-0 overflow-hidden rounded-2xl border-4 border-white bg-zinc-200 shadow-lg">
+                        {getOrgAvatarSrc(org) && !failedAvatarIds[org.id] ? (
+                          <img
+                            src={getOrgAvatarSrc(org) || ''}
+                            alt={org.name}
+                            className="h-full w-full object-cover"
+                            onError={() => {
+                              setFailedAvatarIds((prev) => ({
+                                ...prev,
+                                [org.id]: true
+                              }));
+                            }}
+                          />
+                        ) : (
+                          <div
+                            className={`flex h-full w-full items-center justify-center text-3xl font-semibold text-white ${getAvatarBgClass(org.name)}`}
+                          >
+                            {getInitials(org.name)}
+                          </div>
+                        )}
                       </div>
 
                       {/* Main content */}
@@ -290,11 +331,11 @@ export default function OrganizationsPage({ user, userDetails }: Props) {
             )}
           </div>
 
-          <div className="mt-6 flex flex-col gap-3 border-t border-zinc-200 pt-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-zinc-200 pt-4">
             <p className="text-sm text-zinc-500">
               Trang {currentPage + 1} / {Math.max(totalPages, 1)}
             </p>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <Button
                 variant="outline"
                 size="sm"
@@ -304,6 +345,24 @@ export default function OrganizationsPage({ user, userDetails }: Props) {
                 <ChevronLeft className="mr-1 h-4 w-4" />
                 Trước
               </Button>
+
+              {Array.from({ length: totalPages }).map((_, index) => {
+                const page = index + 1;
+                const isActive = index === currentPage;
+
+                return (
+                  <Button
+                    key={page}
+                    variant={isActive ? 'default' : 'outline'}
+                    size="sm"
+                    disabled={isLoading}
+                    onClick={() => setCurrentPage(index)}
+                  >
+                    {page}
+                  </Button>
+                );
+              })}
+
               <Button
                 variant="outline"
                 size="sm"

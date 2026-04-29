@@ -63,10 +63,12 @@ import type {
 import { useGetHostsofOrgsbySysAdmin } from '@/hooks/features/sys-admin/uc033-view-org-member-accounts-list/useGetHostsofOrgsbySysAdmin';
 import { useGetHostActivitesbySysAdmin } from '@/hooks/features/sys-admin/uc034-view-organization-member-account-profile/useGetHostActivitesbySysAdmin';
 import { useGetHostInfobySysAdmin } from '@/hooks/features/sys-admin/uc034-view-organization-member-account-profile/useGetHostInfobySysAdmin';
+import { useViewOrgDetails } from '@/hooks/features/sys-admin/uc076-view-org-details-by-admin/useViewOrgDetails';
 import { useUpdateHostProfile } from '@/hooks/features/sys-admin/uc036-update-organization-member-account-profile/useUpdateHostProfile';
 import { useUploadFiles } from '@/hooks/features/commons/bucket/useUploadFiles';
 import { toast } from 'sonner';
 import { getFullSupabaseImageUrl } from '@/utils/helpers';
+import { ORG_TYPE_LABELS } from '@/constants/org-type-labels';
 
 interface Props {
   user: User | null | undefined;
@@ -98,6 +100,36 @@ type RegisteredOrganization = {
 };
 
 const pageSize = 10;
+
+const GMAIL_AVATAR_BG = [
+  'bg-[#1a73e8]',
+  'bg-[#0b8043]',
+  'bg-[#d93025]',
+  'bg-[#f29900]',
+  'bg-[#7b1fa2]',
+  'bg-[#00897b]'
+];
+
+const getOrgInitials = (name: string) => {
+  const parts = name
+    .split(' ')
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+  if (parts.length === 0) return 'O';
+
+  return parts
+    .slice(0, 2)
+    .map((item) => item[0])
+    .join('')
+    .toUpperCase();
+};
+
+const getAvatarBgClass = (name: string) => {
+  const value = (name || 'ORG').trim();
+  const index = value.charCodeAt(0) % GMAIL_AVATAR_BG.length;
+  return GMAIL_AVATAR_BG[index];
+};
 
 const mapApiStatusToOrganizerStatus = (
   status: HostSimpleResponseForSystemAdmin['status']
@@ -188,8 +220,10 @@ export default function OrganizersList(props: Props) {
   const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const [editHostUuid, setEditHostUuid] = useState<string | null>(null);
   const [isLoadingEditDetails, setIsLoadingEditDetails] = useState(false);
-  const [tempHostIdForEdit, setTempHostIdForEdit] = useState<string | undefined>(undefined);
-  
+  const [tempHostIdForEdit, setTempHostIdForEdit] = useState<
+    string | undefined
+  >(undefined);
+
   const { data: editHostDetailsData } = useGetHostInfobySysAdmin({
     id: tempHostIdForEdit,
     baseUrl,
@@ -243,6 +277,14 @@ export default function OrganizersList(props: Props) {
       enabled: openDetailModal && Boolean(selectedHostId)
     });
 
+  const selectedOrgId = hostDetailData?.orgId?.trim() || undefined;
+  const { data: selectedOrgData, isLoading: isOrgDetailLoading } =
+    useViewOrgDetails({
+      id: selectedOrgId,
+      baseUrl,
+      enabled: openDetailModal && Boolean(selectedOrgId)
+    });
+
   useEffect(() => {
     const content = hostListData?.content ?? [];
     setOrganizers(
@@ -250,7 +292,6 @@ export default function OrganizersList(props: Props) {
     );
   }, [hostListData?.content]);
 
-  // Populate edit form when host details are loaded
   useEffect(() => {
     if (editHostDetailsData && tempHostIdForEdit) {
       setEditHostUuid(editHostDetailsData.id);
@@ -266,10 +307,10 @@ export default function OrganizersList(props: Props) {
       });
       setAvatarPreview(
         getFullSupabaseImageUrl(editHostDetailsData.avatarUrl) ||
-        `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(editHostDetailsData.id || '')}`
+          `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(editHostDetailsData.id || '')}`
       );
       setIsLoadingEditDetails(false);
-      setTempHostIdForEdit(undefined); // Reset to prevent re-triggering
+      setTempHostIdForEdit(undefined);
     }
   }, [editHostDetailsData, tempHostIdForEdit]);
 
@@ -737,11 +778,11 @@ export default function OrganizersList(props: Props) {
   const handleEdit = (orgId: number) => {
     const org = organizers.find((o) => o.id === orgId);
     if (!org) return;
-    
+
     setIsLoadingEditDetails(true);
     setSelectedEditUser(org);
     setTempHostIdForEdit(org.cccd); // This will trigger the hook to fetch data
-    
+
     // Set temporary fallback data while loading
     setEditOrganizer({
       fullName: org.fullName,
@@ -798,8 +839,7 @@ export default function OrganizersList(props: Props) {
 
     if (!editOrganizer.fullName.trim())
       newErrors.fullName = 'Vui lòng nhập họ và tên';
-    if (!editOrganizer.dob.trim())
-      newErrors.dob = 'Vui lòng nhập ngày sinh';
+    if (!editOrganizer.dob.trim()) newErrors.dob = 'Vui lòng nhập ngày sinh';
     if (!editOrganizer.address.trim())
       newErrors.address = 'Vui lòng nhập địa chỉ';
     if (!editOrganizer.detailAddress.trim())
@@ -818,7 +858,8 @@ export default function OrganizersList(props: Props) {
     // Helper to filter placeholder values - return null for placeholders
     const filterPlaceholder = (value: string): string | null => {
       const trimmed = value.trim();
-      if (trimmed === '-' || trimmed === 'Chưa cập nhật' || trimmed === '') return null;
+      if (trimmed === '-' || trimmed === 'Chưa cập nhật' || trimmed === '')
+        return null;
       return trimmed;
     };
 
@@ -835,7 +876,9 @@ export default function OrganizersList(props: Props) {
 
     if (avatarFile) {
       const avatarExtension = avatarFile.name.split('.').pop();
-      requestData.avatarExtension = avatarExtension ? `.${avatarExtension}` : '';
+      requestData.avatarExtension = avatarExtension
+        ? `.${avatarExtension}`
+        : '';
     }
 
     try {
@@ -871,7 +914,9 @@ export default function OrganizersList(props: Props) {
       setAvatarFile(null);
       setAvatarPreview(null);
     } catch (error: any) {
-      toast.error(error.message || 'Không thể cập nhật thông tin người tổ chức');
+      toast.error(
+        error.message || 'Không thể cập nhật thông tin người tổ chức'
+      );
     } finally {
       setIsSavingOrganizer(false);
     }
@@ -980,13 +1025,21 @@ export default function OrganizersList(props: Props) {
   const getRoleBadge = (role: string) => {
     switch (role) {
       case 'Manager':
-        return <Badge className="rounded-full bg-blue-500 text-[10px] px-1.5 py-0">Manager</Badge>;
+        return (
+          <Badge className="rounded-full bg-blue-500 text-[10px] px-1.5 py-0">
+            Manager
+          </Badge>
+        );
       case 'Host':
         return (
-          <Badge className="rounded-full bg-purple-500 text-[10px] px-1.5 py-0">Host</Badge>
+          <Badge className="rounded-full bg-purple-500 text-[10px] px-1.5 py-0">
+            Host
+          </Badge>
         );
       default:
-        return <Badge className="rounded-full text-[10px] px-1.5 py-0">{role}</Badge>;
+        return (
+          <Badge className="rounded-full text-[10px] px-1.5 py-0">{role}</Badge>
+        );
     }
   };
 
@@ -1017,7 +1070,9 @@ export default function OrganizersList(props: Props) {
     selectedUser?.fullName ||
     'Chua cap nhat';
   const detailAvatar =
-    getFullSupabaseImageUrl(hostDetailData?.avatarUrl) || selectedUser?.avatar || '';
+    getFullSupabaseImageUrl(hostDetailData?.avatarUrl) ||
+    selectedUser?.avatar ||
+    '';
   const detailId = hostDetailData?.id || selectedUser?.cccd || '-';
   const detailCid = hostDetailData?.cid?.trim() || '-';
   const detailAddress =
@@ -1039,6 +1094,29 @@ export default function OrganizersList(props: Props) {
   const detailCreatedAt = hostDetailData?.createdAt
     ? new Date(hostDetailData.createdAt).toLocaleString('vi-VN')
     : 'Chua cap nhat';
+
+  const organizationAvatar =
+    getFullSupabaseImageUrl(selectedOrgData?.avatarImageUrl) ||
+    getFullSupabaseImageUrl(hostDetailData?.orgAvatarUrl);
+  const organizationName =
+    hostDetailData?.orgName?.trim() || selectedOrgData?.name?.trim() || '-';
+  const organizationType =
+    selectedOrgData?.orgType && ORG_TYPE_LABELS[selectedOrgData.orgType]
+      ? ORG_TYPE_LABELS[selectedOrgData.orgType]
+      : '-';
+  const organizationStatus =
+    selectedOrgData?.status === 'ACTIVE'
+      ? 'Hoạt động'
+      : selectedOrgData?.status === 'INACTIVE'
+        ? 'Ngừng hoạt động'
+        : '-';
+  const organizationAvgRating =
+    selectedOrgData?.avgRating ?? hostDetailData?.orgAvgRating ?? 0;
+  const organizationHostedEventCount =
+    selectedOrgData?.hostedEventCount ??
+    hostDetailData?.orgHostedEventCount ??
+    0;
+  const organizationCreditHour = selectedOrgData?.creditHour ?? 0;
 
   const formatDateTimeVi = (value: string | null | undefined) => {
     if (!value) return '-';
@@ -1221,7 +1299,9 @@ export default function OrganizersList(props: Props) {
                     <TableCell>{org.phone}</TableCell>
                     <TableCell>{org.email}</TableCell>
                     <TableCell className="text-center">{org.events}</TableCell>
-                    <TableCell className="whitespace-nowrap">{getStatusBadge(org.status)}</TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      {getStatusBadge(org.status)}
+                    </TableCell>
                     <TableCell>
                       <div className="flex items-center justify-center gap-2">
                         <Button
@@ -1385,6 +1465,71 @@ export default function OrganizersList(props: Props) {
                       {detailCreatedAt}
                     </p>
                   </div>
+
+                  <div className="mt-5 border-t border-zinc-200 pt-4">
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-14 w-14 border border-zinc-200 shadow-sm">
+                        <AvatarImage
+                          src={organizationAvatar || ''}
+                          alt={organizationName}
+                        />
+                        <AvatarFallback
+                          className={`text-sm font-semibold text-white ${getAvatarBgClass(organizationName)}`}
+                        >
+                          {getOrgInitials(organizationName)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-slate-900">
+                          {organizationName}
+                        </p>
+                        <p className="text-xs text-zinc-500">
+                          ID tổ chức: {selectedOrgId || '-'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 rounded-xl border border-zinc-200 bg-zinc-50/80 p-3 text-sm text-zinc-700">
+                      {isOrgDetailLoading ? (
+                        <p className="text-zinc-500">
+                          Đang tải thông tin tổ chức...
+                        </p>
+                      ) : (
+                        <div className="space-y-2">
+                          <p>
+                            <span className="font-semibold text-zinc-500">
+                              Loại hình:
+                            </span>{' '}
+                            {organizationType}
+                          </p>
+                          <p>
+                            <span className="font-semibold text-zinc-500">
+                              Trạng thái:
+                            </span>{' '}
+                            {organizationStatus}
+                          </p>
+                          <p>
+                            <span className="font-semibold text-zinc-500">
+                              Đánh giá trung bình:
+                            </span>{' '}
+                            {organizationAvgRating}
+                          </p>
+                          <p>
+                            <span className="font-semibold text-zinc-500">
+                              Số sự kiện đã tổ chức:
+                            </span>{' '}
+                            {organizationHostedEventCount}
+                          </p>
+                          <p>
+                            <span className="font-semibold text-zinc-500">
+                              Số giờ uy tín:
+                            </span>{' '}
+                            {organizationCreditHour}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
                 <div className="rounded-2xl border border-blue-100 bg-white p-5 shadow-md shadow-blue-100/35">
@@ -1450,7 +1595,11 @@ export default function OrganizersList(props: Props) {
                             <TableRow
                               key={activity.sessionId}
                               className="cursor-pointer hover:bg-zinc-100"
-                              onClick={() => router.push(`/dashboard/organizers-list/events/${activity.eventId}`)}
+                              onClick={() =>
+                                router.push(
+                                  `/dashboard/organizers-list/events/${activity.eventId}`
+                                )
+                              }
                             >
                               <TableCell className="font-medium">
                                 {activity.eventName || '-'}
@@ -1469,7 +1618,10 @@ export default function OrganizersList(props: Props) {
                                 </Badge>
                               </TableCell>
                               <TableCell>
-                                {[activity.eventAddress, activity.eventDetailAddress]
+                                {[
+                                  activity.eventAddress,
+                                  activity.eventDetailAddress
+                                ]
                                   .filter(Boolean)
                                   .join(' - ') || '-'}
                               </TableCell>
@@ -1528,7 +1680,11 @@ export default function OrganizersList(props: Props) {
                     />
                   ) : null}
                   <AvatarFallback className="bg-gradient-to-br from-purple-600 via-violet-500 to-fuchsia-500 text-2xl font-semibold text-white">
-                    {(editOrganizer.fullName || selectedEditUser?.fullName || 'U')
+                    {(
+                      editOrganizer.fullName ||
+                      selectedEditUser?.fullName ||
+                      'U'
+                    )
                       .split(' ')
                       .map((part) => part[0])
                       .join('')
@@ -1579,158 +1735,162 @@ export default function OrganizersList(props: Props) {
                       setEditOrganizer({
                         ...editOrganizer,
                         fullName: e.target.value
-                    })
-                  }
-                  className="mt-1"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                    Số CCCD
-                  </label>
-                  <Input
-                    placeholder="Nhập 12 số CCCD"
-                    value={editOrganizer.cccd}
-                    onChange={(e) =>
-                      setEditOrganizer({
-                        ...editOrganizer,
-                        cccd: e.target.value
                       })
                     }
                     className="mt-1"
                   />
                 </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                      Số CCCD
+                    </label>
+                    <Input
+                      placeholder="Nhập 12 số CCCD"
+                      value={editOrganizer.cccd}
+                      onChange={(e) =>
+                        setEditOrganizer({
+                          ...editOrganizer,
+                          cccd: e.target.value
+                        })
+                      }
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                      Số điện thoại
+                    </label>
+                    <Input
+                      placeholder="Nhập số điện thoại"
+                      value={editOrganizer.phone}
+                      onChange={(e) =>
+                        setEditOrganizer({
+                          ...editOrganizer,
+                          phone: e.target.value
+                        })
+                      }
+                      className="mt-1"
+                    />
+                  </div>
+                </div>
+
                 <div>
                   <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                    Số điện thoại
+                    Email
                   </label>
                   <Input
-                    placeholder="Nhập số điện thoại"
-                    value={editOrganizer.phone}
+                    type="email"
+                    placeholder="Nhập địa chỉ email"
+                    value={editOrganizer.email}
                     onChange={(e) =>
                       setEditOrganizer({
                         ...editOrganizer,
-                        phone: e.target.value
+                        email: e.target.value
                       })
                     }
                     className="mt-1"
                   />
                 </div>
-              </div>
 
-              <div>
-                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                  Email
-                </label>
-                <Input
-                  type="email"
-                  placeholder="Nhập địa chỉ email"
-                  value={editOrganizer.email}
-                  onChange={(e) =>
-                    setEditOrganizer({
-                      ...editOrganizer,
-                      email: e.target.value
-                    })
-                  }
-                  className="mt-1"
-                />
-              </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                      Ngày sinh
+                    </label>
+                    <Input
+                      type="date"
+                      value={editOrganizer.dob}
+                      onChange={(e) =>
+                        setEditOrganizer({
+                          ...editOrganizer,
+                          dob: e.target.value
+                        })
+                      }
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                      Giới tính
+                    </label>
+                    <Select
+                      value={editOrganizer.gender ? 'male' : 'female'}
+                      onValueChange={(value) =>
+                        setEditOrganizer({
+                          ...editOrganizer,
+                          gender: value === 'male'
+                        })
+                      }
+                    >
+                      <SelectTrigger className="mt-1 bg-white border-zinc-200">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white border-zinc-200">
+                        <SelectItem value="male">Nam</SelectItem>
+                        <SelectItem value="female">Nữ</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
 
-              <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                    Ngày sinh
+                    Địa chỉ
                   </label>
                   <Input
-                    type="date"
-                    value={editOrganizer.dob}
+                    placeholder="Nhập địa chỉ"
+                    value={editOrganizer.address}
                     onChange={(e) =>
                       setEditOrganizer({
                         ...editOrganizer,
-                        dob: e.target.value
+                        address: e.target.value
                       })
                     }
                     className="mt-1"
                   />
                 </div>
+
                 <div>
                   <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                    Giới tính
+                    Địa chỉ chi tiết
                   </label>
-                  <Select
-                    value={editOrganizer.gender ? 'male' : 'female'}
-                    onValueChange={(value) =>
+                  <Input
+                    placeholder="Nhập địa chỉ chi tiết"
+                    value={editOrganizer.detailAddress}
+                    onChange={(e) =>
                       setEditOrganizer({
                         ...editOrganizer,
-                        gender: value === 'male'
+                        detailAddress: e.target.value
                       })
                     }
-                  >
-                    <SelectTrigger className="mt-1 bg-white border-zinc-200">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white border-zinc-200">
-                      <SelectItem value="male">Nam</SelectItem>
-                      <SelectItem value="female">Nữ</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    className="mt-1"
+                  />
                 </div>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                  Địa chỉ
-                </label>
-                <Input
-                  placeholder="Nhập địa chỉ"
-                  value={editOrganizer.address}
-                  onChange={(e) =>
-                    setEditOrganizer({
-                      ...editOrganizer,
-                      address: e.target.value
-                    })
-                  }
-                  className="mt-1"
-                />
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                  Địa chỉ chi tiết
-                </label>
-                <Input
-                  placeholder="Nhập địa chỉ chi tiết"
-                  value={editOrganizer.detailAddress}
-                  onChange={(e) =>
-                    setEditOrganizer({
-                      ...editOrganizer,
-                      detailAddress: e.target.value
-                    })
-                  }
-                  className="mt-1"
-                />
               </div>
             </div>
-          </div>
 
-          <div className="flex justify-end gap-2 pt-4 px-6 pb-6">
-            <Button
-              onClick={() => setOpenEditModal(false)}
-              className="bg-red-600 hover:bg-red-700 text-white"
-              disabled={isSavingOrganizer}
-            >
-              Hủy
-            </Button>
-            <Button
-              onClick={handleConfirmEdit}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
-              disabled={isSavingOrganizer || isLoadingEditDetails}
-            >
-              {isSavingOrganizer ? 'Đang lưu...' : isLoadingEditDetails ? 'Đang tải...' : 'Cập nhật'}
-            </Button>
-          </div>
+            <div className="flex justify-end gap-2 pt-4 px-6 pb-6">
+              <Button
+                onClick={() => setOpenEditModal(false)}
+                className="bg-red-600 hover:bg-red-700 text-white"
+                disabled={isSavingOrganizer}
+              >
+                Hủy
+              </Button>
+              <Button
+                onClick={handleConfirmEdit}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+                disabled={isSavingOrganizer || isLoadingEditDetails}
+              >
+                {isSavingOrganizer
+                  ? 'Đang lưu...'
+                  : isLoadingEditDetails
+                    ? 'Đang tải...'
+                    : 'Cập nhật'}
+              </Button>
+            </div>
           </DialogContent>
         </Dialog>
         {/* Lock Confirmation Modal */}

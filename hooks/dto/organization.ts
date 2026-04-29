@@ -83,6 +83,8 @@ export interface OrganizationSimpleResponse {
   id: string;
   name: string;
   orgType: EOrgType | null;
+  avatarImageUrl?: string | null;
+  avatarUrl?: string | null;
   hostedEventCount: number;
   creditHour: number;
   avgRating: number;

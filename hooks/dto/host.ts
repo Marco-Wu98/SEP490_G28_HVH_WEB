@@ -67,6 +67,11 @@ export interface HostInfoResponseForSystemAdmin {
   address: string | null;
   detailAddress: string | null;
   createdAt: string | null;
+  orgId?: string | null;
+  orgName?: string | null;
+  orgAvatarUrl?: string | null;
+  orgAvgRating?: number | null;
+  orgHostedEventCount?: number | null;
   avatarUploadUrl?: string | null;
 }
 
