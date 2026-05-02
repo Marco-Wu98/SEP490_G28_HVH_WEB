@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import {
@@ -15,12 +17,13 @@ import {
 import Link from 'next/link';
 import React, { useContext, useEffect, useState } from 'react';
 import { FiAlignJustify } from 'react-icons/fi';
+import { FiBell } from 'react-icons/fi';
 import {
   HiOutlineInformationCircle,
   HiOutlineArrowRightOnRectangle
 } from 'react-icons/hi2';
 import { useSupabase } from '@/app/supabase-provider';
-import { useUnregisterToken } from '@/hooks/features/commons/notification/use-unregister-token';
+import { useUnregisterToken } from '@/hooks/features/commons/notification/useUnregisterToken';
 import { useGetSysAdmAccountInfo } from '@/hooks/features/sys-admin/uc088-view-profile-by-admin/useGetSysAdmAccountInfo';
 import { useGetOrgManagerAccInfo } from '@/hooks/features/org-manager/uc087-view-profile-by-org-manager/useGetOrgManagerAccInfo';
 import {
@@ -28,6 +31,8 @@ import {
   getStoredNotificationToken
 } from '@/hooks/use-notification-permission';
 import { getFullSupabaseImageUrl } from '@/utils/helpers';
+import { useGetNotiUser } from '@/hooks/features/commons/notification/useGetNotiUser';
+import { useGetNotiUserTopic } from '@/hooks/features/commons/notification/useGetNotiUserTopic';
 
 export default function HeaderLinks(props: {
   colorVariant?: 'admin' | 'organizer';
@@ -65,7 +70,29 @@ export default function HeaderLinks(props: {
     baseUrl: apiBaseUrl,
     enabled: colorVariant === 'organizer'
   });
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isOpen, setIsOpen] = useState(false);
+  
+  // Call hooks unconditionally (required by React Hook Rules)
+  const notiUserTopicResult = useGetNotiUserTopic({
+    baseUrl: apiBaseUrl,
+    pageNumber: currentPage,
+    pageSize: 5,
+    enabled: mounted && isOpen && colorVariant === 'admin'
+  });
+  const notiUserResult = useGetNotiUser({
+    baseUrl: apiBaseUrl,
+    pageNumber: currentPage,
+    pageSize: 5,
+    enabled: mounted && isOpen && colorVariant === 'organizer'
+  });
+  
+  const swrResult = colorVariant === 'admin' 
+    ? notiUserTopicResult 
+    : notiUserResult;
+  const { data: notificationsData } = swrResult;
 
+  
   const profileInfo =
     colorVariant === 'admin' ? sysAdmAccountInfo : orgManagerAccountInfo;
 
@@ -124,6 +151,25 @@ export default function HeaderLinks(props: {
     }
   };
   if (!mounted) return null;
+  const notiList = notificationsData?.content ?? [];
+  const notiCount = notificationsData?.page?.totalElements ?? notiList.length;
+  const hasNextPage = (notificationsData?.page?.number ?? 0) < (notificationsData?.page?.totalPages ?? 1);
+  const isLastPage = (notificationsData?.page?.number ?? 0) >= (notificationsData?.page?.totalPages ?? 1);
+
+  const handleLoadMore = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (hasNextPage) {
+      setCurrentPage(prev => prev + 1);
+    }
+  };
+
+  const handleResetPage = (open: boolean) => {
+    setIsOpen(open);
+    if (!open) {
+      setCurrentPage(1);
+    }
+  };
 
   const iconButtonClassName =
     colorVariant === 'organizer'
@@ -155,6 +201,60 @@ export default function HeaderLinks(props: {
       >
         <HiOutlineArrowRightOnRectangle className={signOutIconClassName} />
       </Button>
+      <DropdownMenu onOpenChange={handleResetPage}>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" className={iconButtonClassName}>
+            <div className="relative">
+              <FiBell className="h-4 w-4" />
+              {notiCount > 0 && (
+                <span className="absolute -top-5 -right-4 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-red-500 px-1 text-xs font-semibold text-white">
+                  {notiCount > 99 ? '99+' : notiCount}
+                </span>
+              )}
+            </div>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="z-[80] w-[320px] max-w-[90vw] bg-white border-gray-200" align="end" sideOffset={5}>
+          <DropdownMenuGroup className="max-h-96">
+            {notiList.length === 0 ? (
+              <DropdownMenuItem>
+                <p className="text-sm text-gray-600">Không có thông báo</p>
+              </DropdownMenuItem>
+            ) : (
+              <>
+                {notiList.map((n) => (
+                  <DropdownMenuItem key={n.notificationId}>
+                    <div className="flex w-full flex-col px-1 py-1">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-medium text-gray-900">{n.title ?? 'Thông báo'}</p>
+                        <p className="ml-2 text-xs text-gray-500">{new Date(n.createdAt).toLocaleString()}</p>
+                      </div>
+                      {n.body && <p className="mt-1 text-xs text-gray-700">{n.body}</p>}
+                    </div>
+                  </DropdownMenuItem>
+                ))}
+                {hasNextPage && (
+                  <DropdownMenuItem>
+                    <Button 
+                      onClick={handleLoadMore}
+                      variant="ghost" 
+                      size="sm"
+                      className="w-full text-sm text-gray-600 hover:text-gray-900"
+                    >
+                      Xem thông báo cũ hơn
+                    </Button>
+                  </DropdownMenuItem>
+                )}
+                {isLastPage && currentPage > 1 && (
+                  <DropdownMenuItem>
+                    <p className="text-sm text-gray-500 text-center w-full">Đã hiển thị tất cả thông báo</p>
+                  </DropdownMenuItem>
+                )}
+              </>
+            )}
+          </DropdownMenuGroup>
+        </DropdownMenuContent>
+      </DropdownMenu>
       <Link className="w-full" href={settingsPath}>
         <Avatar className="h-9 min-w-9 md:min-h-10 md:min-w-10">
           <AvatarImage src={avatarSrc} />

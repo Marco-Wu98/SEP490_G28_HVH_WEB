@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { requestFirebaseToken } from '@/lib/firebase';
-import { useRegisterToken } from '@/hooks/features/commons/notification/use-register-token';
+import { useRegisterToken } from '@/hooks/features/commons/notification/useRegisterToken';
 
 type NotificationPermission = 'granted' | 'denied' | 'default' | 'unsupported';
 

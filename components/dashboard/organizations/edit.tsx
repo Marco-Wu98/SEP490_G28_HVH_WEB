@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import DashboardLayout from '@/components/layout';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -310,13 +311,13 @@ export default function OrganizationEditPage({
           {/* Cover Image */}
           <div className="relative h-48 bg-gradient-to-r from-blue-500 to-blue-600">
             {coverPreview && (
-              <img
+              <Image
                 src={coverPreview}
                 alt="Cover"
                 className="w-full h-full object-cover"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = 'none';
-                }}
+                width={800}
+                height={192}
+                priority
               />
             )}
             <button
@@ -343,17 +344,13 @@ export default function OrganizationEditPage({
                   className="cursor-pointer h-32 w-32 md:h-40 md:w-40 rounded-2xl border-4 border-white shadow-lg bg-zinc-200 flex items-center justify-center overflow-hidden"
                 >
                   {avatarPreview ? (
-                    <img
+                    <Image
                       src={avatarPreview}
                       alt="Avatar"
                       className="w-full h-full object-cover"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = 'none';
-                        const fallback = (
-                          e.target as HTMLImageElement
-                        ).parentElement?.querySelector('.avatar-fallback');
-                        if (fallback) fallback.classList.remove('hidden');
-                      }}
+                      width={160}
+                      height={160}
+                      priority
                     />
                   ) : null}
                   <p

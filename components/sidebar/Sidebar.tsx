@@ -8,7 +8,7 @@ import {
 } from '@/components/scrollbar/Scrollbar';
 import Links from '@/components/sidebar/components/Links';
 import { UserContext, UserDetailsContext } from '@/contexts/layout';
-import { useUnregisterToken } from '@/hooks/features/commons/notification/use-unregister-token';
+import { useUnregisterToken } from '@/hooks/features/commons/notification/useUnregisterToken';
 import {
   clearStoredNotificationToken,
   getStoredNotificationToken

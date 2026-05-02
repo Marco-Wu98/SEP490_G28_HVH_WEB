@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import DashboardLayout from '@/components/layout';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -220,10 +221,12 @@ export default function OrganizationsPage({ user, userDetails }: Props) {
                       {/* Avatar */}
                       <div className="h-28 w-28 flex-shrink-0 overflow-hidden rounded-2xl border-4 border-white bg-zinc-200 shadow-lg">
                         {getOrgAvatarSrc(org) && !failedAvatarIds[org.id] ? (
-                          <img
+                          <Image
                             src={getOrgAvatarSrc(org) || ''}
                             alt={org.name}
                             className="h-full w-full object-cover"
+                            width={112}
+                            height={112}
                             onError={() => {
                               setFailedAvatarIds((prev) => ({
                                 ...prev,

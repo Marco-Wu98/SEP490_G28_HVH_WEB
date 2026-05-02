@@ -17,3 +17,21 @@ export interface SendToUserRequest {
   platform: NotificationPlatform;
   deviceId: string;
 }
+
+export interface NotificationResponse {
+  notificationId: string;
+  title?: string;
+  body?: string;
+  data?: Record<string, string>;
+  createdAt: string; // ISO datetime string
+}
+
+export interface NotificationsResponse {
+  content: NotificationResponse[];
+  page: {
+    size: number;
+    number: number;
+    totalElements: number;
+    totalPages: number;
+  };
+}

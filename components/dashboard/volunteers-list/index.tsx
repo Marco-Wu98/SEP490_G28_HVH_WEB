@@ -1,5 +1,6 @@
 'use client';
 
+import { useCallback } from 'react';
 import DashboardLayout from '@/components/layout';
 
 import { User } from '@supabase/supabase-js';
@@ -562,7 +563,7 @@ export default function VolunteersList(props: Props) {
 
       .trim();
 
-  const getFilterValueForKey = (user: Volunteer, key: ValueFilterKey) => {
+  const getFilterValueForKey = useCallback((user: Volunteer, key: ValueFilterKey) => {
     switch (key) {
       case 'fullName':
         return normalizeForFilter(user.fullName);
@@ -582,7 +583,7 @@ export default function VolunteersList(props: Props) {
       default:
         return '';
     }
-  };
+  }, []);
 
   const getUniqueValuesForKey = (key: ValueFilterKey) => {
     const values = users
