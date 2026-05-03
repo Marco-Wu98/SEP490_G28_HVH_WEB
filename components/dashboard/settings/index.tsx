@@ -333,7 +333,9 @@ export default function Settings(props: Props) {
         fullName: `${firstName || ''} ${lastName || ''}`.trim(),
         dob: dob || '',
         address: address || '',
-        detailAddress: detailAddress || ''
+        detailAddress: detailAddress || '',
+        phone: phone || '',
+        cid: cid || ''
       };
 
       // Handle avatar upload if file is selected
