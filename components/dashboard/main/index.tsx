@@ -337,7 +337,7 @@ export default function Main(props: Props) {
         </div>
 
         <div className="mt-5 grid grid-cols-1 gap-5 xl:grid-cols-3">
-          <Card className="border-zinc-200 bg-white p-5 shadow-sm xl:col-span-2">
+          <Card className="border-zinc-200 bg-white p-5 shadow-sm xl:col-span-3">
             <div className="mb-4 flex items-center justify-between">
               <div>
                 <h3 className="text-lg font-bold text-zinc-950">
@@ -363,7 +363,7 @@ export default function Main(props: Props) {
             </div>
           </Card>
 
-          <Card className="border-zinc-200 bg-white p-5 shadow-sm">
+          {/* <Card className="border-zinc-200 bg-white p-5 shadow-sm">
             <h3 className="text-lg font-bold text-zinc-950">
               Phân bổ lĩnh vực
             </h3>
@@ -398,7 +398,7 @@ export default function Main(props: Props) {
                 </div>
               ))}
             </div>
-          </Card>
+          </Card> */}
         </div>
       </div>
     </DashboardLayout>

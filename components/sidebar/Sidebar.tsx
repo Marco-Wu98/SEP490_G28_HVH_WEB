@@ -144,7 +144,7 @@ function Sidebar(props: SidebarProps) {
                   <span className="mt-2   block">Thiện Nguyện</span>
                 </h5>
               </div>
-              {colorVariant === 'organizer' && (
+              {/* {colorVariant === 'organizer' && (
                 <div className="mx-auto mt-4 w-[92%] max-w-[260px] rounded-xl border border-[#BFDBFE]/70 bg-white/15 px-4 py-2.5 text-center shadow-lg shadow-[#1E40AF]/25 backdrop-blur-sm">
                   <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#DBEAFE]">
                     Tổ chức
@@ -153,7 +153,7 @@ function Sidebar(props: SidebarProps) {
                     {organizerDisplayName}
                   </p>
                 </div>
-              )}
+              )} */}
               <div className={`mb-8 mt-8 h-px ${dividerClass}`} />
               {/* Nav item */}
               <ul>
